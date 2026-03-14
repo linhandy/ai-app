@@ -1,0 +1,28 @@
+
+> love-detector@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3001
+
+ ✓ Starting...
+ ✓ Ready in 12.3s
+ ○ Compiling / ...
+The user aborted a request.
+
+Retrying 1/3...
+The user aborted a request.
+
+Retrying 1/3...
+The user aborted a request.
+
+Retrying 2/3...
+The user aborted a request.
+
+Retrying 3/3...
+ ✓ Compiled / in 14.5s (477 modules)
+ GET / 200 in 14743ms
+ ✓ Compiled in 286ms (242 modules)
+ GET / 200 in 43ms
+ GET / 200 in 70ms

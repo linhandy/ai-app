@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>恋爱测谎仪 - 界面原型</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0f1e;
+    --card: #111827;
+    --border: #1f2d4a;
+    --green: #00ff88;
+    --red: #ff4466;
+    --blue: #4488ff;
+    --yellow: #ffcc00;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --accent: #7c3aed;
+  }
+
+  body {
+    font-family: 'Courier New', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ===== NAVIGATION ===== */
+  .nav {
+    width: 100%;
+    background: #060c18;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-title {
+    color: var(--green);
+    font-size: 14px;
+    font-weight: bold;
+    margin-right: 16px;
+    line-height: 32px;
+    letter-spacing: 2px;
+  }
+
+  .nav-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover, .nav-btn.active {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(0,255,136,0.05);
+  }
+
+  /* ===== SCREEN CONTAINER ===== */
+  .screen-wrapper {
+    display: none;
+    width: 100%;
+    max-width: 480px;
+    min-height: calc(100vh - 57px);
+    padding: 0;
+  }
+
+  .screen-wrapper.active { display: flex; flex-direction: column; }
+
+  /* ===== SCREEN LABEL ===== */
+  .screen-label {
+    background: rgba(0,255,136,0.05);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    font-size: 11px;
+    color: var(--green);
+    letter-spacing: 2px;
+    text-align: center;
+  }
+
+  /* ===== SCAN LINE EFFECT ===== */
+  .scanlines {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.05) 2px,
+      rgba(0,0,0,0.05) 4px
+    );
+    z-index: 999;
+  }
+
+  /* ===== PAGE 1: SPLASH ===== */
+  #page-splash .splash-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    gap: 16px;
+    padding: 40px;
+  }
+
+  .splash-logo {
+    font-size: 48px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(0.97); }
+  }
+
+  .splash-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--green);
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px var(--green);
+  }
+
+  .splash-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 3px;
+  }
+
+  .splash-bar {
+    width: 200px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+
+  .splash-bar-fill {
+    height: 100%;
+    background: var(--green);
+    width: 0%;
+    animation: loading 2s ease-in-out infinite;
+  }
+
+  @keyframes loading {
+    0% { width: 0%; }
+    100% { width: 100%; }
+  }
+
+  .splash-status {
+    font-size: 11px;
+    color: var(--green);
+    letter-spacing: 1px;
+    opacity: 0.7;
+  }
+
+  /* ===== PAGE 2: WELCOME ===== */
+  #page-welcome .welcome-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 20px;
+    gap: 20px;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-header-icon { font-size: 24px; }
+
+  .page-header-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--green);
+  }
+
+  .page-header-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .form-label {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+
+  .relation-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .relation-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .relation-card:hover, .relation-card.selected {
+    border-color: var(--green);
+    background: rgba(0,255,136,0.05);
+  }
+
+  .relation-card .emoji { font-size: 22px; display: block; margin-bottom: 6px; }
+  .relation-card .label { font-size: 12px; color: var(--text); }
+  .relation-card .desc { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .input-field {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-field:focus { border-color: var(--green); }
+  .input-field::placeholder { color: var(--muted); }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--green);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 14px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    margin-top: auto;
+  }
+
+  .btn-primary:hover { background: #00cc70; transform: translateY(-1px); }
+
+  .disclaimer {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    padding: 8px 0;
+  }
+
+  /* ===== PAGE 3: CONNECT ===== */
+  #page-connect .connect-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    gap: 0;
+  }
+
+  .connect-icon { font-size: 48px; margin-bottom: 24px; }
+
+  .connect-title {
+    font-size: 16px;
+    color: var(--green);
+    letter-spacing: 2px;
+    margin-bottom: 32px;
+  }
+
+  .connect-log {
+    width: 100%;
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 12px;
+    line-height: 2;
+    color: var(--green);
+  }
+
+  .log-line { display: flex; align-items: center; gap: 8px; }
+  .log-check { color: var(--green); }
+  .log-pending { color: var(--yellow); animation: blink 1s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .connect-name {
+    margin-top: 24px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .connect-name span { color: var(--blue); }
+
+  /* ===== PAGE 4: QUIZ ===== */
+  #page-quiz .quiz-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Heart Rate Monitor */
+  .heart-monitor {
+    background: #000;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    position: relative;
+    height: 100px;
+  }
+
+  .monitor-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .monitor-label {
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 1px;
+  }
+
+  .bpm-display {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--green);
+    text-shadow: 0 0 10px var(--green);
+  }
+
+  .heart-wave {
+    width: 100%;
+    height: 60px;
+  }
+
+  .monitor-status {
+    font-size: 10px;
+    color: var(--green);
+    opacity: 0.6;
+  }
+
+  /* Progress */
+  .quiz-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .progress-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  .progress-text {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* Gauge */
+  .quiz-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px 12px;
+    gap: 12px;
+  }
+
+  .gauge-mini {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+
+  .gauge-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.5s infinite;
+  }
+
+  .gauge-val {
+    font-size: 12px;
+    color: var(--green);
+    font-weight: bold;
+  }
+
+  .timer-display {
+    font-size: 13px;
+    color: var(--yellow);
+    letter-spacing: 1px;
+  }
+
+  /* Question */
+  .question-area {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+
+  .question-num {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+
+  .question-text {
+    font-size: 16px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .options-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .option-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+    font-size: 13px;
+  }
+
+  .option-item:hover {
+    border-color: var(--blue);
+    background: rgba(68,136,255,0.05);
+  }
+
+  .option-item.selected {
+    border-color: var(--green);
+    background: rgba(0,255,136,0.08);
+  }
+
+  .option-item.suspect {
+    border-color: var(--red);
+    background: rgba(255,68,102,0.08);
+  }
+
+  .option-key {
+    width: 22px; height: 22px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .option-item.selected .option-key {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(0,255,136,0.1);
+  }
+
+  /* Feedback Overlay */
+  .feedback-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 50;
+    padding: 24px;
+    display: none;
+  }
+
+  .feedback-overlay.show { display: flex; }
+
+  .feedback-icon { font-size: 40px; }
+
+  .feedback-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--yellow);
+    text-align: center;
+  }
+
+  .feedback-text {
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .feedback-badge {
+    background: rgba(255,204,0,0.1);
+    border: 1px solid var(--yellow);
+    color: var(--yellow);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  /* ===== PAGE 5: RESULT ===== */
+  #page-result .result-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 16px;
+    overflow-y: auto;
+  }
+
+  .report-header {
+    background: #000;
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 11px;
+    color: var(--green);
+    line-height: 1.8;
+    font-family: 'Courier New', monospace;
+  }
+
+  .report-divider {
+    color: var(--green);
+    opacity: 0.5;
+  }
+
+  .diagnosis-card {
+    background: var(--card);
+    border: 2px solid var(--green);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0,255,136,0.1);
+  }
+
+  .diagnosis-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .diagnosis-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--green);
+    text-shadow: 0 0 15px rgba(0,255,136,0.5);
+    margin-bottom: 8px;
+  }
+
+  .credibility {
+    font-size: 36px;
+    font-weight: bold;
+    color: var(--yellow);
+    text-shadow: 0 0 20px rgba(255,204,0,0.5);
+  }
+
+  .credibility-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Dimension bars */
+  .dimensions-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .dim-title {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+
+  .dim-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .dim-name {
+    font-size: 12px;
+    color: var(--text);
+    width: 56px;
+    flex-shrink: 0;
+  }
+
+  .dim-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .dim-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--green);
+  }
+
+  .dim-val {
+    font-size: 11px;
+    color: var(--green);
+    width: 30px;
+    text-align: right;
+  }
+
+  /* Analysis */
+  .analysis-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .analysis-card .highlight { color: var(--text); }
+
+  /* Action buttons */
+  .result-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-secondary {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+
+  .btn-accent {
+    width: 100%;
+    background: rgba(124,58,237,0.15);
+    border: 1px solid var(--accent);
+    color: #a78bfa;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .btn-accent:hover {
+    background: rgba(124,58,237,0.25);
+  }
+
+  /* ===== PAGE 6: SHARE ===== */
+  #page-share .share-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .share-card {
+    width: 100%;
+    max-width: 340px;
+    background: linear-gradient(135deg, #0a1628, #0f2040);
+    border: 1px solid var(--green);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .share-card::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at center, rgba(0,255,136,0.03) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .share-brand {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+  }
+
+  .share-name {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .share-name span { color: var(--blue); }
+
+  .share-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--green);
+    text-shadow: 0 0 15px rgba(0,255,136,0.4);
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+
+  /* Mini radar */
+  .mini-radar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .radar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .radar-label { font-size: 10px; color: var(--muted); }
+
+  .radar-ring {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--green);
+    position: relative;
+  }
+
+  .share-cred {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--yellow);
+    margin-bottom: 4px;
+  }
+
+  .share-cred-label { font-size: 10px; color: var(--muted); }
+
+  .share-qr {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .qr-placeholder {
+    width: 60px; height: 60px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin: 8px auto;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+    padding: 4px;
+  }
+
+  .qr-cell {
+    border-radius: 1px;
+    background: var(--text);
+  }
+
+  .share-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 340px;
+  }
+
+  /* ===== PAGE 7: INVITE ===== */
+  #page-invite .invite-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 20px;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .invite-icon { font-size: 52px; text-align: center; }
+
+  .invite-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .invite-sub {
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.7;
+  }
+
+  .invite-link-box {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .invite-link-text {
+    flex: 1;
+    font-size: 11px;
+    color: var(--blue);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .copy-btn {
+    background: rgba(68,136,255,0.1);
+    border: 1px solid var(--blue);
+    color: var(--blue);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover { background: rgba(68,136,255,0.2); }
+
+  .invite-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    width: 100%;
+  }
+
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--yellow);
+    animation: pulse 1.5s infinite;
+  }
+
+  .status-text { font-size: 13px; color: var(--muted); }
+  .status-text span { color: var(--yellow); }
+
+  /* ===== ANNOTATION OVERLAY ===== */
+  .annotation {
+    position: relative;
+  }
+
+  .ann-tag {
+    position: absolute;
+    background: rgba(255,204,0,0.9);
+    color: #000;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: bold;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .ann-tag::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 3px solid transparent;
+    border-right-color: rgba(255,204,0,0.9);
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 500px) {
+    .nav { padding: 10px 12px; }
+    .nav-btn { padding: 5px 10px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scanlines"></div>
+
+<!-- Navigation -->
+<nav class="nav">
+  <span class="nav-title">❤ PROTOTYPE</span>
+  <button class="nav-btn active" onclick="showPage('splash')">启动页</button>
+  <button class="nav-btn" onclick="showPage('welcome')">引导页</button>
+  <button class="nav-btn" onclick="showPage('connect')">连接页</button>
+  <button class="nav-btn" onclick="showPage('quiz')">答题页</button>
+  <button class="nav-btn" onclick="showPage('result')">结果页</button>
+  <button class="nav-btn" onclick="showPage('share')">分享页</button>
+  <button class="nav-btn" onclick="showPage('invite')">邀请页</button>
+</nav>
+
+<!-- ============================================================ -->
+<!-- PAGE 1: SPLASH -->
+<!-- ============================================================ -->
+<div id="page-splash" class="screen-wrapper active">
+  <div class="screen-label">SCREEN 01 · 启动页 / Splash Screen</div>
+  <div class="splash-screen">
+    <div class="splash-logo">🔍</div>
+    <div class="splash-title">恋爱测谎仪</div>
+    <div class="splash-subtitle">LOVE DETECTOR v2.0</div>
+    <div class="splash-bar">
+      <div class="splash-bar-fill"></div>
+    </div>
+    <div class="splash-status">INITIALIZING SYSTEM...</div>
+
+    <!-- Annotations -->
+    <div style="position:absolute; top: 120px; right: 20px; pointer-events:none;">
+      <div class="ann-tag" style="left:0;">深色背景 + 扫描线</div>
+    </div>
+    <div style="position:absolute; bottom: 100px; left: 20px; pointer-events:none;">
+      <div class="ann-tag" style="left:0;">自动跳转 2s</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 2: WELCOME -->
+<!-- ============================================================ -->
+<div id="page-welcome" class="screen-wrapper">
+  <div class="screen-label">SCREEN 02 · 欢迎/引导页 / Welcome Page</div>
+  <div class="welcome-screen">
+
+    <div class="page-header">
+      <div class="page-header-icon">🔬</div>
+      <div>
+        <div class="page-header-title">开始检测</div>
+        <div class="page-header-sub">请先配置检测参数</div>
+      </div>
+    </div>
+
+    <!-- Relation Type -->
+    <div>
+      <div class="form-label">⚙ 选择关系类型</div>
+      <div class="relation-grid">
+        <div class="relation-card selected" onclick="selectCard(this)">
+          <span class="emoji">💌</span>
+          <div class="label">暗恋中</div>
+          <div class="desc">还没在一起</div>
+        </div>
+        <div class="relation-card" onclick="selectCard(this)">
+          <span class="emoji">🔥</span>
+          <div class="label">热恋期</div>
+          <div class="desc">在一起不到1年</div>
+        </div>
+        <div class="relation-card" onclick="selectCard(this)">
+          <span class="emoji">💑</span>
+          <div class="label">老夫老妻</div>
+          <div class="desc">在一起超过1年</div>
+        </div>
+        <div class="relation-card" onclick="selectCard(this)">
+          <span class="emoji">👀</span>
+          <div class="label">单身观光</div>
+          <div class="desc">好奇来看看</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Name Input -->
+    <div>
+      <div class="form-label">✏ TA 的名字（选填）</div>
+      <input class="input-field" type="text" placeholder="输入TA的名字或外号" maxlength="10">
+    </div>
+
+    <div class="disclaimer">* 本产品所有结果均为娱乐性质，不代表真实心理评测结论</div>
+
+    <button class="btn-primary" onclick="showPage('connect')">▶  开 始 检 测</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 3: CONNECT -->
+<!-- ============================================================ -->
+<div id="page-connect" class="screen-wrapper">
+  <div class="screen-label">SCREEN 03 · 设备连接页 / Connect Page</div>
+  <div class="connect-screen">
+    <div class="connect-icon">📡</div>
+    <div class="connect-title">正在连接测谎仪...</div>
+
+    <div class="connect-log">
+      <div class="log-line">
+        <span class="log-check">✓</span>
+        <span>正在初始化情感分析模块</span>
+      </div>
+      <div class="log-line">
+        <span class="log-check">✓</span>
+        <span>正在加载恋爱数据库</span>
+      </div>
+      <div class="log-line">
+        <span class="log-check">✓</span>
+        <span>正在连接心率传感器</span>
+      </div>
+      <div class="log-line">
+        <span class="log-pending">▶</span>
+        <span>正在识别受测者：<span style="color:#4488ff">小明</span></span>
+      </div>
+    </div>
+
+    <div class="connect-name">受测者：<span>小明</span> | 关系类型：<span>暗恋中</span></div>
+
+    <button class="btn-primary" style="margin-top: 32px; max-width: 280px;" onclick="showPage('quiz')">连接成功 → 进入检测</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 4: QUIZ -->
+<!-- ============================================================ -->
+<div id="page-quiz" class="screen-wrapper">
+  <div class="screen-label">SCREEN 04 · 答题主页 / Quiz Page [核心]</div>
+  <div class="quiz-screen" style="position: relative;">
+
+    <!-- Heart Rate Monitor -->
+    <div class="heart-monitor">
+      <div class="monitor-labels">
+        <span class="monitor-label">◉ 心率监测 LIVE</span>
+        <span class="bpm-display" id="bpmDisplay">78 BPM</span>
+      </div>
+      <svg class="heart-wave" id="heartWave" viewBox="0 0 400 60" preserveAspectRatio="none">
+        <polyline id="waveLine"
+          points="0,30 20,30 30,30 40,10 50,50 60,30 80,30 100,30 120,30 130,10 140,50 150,30 170,30 200,30 220,30 230,10 240,50 250,30 270,30 290,30 310,30 320,10 330,50 340,30 360,30 390,30 400,30"
+          fill="none" stroke="#00ff88" stroke-width="1.5"/>
+      </svg>
+      <div class="monitor-status">── SCANNING ──</div>
+    </div>
+
+    <!-- Progress -->
+    <div class="quiz-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 40%"></div>
+      </div>
+      <div class="progress-text">4 / 10</div>
+    </div>
+
+    <!-- Top bar: Gauge + Timer -->
+    <div class="quiz-top-bar">
+      <div class="gauge-mini">
+        <div class="gauge-dot"></div>
+        <span class="gauge-val">可信度 72%</span>
+      </div>
+      <div class="timer-display">⏱ 11s</div>
+    </div>
+
+    <!-- Question -->
+    <div class="question-area">
+      <div class="question-card">
+        <div class="question-num">QUESTION 04 / 10</div>
+        <div class="question-text">如果我们同时失业了，你会怎么办？</div>
+      </div>
+
+      <div class="options-list">
+        <div class="option-item selected" onclick="selectOption(this)">
+          <div class="option-key">A</div>
+          <span>一起努力找工作，我陪着你</span>
+        </div>
+        <div class="option-item" onclick="selectOption(this)">
+          <div class="option-key">B</div>
+          <span>先冷静一周，分开想想</span>
+        </div>
+        <div class="option-item" onclick="selectOption(this)">
+          <div class="option-key">C</div>
+          <span>趁机去旅行，别浪费危机</span>
+        </div>
+        <div class="option-item suspect" onclick="selectOption(this)">
+          <div class="option-key">D</div>
+          <span>先瞒着家里，悄悄解决</span>
+          <span style="margin-left:auto; font-size:10px; color:var(--red);">⚠ 可疑</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback Overlay (shown on answer) -->
+    <div class="feedback-overlay" id="feedbackOverlay">
+      <div class="feedback-icon">📊</div>
+      <div class="feedback-badge">系统分析中</div>
+      <div class="feedback-title">检测到多巴胺异常升高……</div>
+      <div class="feedback-text">恋爱脑特征明显，情感依赖指数超过阈值。<br>继续检测以获取更多数据。</div>
+      <button class="btn-primary" style="max-width:200px; margin-top:8px;" onclick="hideFeedback()">下一题 →</button>
+    </div>
+
+    <div style="padding: 0 16px 16px;">
+      <button class="btn-primary" onclick="showFeedback()">确认答案 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 5: RESULT -->
+<!-- ============================================================ -->
+<div id="page-result" class="screen-wrapper">
+  <div class="screen-label">SCREEN 05 · 结果报告页 / Result Page [核心]</div>
+  <div class="result-screen">
+
+    <!-- Report Header -->
+    <div class="report-header">
+      <div class="report-divider">══════════════════════════</div>
+      <div>恋爱测谎仪 | 官方诊断报告</div>
+      <div class="report-divider">══════════════════════════</div>
+      <div>受测者：<span style="color:#4488ff">小明</span></div>
+      <div>检测时间：2026-03-14 22:30</div>
+      <div>报告编号：LD-<span style="color:#ffcc00">847293</span></div>
+      <div class="report-divider">──────────────────────────</div>
+    </div>
+
+    <!-- Diagnosis -->
+    <div class="diagnosis-card">
+      <div class="diagnosis-label">综合诊断结果</div>
+      <div class="diagnosis-title">高度可疑的甜蜜骗子</div>
+      <div class="credibility">87.3%</div>
+      <div class="credibility-label">本次检测可信度</div>
+    </div>
+
+    <!-- Dimensions -->
+    <div class="dimensions-card">
+      <div class="dim-title">▸ 四维度分析</div>
+      <div class="dim-item">
+        <span class="dim-name">忠诚度</span>
+        <div class="dim-bar"><div class="dim-fill" style="width:82%; background: var(--green);"></div></div>
+        <span class="dim-val">82</span>
+      </div>
+      <div class="dim-item">
+        <span class="dim-name">甜蜜值</span>
+        <div class="dim-bar"><div class="dim-fill" style="width:91%; background: var(--blue);"></div></div>
+        <span class="dim-val">91</span>
+      </div>
+      <div class="dim-item">
+        <span class="dim-name">依赖感</span>
+        <div class="dim-bar"><div class="dim-fill" style="width:67%; background: var(--yellow);"></div></div>
+        <span class="dim-val">67</span>
+      </div>
+      <div class="dim-item">
+        <span class="dim-name">神秘度</span>
+        <div class="dim-bar"><div class="dim-fill" style="width:45%; background: var(--accent);"></div></div>
+        <span class="dim-val">45</span>
+      </div>
+    </div>
+
+    <!-- Analysis Text -->
+    <div class="analysis-card">
+      <span class="highlight">小明</span>的情感数据显示，其内心对感情的<span class="highlight">投入度极高</span>，但存在一定的信息过滤倾向——也就是说，TA会选择性地表达自己的真实感受。<br><br>
+      检测发现其<span class="highlight">甜蜜值爆表</span>，这通常意味着该受测者已进入高度恋爱状态。神秘度偏低则表明TA对你的警惕心正在下降。<br><br>
+      <span style="color: var(--yellow);">建议：趁热打铁，时机已到。</span>
+    </div>
+
+    <div style="font-size:10px; color:var(--muted); text-align:center; padding: 4px 0;">
+      * 本结果由AI情感算法生成，仅供娱乐（或者……就当真吧）
+    </div>
+
+    <!-- Actions -->
+    <div class="result-actions">
+      <button class="btn-primary" onclick="showPage('share')">📤 分享这份报告</button>
+      <button class="btn-accent" onclick="showPage('invite')">💌 邀请TA来测我</button>
+      <button class="btn-secondary" onclick="showPage('welcome')">↺ 重新检测</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 6: SHARE -->
+<!-- ============================================================ -->
+<div id="page-share" class="screen-wrapper">
+  <div class="screen-label">SCREEN 06 · 分享页 / Share Page</div>
+  <div class="share-screen">
+
+    <div style="font-size: 13px; color: var(--muted); text-align:center; padding-top: 8px;">
+      长按图片保存 / 转发给TA
+    </div>
+
+    <!-- Share Card Preview -->
+    <div class="share-card">
+      <div class="share-brand">❤ 恋爱测谎仪 LOVE DETECTOR</div>
+      <div class="share-name">受测者：<span>小明</span></div>
+      <div class="share-title">高度可疑的<br>甜蜜骗子</div>
+
+      <!-- Mini dimensions -->
+      <div class="mini-radar">
+        <div class="radar-item">
+          <div class="radar-ring">82</div>
+          <div class="radar-label">忠诚度</div>
+        </div>
+        <div class="radar-item">
+          <div class="radar-ring" style="color:var(--blue); border-color:var(--blue);">91</div>
+          <div class="radar-label">甜蜜值</div>
+        </div>
+        <div class="radar-item">
+          <div class="radar-ring" style="color:var(--yellow); border-color:var(--yellow);">67</div>
+          <div class="radar-label">依赖感</div>
+        </div>
+        <div class="radar-item">
+          <div class="radar-ring" style="color:#a78bfa; border-color:#7c3aed;">45</div>
+          <div class="radar-label">神秘度</div>
+        </div>
+      </div>
+
+      <div class="share-cred">87.3%</div>
+      <div class="share-cred-label">综合可信度</div>
+
+      <div class="share-qr">
+        <div>测测你的TA →</div>
+        <div class="qr-placeholder" id="qrPlaceholder"></div>
+        <div style="font-size:9px; opacity:0.5;">lovedetector.app</div>
+      </div>
+    </div>
+
+    <!-- Share Actions -->
+    <div class="share-actions">
+      <button class="btn-primary">💾 保存图片到相册</button>
+      <button class="btn-secondary">🔗 复制链接</button>
+      <button class="btn-secondary" onclick="showPage('result')">← 返回报告</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 7: INVITE -->
+<!-- ============================================================ -->
+<div id="page-invite" class="screen-wrapper">
+  <div class="screen-label">SCREEN 07 · 邀请等待页 / Invite Page</div>
+  <div class="invite-screen">
+
+    <div class="invite-icon">💌</div>
+    <div class="invite-title">已向 TA 发出检测邀请</div>
+    <div class="invite-sub">
+      将下方链接发给 <span style="color: var(--blue);">小明</span>，<br>
+      让TA来测测你的心意吧
+    </div>
+
+    <div class="invite-link-box">
+      <span class="invite-link-text">lovedetector.app/i/XK72P9</span>
+      <button class="copy-btn">复制链接</button>
+    </div>
+
+    <div class="invite-status">
+      <div class="status-dot"></div>
+      <div class="status-text">等待 <span>小明</span> 接受邀请中…</div>
+    </div>
+
+    <div style="font-size: 12px; color: var(--muted); text-align: center; line-height: 1.8; margin-top: 8px;">
+      链接有效期 <span style="color: var(--yellow);">7天</span><br>
+      对方完成后，你将看到 TA 的检测报告
+    </div>
+
+    <button class="btn-secondary" style="margin-top: 16px;" onclick="showPage('result')">← 返回我的报告</button>
+
+  </div>
+</div>
+
+<script>
+  // Page navigation
+  function showPage(name) {
+    document.querySelectorAll('.screen-wrapper').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+    const page = document.getElementById('page-' + name);
+    if (page) page.classList.add('active');
+
+    const pageMap = {
+      splash: 0, welcome: 1, connect: 2, quiz: 3, result: 4, share: 5, invite: 6
+    };
+    const btns = document.querySelectorAll('.nav-btn');
+    if (btns[pageMap[name]]) btns[pageMap[name]].classList.add('active');
+
+    // Stop feedback overlay when leaving quiz
+    if (name !== 'quiz') hideFeedback();
+  }
+
+  // Relation card selection
+  function selectCard(el) {
+    el.closest('.relation-grid').querySelectorAll('.relation-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  // Option selection
+  function selectOption(el) {
+    el.closest('.options-list').querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  // Feedback overlay
+  function showFeedback() {
+    document.getElementById('feedbackOverlay').classList.add('show');
+  }
+
+  function hideFeedback() {
+    const overlay = document.getElementById('feedbackOverlay');
+    if (overlay) overlay.classList.remove('show');
+  }
+
+  // Heart rate animation
+  const waveLine = document.getElementById('waveLine');
+  let phase = 0;
+
+  function animateHeartWave() {
+    phase += 0.08;
+    const bpm = Math.round(75 + Math.sin(phase * 0.5) * 8);
+    const bpmEl = document.getElementById('bpmDisplay');
+    if (bpmEl) bpmEl.textContent = bpm + ' BPM';
+
+    if (waveLine) {
+      const points = [];
+      for (let x = 0; x <= 400; x += 8) {
+        const t = (x / 400) * Math.PI * 6 + phase;
+        // Simulate ECG-like wave
+        let y = 30;
+        const mod = ((x + phase * 30) % 80);
+        if (mod > 30 && mod < 35) y = 8;
+        else if (mod > 35 && mod < 45) y = 52;
+        else if (mod > 45 && mod < 50) y = 20;
+        else y = 30 + Math.sin(t) * 3;
+        points.push(x + ',' + Math.max(2, Math.min(58, y)));
+      }
+      waveLine.setAttribute('points', points.join(' '));
+    }
+    requestAnimationFrame(animateHeartWave);
+  }
+
+  animateHeartWave();
+
+  // Generate QR placeholder pattern
+  const qr = document.getElementById('qrPlaceholder');
+  if (qr) {
+    for (let i = 0; i < 25; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'qr-cell';
+      cell.style.background = Math.random() > 0.45 ? 'var(--text)' : 'transparent';
+      qr.appendChild(cell);
+    }
+  }
+</script>
+</body>
+</html>

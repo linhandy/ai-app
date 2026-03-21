@@ -1,5 +1,3 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  basePath: '/love-detector',
-}
+const nextConfig = {}
 export default nextConfig

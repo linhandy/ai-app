@@ -2,10 +2,10 @@
 import Link from 'next/link'
 
 const tabs = [
-  { id: 'home', label: '首页', emoji: '⌂', href: '/home' },
-  { id: 'test', label: '测谎', emoji: '⚡', href: '/setup' },
-  { id: 'history', label: '历史', emoji: '🕐', href: '/result' },
-  { id: 'profile', label: '我的', href: '/home', emoji: '👤' },
+  { id: 'home', label: '首页', emoji: '⌂', href: '/love-detector' },
+  { id: 'test', label: '测谎', emoji: '⚡', href: '/love-detector/setup' },
+  { id: 'history', label: '历史', emoji: '🕐', href: '/love-detector/history' },
+  { id: 'profile', label: '我的', href: '/love-detector', emoji: '👤' },
 ]
 
 export default function TabBar({ activeTab }: { activeTab: string }) {

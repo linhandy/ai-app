@@ -81,7 +81,7 @@ function SetupContent() {
 
   function handleStart() {
     localStorage.setItem('ld_setup', JSON.stringify(config))
-    router.push('/test')
+    router.push('/love-detector/test')
   }
 
   return (
@@ -91,7 +91,7 @@ function SetupContent() {
         <div className="bg-[#2D0A6E]">
           <StatusBar dark />
           <div className="flex items-center px-5 pb-4 gap-3">
-            <Link href="/home" className="text-white/80 text-2xl leading-none">‹</Link>
+            <Link href="/love-detector" className="text-white/80 text-2xl leading-none">‹</Link>
             <h1 className="text-white font-bold text-lg flex-1 text-center pr-7">测谎设置</h1>
           </div>
         </div>

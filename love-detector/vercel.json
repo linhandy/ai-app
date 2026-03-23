@@ -5,8 +5,12 @@
   "framework": "nextjs",
   "rewrites": [
     {
+      "source": "/get-reelestate",
+      "destination": "https://ai-app-mauve-six.vercel.app/"
+    },
+    {
       "source": "/get-reelestate/:path*",
-      "destination": "https://ai-app-mauve-six.vercel.app/get-reelestate/:path*"
+      "destination": "https://ai-app-mauve-six.vercel.app/:path*"
     }
   ]
 }

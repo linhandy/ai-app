@@ -29,6 +29,8 @@ const CATEGORY_COLORS: Record<Category, string> = {
   '感情深度': 'bg-white text-gray-400 border-gray-200',
   '小谎言': 'bg-white text-gray-400 border-gray-200',
   '财务诚实': 'bg-white text-gray-400 border-gray-200',
+  '社交边界': 'bg-white text-gray-400 border-gray-200',
+  '未来规划': 'bg-white text-gray-400 border-gray-200',
 }
 
 const CATEGORY_COLORS_ACTIVE: Record<Category, string> = {
@@ -37,6 +39,8 @@ const CATEGORY_COLORS_ACTIVE: Record<Category, string> = {
   '感情深度': 'bg-pink-600 text-white border-pink-600 shadow-sm shadow-pink-300',
   '小谎言': 'bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-300',
   '财务诚实': 'bg-green-600 text-white border-green-600 shadow-sm shadow-green-300',
+  '社交边界': 'bg-cyan-600 text-white border-cyan-600 shadow-sm shadow-cyan-300',
+  '未来规划': 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-300',
 }
 
 const CATEGORY_DOTS: Record<Category, string> = {
@@ -45,6 +49,8 @@ const CATEGORY_DOTS: Record<Category, string> = {
   '感情深度': '💕',
   '小谎言': '🤥',
   '财务诚实': '💰',
+  '社交边界': '🤝',
+  '未来规划': '🔮',
 }
 
 function SetupContent() {

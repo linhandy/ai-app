@@ -1,0 +1,19 @@
+{
+  "functions": {
+    "app/api/generate/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/create-task/route.ts": {
+      "maxDuration": 10
+    },
+    "app/api/create-checkout-session/route.ts": {
+      "maxDuration": 10
+    },
+    "app/api/webhook/route.ts": {
+      "maxDuration": 10
+    },
+    "app/api/scrape/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}

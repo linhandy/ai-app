@@ -123,6 +123,8 @@ export default function TestPage() {
     '感情深度': 'bg-pink-100 text-pink-700',
     '小谎言': 'bg-amber-100 text-amber-700',
     '财务诚实': 'bg-green-100 text-green-700',
+    '社交边界': 'bg-cyan-100 text-cyan-700',
+    '未来规划': 'bg-indigo-100 text-indigo-700',
   }
 
   return (

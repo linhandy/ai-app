@@ -30,7 +30,7 @@ export default function HomePage() {
             <div className="flex gap-3 mt-4">
               {[
                 { value: '98%', label: '准确率' },
-                { value: '20题', label: '题库量' },
+                { value: '50题', label: '题库量' },
                 { value: '3分钟', label: '出结果' },
               ].map(stat => (
                 <div key={stat.label} className="flex-1 bg-white/15 rounded-xl py-2 flex flex-col items-center">
@@ -75,19 +75,6 @@ export default function HomePage() {
               </div>
             </Link>
 
-            {/* 微信测谎 */}
-            <Link href="/love-detector/wechat">
-              <div className="bg-[#ECFDF5] rounded-2xl p-4 flex items-center gap-4 active:opacity-80 transition-opacity border border-green-100">
-                <div className="w-12 h-12 rounded-2xl bg-green-600 flex items-center justify-center text-2xl shrink-0">
-                  💬
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-gray-900 font-bold text-sm">微信测谎</h3>
-                  <p className="text-gray-500 text-xs mt-0.5">粘贴记录/上传语音</p>
-                </div>
-                <span className="text-green-400 text-lg">›</span>
-              </div>
-            </Link>
           </div>
 
           {/* CTA button */}

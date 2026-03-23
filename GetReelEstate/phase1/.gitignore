@@ -1,0 +1,7 @@
+node_modules/
+output/
+.env
+test-images/*.jpg
+test-images/*.jpeg
+test-images/*.png
+test-images/*.webp

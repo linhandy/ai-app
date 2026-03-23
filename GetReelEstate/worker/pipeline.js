@@ -215,7 +215,7 @@ PlayResY: ${videoHeight}
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Italic, Underline, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Line,Arial,${fontSize},&H00FFFFFF,&H00000000,&HB0000000,-1,0,0,3,0,0,2,30,30,${marginV},1
+Style: Line,Liberation Sans,${fontSize},&H00FFFFFF,&H00000000,&HB0000000,-1,0,0,3,0,0,2,30,30,${marginV},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -299,7 +299,10 @@ async function renderVideo({ images, audioPath, words, audioDuration, outputPath
     const assEscaped = absAssPath
       .replace(/\\/g, '/')              // Windows backslashes → forward slashes
       .replace(/([:\\])/g, '\\$1');     // escape : and \ for FFmpeg filter string
-    const subtitlesFilter = `[vconcat]subtitles='${assEscaped}'[vout]`;
+    // On Linux, point libass at system fonts so it can render without Arial
+    const fontsDir = process.platform === 'win32' ? null : '/usr/share/fonts';
+    const fontsOpt = fontsDir ? `:fontsdir=${fontsDir}` : '';
+    const subtitlesFilter = `[vconcat]subtitles='${assEscaped}'${fontsOpt}[vout]`;
 
     const complexFilter = scaleFilters + xfadeChain + ';' + subtitlesFilter;
 

@@ -258,6 +258,7 @@ async function renderVideo({ images, audioPath, words, audioDuration, outputPath
       : `zoom='max(zoom-${Math.abs(zoomStep).toFixed(6)},${zoomEnd})'`;
     return (
       `[${i}:v]` +
+      `format=yuv420p,` +
       `scale=${videoWidth * 2}:${videoHeight * 2}:force_original_aspect_ratio=increase,` +
       `crop=${videoWidth * 2}:${videoHeight * 2},` +
       `scale=${videoWidth}:${videoHeight},` +

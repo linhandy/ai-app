@@ -27,8 +27,8 @@ const APPS = [
     meta: '60秒出片 · 免费',
     gradient: 'from-amber-500 to-orange-500',
     shadow: 'shadow-amber-500/30',
-    href: process.env.NEXT_PUBLIC_GETREELESTATE_URL || 'https://getreelestate.vercel.app',
-    external: true,
+    href: '/get-reelestate',
+    external: false,
   },
 ]
 

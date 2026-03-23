@@ -2,5 +2,11 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/get-reelestate/:path*",
+      "destination": "https://GETREELESTATE_VERCEL_URL/get-reelestate/:path*"
+    }
+  ]
 }

@@ -263,6 +263,7 @@ async function renderVideo({ images, audioPath, words, audioDuration, outputPath
       `scale=${videoWidth}:${videoHeight},` +
       `zoompan=${zoomExpr}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':` +
       `d=${frames}:s=${videoWidth}x${videoHeight}:fps=${fps},` +
+      `fps=${fps},` +
       `setpts=PTS-STARTPTS[v${i}]`
     );
   }).join(';');

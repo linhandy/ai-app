@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/get-reelestate/:path*",
-      "destination": "https://GETREELESTATE_VERCEL_URL/get-reelestate/:path*"
+      "destination": "https://ai-app-mauve-six.vercel.app/get-reelestate/:path*"
     }
   ]
 }

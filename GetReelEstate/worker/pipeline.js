@@ -239,111 +239,97 @@ async function renderVideo({ images, audioPath, words, audioDuration, outputPath
   const numImages = images.length;
   const totalDuration = audioDuration || numImages * secondsPerImage;
   const durationPerImage = totalDuration / numImages;
+  const fadeDur = 0.5;
+  const effectiveDur = durationPerImage - fadeDur;
 
-  return new Promise((resolve, reject) => {
+  // Write ASS subtitle file
+  const assPath = path.join(path.dirname(outputPath), 'captions.ass');
+  mkdirSync(path.dirname(assPath), { recursive: true });
+  writeAssSubtitles(words, assPath, videoWidth, videoHeight);
+
+  // Build scale + zoompan filters for each image
+  const scaleFilters = images.map((_, i) => {
+    const frames = Math.floor(durationPerImage * fps);
+    const zoomStart = i % 2 === 0 ? 1.0 : 1.3;
+    const zoomEnd   = i % 2 === 0 ? 1.3 : 1.0;
+    const zoomStep  = (zoomEnd - zoomStart) / frames;
+    const zoomExpr  = zoomStep > 0
+      ? `zoom='min(zoom+${zoomStep.toFixed(6)},${zoomEnd})'`
+      : `zoom='max(zoom-${Math.abs(zoomStep).toFixed(6)},${zoomEnd})'`;
+    return (
+      `[${i}:v]` +
+      `scale=${videoWidth * 2}:${videoHeight * 2}:force_original_aspect_ratio=increase,` +
+      `crop=${videoWidth * 2}:${videoHeight * 2},` +
+      `scale=${videoWidth}:${videoHeight},` +
+      `zoompan=${zoomExpr}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':` +
+      `d=${frames}:s=${videoWidth}x${videoHeight}:fps=${fps},` +
+      `setpts=PTS-STARTPTS[v${i}]`
+    );
+  }).join(';');
+
+  // Build xfade chain
+  let xfadeChain = '';
+  let prevLabel = 'v0';
+  for (let i = 1; i < numImages; i++) {
+    const offset = (effectiveDur * i).toFixed(3);
+    const outLabel = i === numImages - 1 ? 'vconcat' : `xf${i}`;
+    xfadeChain += `;[${prevLabel}][v${i}]xfade=transition=fade:duration=${fadeDur}:offset=${offset}[${outLabel}]`;
+    prevLabel = outLabel;
+  }
+  if (numImages === 1) xfadeChain = ';[v0]copy[vconcat]';
+
+  // Build subtitle filter string (escaped for FFmpeg filter syntax)
+  const absAssPath = path.resolve(assPath);
+  const assEscaped = absAssPath.replace(/\\/g, '/').replace(/([:\\])/g, '\\$1');
+  const subtitlesFilter = `[vconcat]subtitles='${assEscaped}'[vout]`;
+  const noSubtitlesFilter = `[vconcat]copy[vout]`;
+
+  const outputOptions = [
+    '-map [vout]',
+    `-map ${numImages}:a`,
+    `-t ${totalDuration}`,
+    '-c:v libx264',
+    '-preset fast',
+    '-crf 22',
+    '-c:a aac',
+    '-b:a 192k',
+    '-pix_fmt yuv420p',
+    '-movflags +faststart',
+    `-r ${fps}`,
+  ];
+
+  // Helper: build and run a fresh ffmpeg command with the given filter string
+  const run = (tailFilter) => new Promise((resolve, reject) => {
     const cmd = ffmpeg();
-
-    // Add each image as an input with duration
     images.forEach((imgPath) => {
-      cmd.input(imgPath).inputOptions([
-        '-loop 1',
-        `-t ${durationPerImage}`,
-        '-framerate 30',
-      ]);
+      cmd.input(imgPath).inputOptions(['-loop 1', `-t ${durationPerImage}`, '-framerate 30']);
     });
-
-    // Add audio
     cmd.input(audioPath);
-
-    // Write ASS subtitle file for word-by-word captions (works without fontconfig)
-    const assPath = path.join(path.dirname(outputPath), 'captions.ass');
-    mkdirSync(path.dirname(assPath), { recursive: true });
-    writeAssSubtitles(words, assPath, videoWidth, videoHeight);
-
-    // Build filter: scale each image → Ken Burns zoompan → concat → subtitles
-    const fadeDur = 0.5; // crossfade duration between images
-    const effectiveDur = durationPerImage - fadeDur;
-
-    const scaleFilters = images.map((_, i) => {
-      const frames = Math.floor(durationPerImage * fps);
-      const zoomStart = i % 2 === 0 ? 1.0 : 1.3;
-      const zoomEnd   = i % 2 === 0 ? 1.3 : 1.0;
-      const zoomStep  = (zoomEnd - zoomStart) / frames;
-      const zoomExpr  = zoomStep > 0
-        ? `zoom='min(zoom+${zoomStep.toFixed(6)},${zoomEnd})'`
-        : `zoom='max(zoom-${Math.abs(zoomStep).toFixed(6)},${zoomEnd})'`;
-      return (
-        `[${i}:v]` +
-        `scale=${videoWidth * 2}:${videoHeight * 2}:force_original_aspect_ratio=increase,` +
-        `crop=${videoWidth * 2}:${videoHeight * 2},` +
-        `scale=${videoWidth}:${videoHeight},` +
-        `zoompan=${zoomExpr}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':` +
-        `d=${frames}:s=${videoWidth}x${videoHeight}:fps=${fps},` +
-        `setpts=PTS-STARTPTS[v${i}]`
-      );
-    }).join(';');
-
-    // Chain xfade transitions
-    let xfadeChain = '';
-    let prevLabel = 'v0';
-    for (let i = 1; i < numImages; i++) {
-      const offset = (effectiveDur * i).toFixed(3);
-      const outLabel = i === numImages - 1 ? 'vconcat' : `xf${i}`;
-      xfadeChain += `;[${prevLabel}][v${i}]xfade=transition=fade:duration=${fadeDur}:offset=${offset}[${outLabel}]`;
-      prevLabel = outLabel;
-    }
-    if (numImages === 1) xfadeChain = ';[v0]copy[vconcat]';
-
-    // ASS subtitles filter — escape path for FFmpeg filter syntax on all platforms
-    const absAssPath = path.resolve(assPath);
-    const assEscaped = absAssPath
-      .replace(/\\/g, '/')              // Windows backslashes → forward slashes
-      .replace(/([:\\])/g, '\\$1');     // escape : and \ for FFmpeg filter string
-    // Do NOT pass fontsdir — let libass use fontconfig's system font lookup.
-    // Passing fontsdir causes EINVAL on Linux if the path has permission issues.
-    const subtitlesFilter = `[vconcat]subtitles='${assEscaped}'[vout]`;
-
-    const complexFilter = scaleFilters + xfadeChain + ';' + subtitlesFilter;
-
     cmd
-      .complexFilter(complexFilter)
-      .outputOptions([
-        '-map [vout]',
-        `-map ${numImages}:a`,
-        `-t ${totalDuration}`,
-        '-c:v libx264',
-        '-preset fast',
-        '-crf 22',
-        '-c:a aac',
-        '-b:a 192k',
-        '-pix_fmt yuv420p',
-        '-movflags +faststart',
-        `-r ${fps}`,
-      ])
+      .complexFilter(scaleFilters + xfadeChain + ';' + tailFilter)
+      .outputOptions(outputOptions)
       .output(outputPath)
-      .on('start', () => {
-        console.log('   FFmpeg command started...');
-      })
+      .on('start', () => console.log('   FFmpeg command started...'))
       .on('stderr', (line) => {
         if (line.includes('Error') || line.includes('Invalid') || line.includes('No such')) {
           console.error('   FFmpeg:', line);
         }
       })
-      .on('progress', (progress) => {
-        if (progress.percent) {
-          process.stdout.write(`\r   Rendering: ${progress.percent.toFixed(1)}%`);
-        }
+      .on('progress', (p) => {
+        if (p.percent) process.stdout.write(`\r   Rendering: ${p.percent.toFixed(1)}%`);
       })
-      .on('end', () => {
-        console.log('\n   ✓ Video rendered successfully!');
-        resolve(outputPath);
-      })
-      .on('error', (err) => {
-        console.error('\n   ✗ FFmpeg error:', err.message);
-        reject(err);
-      })
+      .on('end', () => { console.log('\n   ✓ Video rendered successfully!'); resolve(); })
+      .on('error', (err) => { console.error('\n   ✗ FFmpeg error:', err.message); reject(err); })
       .run();
   });
+
+  // Try with subtitles; fall back to no subtitles if libass fails (Linux font issue)
+  try {
+    await run(subtitlesFilter);
+  } catch (err) {
+    console.warn('   ⚠ Subtitles render failed, retrying without captions…');
+    await run(noSubtitlesFilter);
+  }
 }
 
 // ─── Utility: Load Images ─────────────────────────────────────────────────────

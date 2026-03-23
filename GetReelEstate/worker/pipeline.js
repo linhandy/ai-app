@@ -215,7 +215,7 @@ PlayResY: ${videoHeight}
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Italic, Underline, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Line,Liberation Sans,${fontSize},&H00FFFFFF,&H00000000,&HB0000000,-1,0,0,3,0,0,2,30,30,${marginV},1
+Style: Line,Arial,${fontSize},&H00FFFFFF,&H00000000,&HB0000000,-1,0,0,3,0,0,2,30,30,${marginV},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -299,10 +299,9 @@ async function renderVideo({ images, audioPath, words, audioDuration, outputPath
     const assEscaped = absAssPath
       .replace(/\\/g, '/')              // Windows backslashes → forward slashes
       .replace(/([:\\])/g, '\\$1');     // escape : and \ for FFmpeg filter string
-    // On Linux, point libass at system fonts so it can render without Arial
-    const fontsDir = process.platform === 'win32' ? null : '/usr/share/fonts';
-    const fontsOpt = fontsDir ? `:fontsdir=${fontsDir}` : '';
-    const subtitlesFilter = `[vconcat]subtitles='${assEscaped}'${fontsOpt}[vout]`;
+    // Do NOT pass fontsdir — let libass use fontconfig's system font lookup.
+    // Passing fontsdir causes EINVAL on Linux if the path has permission issues.
+    const subtitlesFilter = `[vconcat]subtitles='${assEscaped}'[vout]`;
 
     const complexFilter = scaleFilters + xfadeChain + ';' + subtitlesFilter;
 
@@ -322,9 +321,8 @@ async function renderVideo({ images, audioPath, words, audioDuration, outputPath
         `-r ${fps}`,
       ])
       .output(outputPath)
-      .on('start', (cmdLine) => {
+      .on('start', () => {
         console.log('   FFmpeg command started...');
-        // Uncomment to debug: console.log('CMD:', cmdLine);
       })
       .on('stderr', (line) => {
         if (line.includes('Error') || line.includes('Invalid') || line.includes('No such')) {

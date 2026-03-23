@@ -2,15 +2,5 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "rewrites": [
-    {
-      "source": "/get-reelestate",
-      "destination": "https://ai-app-mauve-six.vercel.app/"
-    },
-    {
-      "source": "/get-reelestate/:path*",
-      "destination": "https://ai-app-mauve-six.vercel.app/:path*"
-    }
-  ]
+  "framework": "nextjs"
 }

@@ -239,8 +239,6 @@ async function renderVideo({ images, audioPath, words, audioDuration, outputPath
   const numImages = images.length;
   const totalDuration = audioDuration || numImages * secondsPerImage;
   const durationPerImage = totalDuration / numImages;
-  const fadeDur = 0.5;
-  const effectiveDur = durationPerImage - fadeDur;
 
   // Write ASS subtitle file
   const assPath = path.join(path.dirname(outputPath), 'captions.ass');
@@ -269,16 +267,9 @@ async function renderVideo({ images, audioPath, words, audioDuration, outputPath
     );
   }).join(';');
 
-  // Build xfade chain
-  let xfadeChain = '';
-  let prevLabel = 'v0';
-  for (let i = 1; i < numImages; i++) {
-    const offset = (effectiveDur * i).toFixed(3);
-    const outLabel = i === numImages - 1 ? 'vconcat' : `xf${i}`;
-    xfadeChain += `;[${prevLabel}][v${i}]xfade=transition=fade:duration=${fadeDur}:offset=${offset}[${outLabel}]`;
-    prevLabel = outLabel;
-  }
-  if (numImages === 1) xfadeChain = ';[v0]copy[vconcat]';
+  // concat chain — xfade is broken with -loop 1 inputs in FFmpeg 7.x
+  const concatInputs = images.map((_, i) => `[v${i}]`).join('');
+  const xfadeChain = `;${concatInputs}concat=n=${numImages}:v=1:a=0[vconcat]`;
 
   // Build subtitle filter string (escaped for FFmpeg filter syntax)
   const absAssPath = path.resolve(assPath);

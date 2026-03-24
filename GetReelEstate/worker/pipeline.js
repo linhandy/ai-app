@@ -248,12 +248,11 @@ async function renderVideo({ images, audioPath, words, audioDuration, outputPath
   // Build scale + zoompan filters for each image
   const scaleFilters = images.map((_, i) => {
     const frames = Math.floor(durationPerImage * fps);
-    const zoomStart = i % 2 === 0 ? 1.0 : 1.3;
-    const zoomEnd   = i % 2 === 0 ? 1.3 : 1.0;
-    const zoomStep  = (zoomEnd - zoomStart) / frames;
-    const zoomExpr  = zoomStep > 0
-      ? `zoom='min(zoom+${zoomStep.toFixed(6)},${zoomEnd})'`
-      : `zoom='max(zoom-${Math.abs(zoomStep).toFixed(6)},${zoomEnd})'`;
+    const zoomIn = i % 2 === 0;
+    // Use 'on' (output frame counter) so zoom starts correctly for both in/out
+    const zoomExpr = zoomIn
+      ? `zoom='min(1.0+on*${(0.3 / frames).toFixed(6)},1.3)'`
+      : `zoom='max(1.3-on*${(0.3 / frames).toFixed(6)},1.0)'`;
     return (
       `[${i}:v]` +
       `format=yuv420p,` +

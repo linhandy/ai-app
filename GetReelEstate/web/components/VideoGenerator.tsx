@@ -12,6 +12,16 @@ const supabase = createClient(
 type Tab    = 'url' | 'upload';
 type Status = 'idle' | 'fetching' | 'waiting' | 'processing' | 'done' | 'error';
 
+async function downloadBlob(url: string, filename: string) {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 interface Props {
   defaultVideoId?: string;
 }
@@ -28,6 +38,9 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
   const [error, setError]       = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [videoId, setVideoId]   = useState<string | null>(defaultVideoId ?? null);
+  const [email, setEmail]       = useState('');
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
   const fileRef                 = useRef<HTMLInputElement>(null);
 
   // ── Supabase Realtime: listen for video status changes ────────────────────
@@ -164,6 +177,25 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
     setImages([]); setDesc(''); setUrl(''); setError(null); setVideoId(null);
   };
 
+  // ── Send email ────────────────────────────────────────────────────────────
+  const sendEmail = async () => {
+    if (!email.trim() || !videoUrl) return;
+    setEmailSending(true);
+    try {
+      const res = await fetch('/api/send-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), videoUrl, script }),
+      });
+      if (res.ok) setEmailSent(true);
+      else setError('邮件发送失败，请重试');
+    } catch {
+      setError('邮件发送失败，请重试');
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
   // ── Result screen ─────────────────────────────────────────────────────────
   if (status === 'done' && videoUrl) {
     return (
@@ -180,14 +212,39 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
           className="w-full rounded-2xl shadow-2xl border border-white/10" />
 
         <div className="flex gap-3">
-          <a href={videoUrl} download="reel.mp4"
-            className="flex-1 bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold py-3 rounded-xl text-center transition-colors">
+          <button
+            onClick={() => downloadBlob(videoUrl, 'reel.mp4')}
+            className="flex-1 bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold py-3 rounded-xl transition-colors">
             ⬇ Download MP4
-          </a>
+          </button>
           <button onClick={reset}
             className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-200 font-medium py-3 rounded-xl transition-colors">
             Make Another
           </button>
+        </div>
+
+        {/* Email */}
+        <div className="bg-gray-900 rounded-xl border border-white/5 p-4 space-y-3">
+          <p className="text-sm font-medium text-gray-300">✉ 发送到邮箱</p>
+          {emailSent ? (
+            <p className="text-sm text-green-400">✓ 已发送到 {email}</p>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-amber-500"
+              />
+              <button
+                onClick={sendEmail}
+                disabled={!email.trim() || emailSending}
+                className="bg-amber-500 hover:bg-amber-400 disabled:bg-gray-700 disabled:text-gray-500 text-gray-900 font-semibold px-4 rounded-lg text-sm transition-colors">
+                {emailSending ? '发送中…' : '发送'}
+              </button>
+            </div>
+          )}
         </div>
 
         {script && (

@@ -230,97 +230,142 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 // ─── Step 5: Render Video with FFmpeg ────────────────────────────────────────
 
-async function renderVideo({ images, audioPath, words, audioDuration, outputPath }) {
-  console.log('\n🎬 [Step 4] Rendering video with FFmpeg...');
+// ── Pass 1: render single image → temp MP4 clip with Ken Burns ────────────────
+function renderClip(imgPath, clipPath, duration, idx, videoWidth, videoHeight, fps) {
+  const frames = Math.floor(duration * fps);
+  const zoomIn = idx % 2 === 0;
+  // Smooth zoom using 'on' (frame counter within this clip)
+  const step = (0.28 / Math.max(frames, 1)).toFixed(7);
+  const zoomExpr = zoomIn
+    ? `zoom='min(1.0+on*${step},1.28)'`
+    : `zoom='max(1.28-on*${step},1.0)'`;
+  // Gentle pan: drift slightly left/right
+  const panX = zoomIn
+    ? `x='(iw-iw/zoom)/2+sin(on*0.003)*10'`
+    : `x='(iw-iw/zoom)/2-sin(on*0.003)*10'`;
 
-  mkdirSync(path.dirname(outputPath), { recursive: true });
+  return new Promise((resolve, reject) => {
+    ffmpeg()
+      .input(imgPath)
+      .inputOptions(['-loop 1', `-framerate ${fps}`, `-t ${duration}`])
+      .complexFilter(
+        `[0:v]format=yuv420p,` +
+        `scale=${videoWidth * 2}:${videoHeight * 2}:force_original_aspect_ratio=increase,` +
+        `crop=${videoWidth * 2}:${videoHeight * 2},` +
+        `scale=${videoWidth}:${videoHeight},` +
+        `zoompan=${zoomExpr}:${panX}:y='(ih-ih/zoom)/2':` +
+        `d=${frames}:s=${videoWidth}x${videoHeight}:fps=${fps}[v]`
+      )
+      .outputOptions([
+        '-map [v]',
+        `-t ${duration}`,
+        '-c:v libx264',
+        '-preset ultrafast',
+        '-crf 15',
+        '-pix_fmt yuv420p',
+        `-r ${fps}`,
+      ])
+      .output(clipPath)
+      .on('stderr', () => {})
+      .on('end', resolve)
+      .on('error', reject)
+      .run();
+  });
+}
 
-  const { videoWidth, videoHeight, fps, secondsPerImage } = CONFIG;
-  const numImages = images.length;
-  const totalDuration = audioDuration || numImages * secondsPerImage;
-  const durationPerImage = totalDuration / numImages;
+// ── Pass 2: xfade clips + audio + (optional) subtitles → final MP4 ────────────
+function renderFinal({ clipPaths, audioPath, assPath, outputPath, totalDuration, fps, withSubs }) {
+  const n = clipPaths.length;
+  const clipDur = totalDuration / n;
+  const fadeDur = Math.min(0.6, clipDur * 0.15);
 
-  // Write ASS subtitle file
-  const assPath = path.join(path.dirname(outputPath), 'captions.ass');
-  mkdirSync(path.dirname(assPath), { recursive: true });
-  writeAssSubtitles(words, assPath, videoWidth, videoHeight);
+  // Build xfade chain between real video files
+  let filterParts = [];
+  let prevLabel = '0:v';
+  for (let i = 1; i < n; i++) {
+    const offset = Math.max(0, clipDur * i - fadeDur).toFixed(3);
+    const outLabel = i === n - 1 ? 'vconcat' : `xf${i}`;
+    filterParts.push(`[${prevLabel}][${i}:v]xfade=transition=fade:duration=${fadeDur}:offset=${offset}[${outLabel}]`);
+    prevLabel = outLabel;
+  }
+  if (n === 1) filterParts.push(`[0:v]copy[vconcat]`);
 
-  // Build scale + zoompan filters for each image
-  const scaleFilters = images.map((_, i) => {
-    const frames = Math.floor(durationPerImage * fps);
-    const zoomIn = i % 2 === 0;
-    // Use 'on' (output frame counter) so zoom starts correctly for both in/out
-    const zoomExpr = zoomIn
-      ? `zoom='min(1.0+on*${(0.3 / frames).toFixed(6)},1.3)'`
-      : `zoom='max(1.3-on*${(0.3 / frames).toFixed(6)},1.0)'`;
-    return (
-      `[${i}:v]` +
-      `format=yuv420p,` +
-      `scale=${videoWidth * 2}:${videoHeight * 2}:force_original_aspect_ratio=increase,` +
-      `crop=${videoWidth * 2}:${videoHeight * 2},` +
-      `scale=${videoWidth}:${videoHeight},` +
-      `zoompan=${zoomExpr}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':` +
-      `d=${frames}:s=${videoWidth}x${videoHeight}:fps=${fps},` +
-      `fps=${fps},` +
-      `setpts=PTS-STARTPTS[v${i}]`
-    );
-  }).join(';');
+  // Subtitle tail filter
+  let tailFilter;
+  if (withSubs && assPath) {
+    const absAss = path.resolve(assPath).replace(/\\/g, '/').replace(/([:\\])/g, '\\$1');
+    tailFilter = `[vconcat]subtitles='${absAss}'[vout]`;
+  } else {
+    tailFilter = `[vconcat]copy[vout]`;
+  }
+  filterParts.push(tailFilter);
 
-  // concat chain — xfade is broken with -loop 1 inputs in FFmpeg 7.x
-  const concatInputs = images.map((_, i) => `[v${i}]`).join('');
-  const xfadeChain = `;${concatInputs}concat=n=${numImages}:v=1:a=0[vconcat]`;
+  const complexFilter = filterParts.join(';');
 
-  // Build subtitle filter string (escaped for FFmpeg filter syntax)
-  const absAssPath = path.resolve(assPath);
-  const assEscaped = absAssPath.replace(/\\/g, '/').replace(/([:\\])/g, '\\$1');
-  const subtitlesFilter = `[vconcat]subtitles='${assEscaped}'[vout]`;
-  const noSubtitlesFilter = `[vconcat]copy[vout]`;
-
-  const outputOptions = [
-    '-map [vout]',
-    `-map ${numImages}:a`,
-    `-t ${totalDuration}`,
-    '-c:v libx264',
-    '-preset fast',
-    '-crf 22',
-    '-c:a aac',
-    '-b:a 192k',
-    '-pix_fmt yuv420p',
-    '-movflags +faststart',
-    `-r ${fps}`,
-  ];
-
-  // Helper: build and run a fresh ffmpeg command with the given filter string
-  const run = (tailFilter) => new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const cmd = ffmpeg();
-    images.forEach((imgPath) => {
-      cmd.input(imgPath).inputOptions(['-loop 1', `-t ${durationPerImage}`, '-framerate 30']);
-    });
+    clipPaths.forEach(p => cmd.input(p));
     cmd.input(audioPath);
     cmd
-      .complexFilter(scaleFilters + xfadeChain + ';' + tailFilter)
-      .outputOptions(outputOptions)
+      .complexFilter(complexFilter)
+      .outputOptions([
+        '-map [vout]',
+        `-map ${n}:a`,
+        `-t ${totalDuration}`,
+        '-c:v libx264',
+        '-preset fast',
+        '-crf 20',
+        '-c:a aac',
+        '-b:a 192k',
+        '-pix_fmt yuv420p',
+        '-movflags +faststart',
+        `-r ${fps}`,
+      ])
       .output(outputPath)
-      .on('start', () => console.log('   FFmpeg command started...'))
+      .on('start', () => console.log('   FFmpeg final render started...'))
       .on('stderr', (line) => {
-        if (line.includes('Error') || line.includes('Invalid') || line.includes('No such')) {
-          console.error('   FFmpeg:', line);
-        }
+        if (line.includes('Error') || line.includes('Invalid')) console.error('   FFmpeg:', line);
       })
       .on('progress', (p) => {
         if (p.percent) process.stdout.write(`\r   Rendering: ${p.percent.toFixed(1)}%`);
       })
       .on('end', () => { console.log('\n   ✓ Video rendered successfully!'); resolve(); })
-      .on('error', (err) => { console.error('\n   ✗ FFmpeg error:', err.message); reject(err); })
+      .on('error', reject)
       .run();
   });
+}
 
-  // Try with subtitles; fall back to no subtitles if libass fails (Linux font issue)
+async function renderVideo({ images, audioPath, words, audioDuration, outputPath }) {
+  console.log('\n🎬 [Step 4] Rendering video with FFmpeg (two-pass)...');
+
+  const workDir = path.dirname(outputPath);
+  mkdirSync(workDir, { recursive: true });
+
+  const { videoWidth, videoHeight, fps, secondsPerImage } = CONFIG;
+  const totalDuration = audioDuration || images.length * secondsPerImage;
+  const durationPerImage = totalDuration / images.length;
+
+  // Write ASS subtitle file
+  const assPath = path.join(workDir, 'captions.ass');
+  writeAssSubtitles(words, assPath, videoWidth, videoHeight);
+
+  // Pass 1: render each image to its own temp clip
+  console.log(`   Pass 1: rendering ${images.length} clips...`);
+  const clipPaths = [];
+  for (let i = 0; i < images.length; i++) {
+    const clipPath = path.join(workDir, `clip_${i}.mp4`);
+    await renderClip(images[i], clipPath, durationPerImage, i, videoWidth, videoHeight, fps);
+    console.log(`   ✓ clip ${i + 1}/${images.length}`);
+    clipPaths.push(clipPath);
+  }
+
+  // Pass 2: xfade + audio + subtitles
+  console.log('   Pass 2: compositing final video...');
   try {
-    await run(subtitlesFilter);
-  } catch (err) {
-    console.warn('   ⚠ Subtitles render failed, retrying without captions…');
-    await run(noSubtitlesFilter);
+    await renderFinal({ clipPaths, audioPath, assPath, outputPath, totalDuration, fps, withSubs: true });
+  } catch {
+    console.warn('   ⚠ Subtitles failed, retrying without captions…');
+    await renderFinal({ clipPaths, audioPath, assPath: null, outputPath, totalDuration, fps, withSubs: false });
   }
 }
 

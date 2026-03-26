@@ -232,15 +232,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 // ── Pass 1: render single image → temp MP4 clip with Ken Burns ────────────────
 function renderClip(imgPath, clipPath, duration, idx, videoWidth, videoHeight, fps) {
-  const frames = Math.floor(duration * fps);
-  const zoomIn = idx % 2 === 0;
-  // Pure linear zoom — no oscillation, no pan drift, perfectly smooth
-  // z goes from 1.0→1.25 (in) or 1.25→1.0 (out) linearly over the clip
-  const zStart = zoomIn ? 1.0  : 1.25;
-  const zEnd   = zoomIn ? 1.25 : 1.0;
-  const zExpr  = `z='${zStart.toFixed(3)}+on/${frames}*(${(zEnd-zStart).toFixed(3)})'`;
-  const xExpr  = `x='(iw-iw/zoom)/2'`;
-  const yExpr  = `y='(ih-ih/zoom)/2'`;
+  // d=1 + accumulated zoom: most stable zoompan approach.
+  // zoom variable accumulates from 1.0 each clip; step=0.001/frame → smooth 1.0→1.18 over 3min clip
+  const zoomStep = 0.0008;  // ~1.0 → 1.14 over 180 frames (6s@30fps), very subtle
+  const zoomMax  = 1.20;
+  const zExpr = `z='min(zoom+${zoomStep},${zoomMax})'`;
+  const xExpr = `x='iw/2-(iw/zoom/2)'`;
+  const yExpr = `y='ih/2-(ih/zoom/2)'`;
 
   return new Promise((resolve, reject) => {
     ffmpeg()
@@ -248,11 +246,12 @@ function renderClip(imgPath, clipPath, duration, idx, videoWidth, videoHeight, f
       .inputOptions(['-loop 1', `-framerate ${fps}`, `-t ${duration}`])
       .complexFilter(
         `[0:v]format=yuv420p,` +
-        `scale=${videoWidth * 2}:${videoHeight * 2}:force_original_aspect_ratio=increase,` +
-        `crop=${videoWidth * 2}:${videoHeight * 2},` +
+        // Scale to 3× source for smooth sub-pixel zoom without blocky artefacts
+        `scale=${videoWidth * 3}:${videoHeight * 3}:force_original_aspect_ratio=increase,` +
+        `crop=${videoWidth * 3}:${videoHeight * 3},` +
         `scale=${videoWidth}:${videoHeight},` +
         `zoompan=${zExpr}:${xExpr}:${yExpr}:` +
-        `d=${frames}:s=${videoWidth}x${videoHeight}:fps=${fps}[v]`
+        `d=1:fps=${fps}:s=${videoWidth}x${videoHeight}[v]`
       )
       .outputOptions([
         '-map [v]',

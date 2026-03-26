@@ -22,8 +22,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email service not configured' }, { status: 503 });
   }
 
+  // RESEND_FROM_EMAIL must be a verified sender in Resend dashboard.
+  // For testing without domain verification: use 'onboarding@resend.dev'
+  const from = process.env.RESEND_FROM_EMAIL || 'GetReelEstate <onboarding@resend.dev>';
+
   const { error } = await resend.emails.send({
-    from: 'GetReelEstate <noreply@handyai.cc>',
+    from,
     to: email,
     subject: '🎬 Your Real Estate Reel is Ready!',
     html: `

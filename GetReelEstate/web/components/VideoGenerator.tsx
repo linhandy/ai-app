@@ -245,42 +245,68 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
         </div>
 
         {/* Share buttons */}
-        <div className="bg-gray-900 rounded-xl border border-white/5 p-4 space-y-3">
-          <p className="text-sm font-medium text-gray-300">🚀 Share to social</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {/* Web Share API (mobile) */}
-            {typeof navigator !== 'undefined' && 'share' in navigator && (
-              <button
-                onClick={() => navigator.share({ title: 'Real Estate Reel', url: videoUrl! })}
-                className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium py-2.5 rounded-lg transition-colors col-span-2 sm:col-span-3">
-                📤 Share (native)
-              </button>
-            )}
-            <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('🏡 Check out this AI-generated real estate reel!')}&url=${encodeURIComponent(videoUrl!)}`}
-              target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 bg-black hover:bg-gray-900 border border-gray-700 text-white text-xs font-medium py-2.5 rounded-lg transition-colors">
-              𝕏 X.com
-            </a>
-            <a href={`https://bsky.app/intent/compose?text=${encodeURIComponent('🏡 AI-generated real estate reel! ' + videoUrl!)}`}
-              target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 bg-sky-900 hover:bg-sky-800 text-sky-200 text-xs font-medium py-2.5 rounded-lg transition-colors">
-              🦋 Bluesky
-            </a>
-            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(videoUrl!)}`}
-              target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 bg-blue-900 hover:bg-blue-800 text-blue-200 text-xs font-medium py-2.5 rounded-lg transition-colors">
-              💼 LinkedIn
-            </a>
-            <button
-              onClick={() => { navigator.clipboard.writeText(videoUrl!); }}
-              className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium py-2.5 rounded-lg transition-colors col-span-2 sm:col-span-1">
-              🔗 Copy Link
-            </button>
-            <div className="col-span-2 sm:col-span-2 flex items-center gap-2 bg-gray-800/50 rounded-lg px-3 py-2">
-              <span className="text-xs text-gray-500">📱 TikTok / Instagram: download → upload manually</span>
+        {(() => {
+          const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.handyai.cc';
+          const shareText = `🏡 Just generated this real estate reel with AI in 60 seconds!\n\nCreate yours free → ${siteUrl}\n\n#RealEstate #ReelEstate #AIVideo`;
+          const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(videoUrl!)}`;
+          const bskyUrl = `https://bsky.app/intent/compose?text=${encodeURIComponent(shareText + '\n' + videoUrl!)}`;
+          const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(siteUrl)}`;
+          const tiktokCaption = `🏡 AI-generated real estate reel! Create yours free at ${siteUrl} #RealEstate #TikTokRealEstate #AIVideo`;
+          const igCaption = `🏡 AI generated this real estate reel in 60s! Create yours free → ${siteUrl} ⬇️ link in bio\n\n#RealEstateAgent #RealtorLife #HomeTour #AIVideo #InstagramReels`;
+
+          return (
+            <div className="bg-gray-900 rounded-xl border border-white/5 p-4 space-y-3">
+              <p className="text-sm font-medium text-gray-300">🚀 Share to social</p>
+
+              {/* Mobile native share */}
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
+                <button
+                  onClick={() => navigator.share({ title: 'Real Estate Reel', text: shareText, url: videoUrl! })}
+                  className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-gray-900 text-sm font-semibold py-2.5 rounded-lg transition-colors">
+                  📤 Share Video (native)
+                </button>
+              )}
+
+              <div className="grid grid-cols-2 gap-2">
+                <a href={twitterUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 bg-black hover:bg-gray-900 border border-gray-700 text-white text-xs font-medium py-2.5 rounded-lg transition-colors">
+                  𝕏 Post to X
+                </a>
+                <a href={bskyUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 bg-sky-900 hover:bg-sky-800 text-sky-200 text-xs font-medium py-2.5 rounded-lg transition-colors">
+                  🦋 Bluesky
+                </a>
+                <a href={linkedinUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 bg-blue-800 hover:bg-blue-700 text-blue-100 text-xs font-medium py-2.5 rounded-lg transition-colors">
+                  💼 LinkedIn
+                </a>
+                <button
+                  onClick={() => navigator.clipboard.writeText(videoUrl!)}
+                  className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium py-2.5 rounded-lg transition-colors">
+                  🔗 Copy Link
+                </button>
+              </div>
+
+              {/* TikTok / Instagram — copy caption */}
+              <div className="space-y-2 pt-1">
+                <p className="text-xs text-gray-500 font-medium">📱 TikTok & Instagram — download video, then:</p>
+                <div className="space-y-1.5">
+                  {[
+                    { label: '📋 Copy TikTok caption', text: tiktokCaption },
+                    { label: '📋 Copy Instagram caption', text: igCaption },
+                  ].map(({ label, text }) => (
+                    <button key={label}
+                      onClick={() => navigator.clipboard.writeText(text)}
+                      className="w-full text-left flex items-center justify-between bg-gray-800 hover:bg-gray-750 rounded-lg px-3 py-2 transition-colors group">
+                      <span className="text-xs text-gray-400 group-hover:text-gray-200 truncate">{label}</span>
+                      <span className="text-xs text-gray-600 ml-2 shrink-0">copy</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* Email */}
         <div className="bg-gray-900 rounded-xl border border-white/5 p-4 space-y-3">

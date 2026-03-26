@@ -234,15 +234,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 function renderClip(imgPath, clipPath, duration, idx, videoWidth, videoHeight, fps) {
   const frames = Math.floor(duration * fps);
   const zoomIn = idx % 2 === 0;
-  // Smooth zoom using 'on' (frame counter within this clip)
-  const step = (0.28 / Math.max(frames, 1)).toFixed(7);
-  const zoomExpr = zoomIn
-    ? `zoom='min(1.0+on*${step},1.28)'`
-    : `zoom='max(1.28-on*${step},1.0)'`;
-  // Gentle pan: drift slightly left/right
-  const panX = zoomIn
-    ? `x='(iw-iw/zoom)/2+sin(on*0.003)*10'`
-    : `x='(iw-iw/zoom)/2-sin(on*0.003)*10'`;
+  // Pure linear zoom — no oscillation, no pan drift, perfectly smooth
+  // z goes from 1.0→1.25 (in) or 1.25→1.0 (out) linearly over the clip
+  const zStart = zoomIn ? 1.0  : 1.25;
+  const zEnd   = zoomIn ? 1.25 : 1.0;
+  const zExpr  = `z='${zStart.toFixed(3)}+on/${frames}*(${(zEnd-zStart).toFixed(3)})'`;
+  const xExpr  = `x='(iw-iw/zoom)/2'`;
+  const yExpr  = `y='(ih-ih/zoom)/2'`;
 
   return new Promise((resolve, reject) => {
     ffmpeg()
@@ -253,7 +251,7 @@ function renderClip(imgPath, clipPath, duration, idx, videoWidth, videoHeight, f
         `scale=${videoWidth * 2}:${videoHeight * 2}:force_original_aspect_ratio=increase,` +
         `crop=${videoWidth * 2}:${videoHeight * 2},` +
         `scale=${videoWidth}:${videoHeight},` +
-        `zoompan=${zoomExpr}:${panX}:y='(ih-ih/zoom)/2':` +
+        `zoompan=${zExpr}:${xExpr}:${yExpr}:` +
         `d=${frames}:s=${videoWidth}x${videoHeight}:fps=${fps}[v]`
       )
       .outputOptions([

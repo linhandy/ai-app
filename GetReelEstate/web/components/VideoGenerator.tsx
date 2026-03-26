@@ -41,7 +41,28 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
   const [email, setEmail]       = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
+  const [progress, setProgress] = useState(0);
   const fileRef                 = useRef<HTMLInputElement>(null);
+
+  // ── Animated progress bar ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (status === 'waiting') {
+      setProgress(8);
+    } else if (status === 'processing') {
+      setProgress(25);
+      // Animate from 25 → 90 over ~80s
+      const start = Date.now();
+      const timer = setInterval(() => {
+        const elapsed = (Date.now() - start) / 1000;
+        const p = Math.min(25 + (elapsed / 80) * 65, 90);
+        setProgress(Math.round(p));
+        if (p >= 90) clearInterval(timer);
+      }, 500);
+      return () => clearInterval(timer);
+    } else if (status === 'done') {
+      setProgress(100);
+    }
+  }, [status]);
 
   // ── Supabase Realtime: listen for video status changes ────────────────────
   useEffect(() => {
@@ -223,6 +244,44 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
           </button>
         </div>
 
+        {/* Share buttons */}
+        <div className="bg-gray-900 rounded-xl border border-white/5 p-4 space-y-3">
+          <p className="text-sm font-medium text-gray-300">🚀 Share to social</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {/* Web Share API (mobile) */}
+            {typeof navigator !== 'undefined' && 'share' in navigator && (
+              <button
+                onClick={() => navigator.share({ title: 'Real Estate Reel', url: videoUrl! })}
+                className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium py-2.5 rounded-lg transition-colors col-span-2 sm:col-span-3">
+                📤 Share (native)
+              </button>
+            )}
+            <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('🏡 Check out this AI-generated real estate reel!')}&url=${encodeURIComponent(videoUrl!)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 bg-black hover:bg-gray-900 border border-gray-700 text-white text-xs font-medium py-2.5 rounded-lg transition-colors">
+              𝕏 X.com
+            </a>
+            <a href={`https://bsky.app/intent/compose?text=${encodeURIComponent('🏡 AI-generated real estate reel! ' + videoUrl!)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 bg-sky-900 hover:bg-sky-800 text-sky-200 text-xs font-medium py-2.5 rounded-lg transition-colors">
+              🦋 Bluesky
+            </a>
+            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(videoUrl!)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 bg-blue-900 hover:bg-blue-800 text-blue-200 text-xs font-medium py-2.5 rounded-lg transition-colors">
+              💼 LinkedIn
+            </a>
+            <button
+              onClick={() => { navigator.clipboard.writeText(videoUrl!); }}
+              className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium py-2.5 rounded-lg transition-colors col-span-2 sm:col-span-1">
+              🔗 Copy Link
+            </button>
+            <div className="col-span-2 sm:col-span-2 flex items-center gap-2 bg-gray-800/50 rounded-lg px-3 py-2">
+              <span className="text-xs text-gray-500">📱 TikTok / Instagram: download → upload manually</span>
+            </div>
+          </div>
+        </div>
+
         {/* Email */}
         <div className="bg-gray-900 rounded-xl border border-white/5 p-4 space-y-3">
           <p className="text-sm font-medium text-gray-300">✉ 发送到邮箱</p>
@@ -261,24 +320,51 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
 
   // ── Waiting / Processing screen ───────────────────────────────────────────
   if (status === 'waiting' || status === 'processing') {
-    const msgs = status === 'waiting'
-      ? ['Job queued — waiting for worker…', 'This usually starts within seconds…']
-      : ['Writing AI voiceover script…', 'Generating audio with Edge TTS…', 'Adding Ken Burns & captions…', 'Final render in progress…'];
+    const stages = [
+      { label: 'Job queued',          pct: 8  },
+      { label: 'Generating script',   pct: 25 },
+      { label: 'Creating voiceover',  pct: 50 },
+      { label: 'Rendering video',     pct: 75 },
+      { label: 'Finalizing',          pct: 90 },
+    ];
+    const currentStage = stages.filter(s => progress >= s.pct).pop() ?? stages[0];
 
     return (
-      <div className="py-12 text-center space-y-6">
-        <div className="w-16 h-16 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin mx-auto" />
-        <div>
+      <div className="py-10 space-y-6">
+        <div className="text-center">
           <div className="font-semibold text-lg mb-1">
-            {status === 'waiting' ? 'Queued ✓' : 'Rendering your reel…'}
+            {status === 'waiting' ? '⏳ Queued…' : '🎬 Rendering your reel…'}
           </div>
-          <div className="text-gray-400 text-sm">This usually takes 60–90 seconds</div>
+          <div className="text-gray-400 text-sm">Usually takes 60–90 seconds</div>
         </div>
-        <div className="max-w-xs mx-auto space-y-2">
-          {msgs.map((m, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm text-gray-500">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500/40 shrink-0" />
-              {m}
+
+        {/* Progress bar */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>{currentStage.label}</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-amber-500 rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Stage dots */}
+        <div className="space-y-2">
+          {stages.map((s, i) => (
+            <div key={i} className={`flex items-center gap-2 text-xs transition-colors ${
+              progress >= s.pct ? 'text-amber-400' : 'text-gray-600'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                progress >= s.pct ? 'bg-amber-500' : 'bg-gray-700'
+              }`} />
+              {s.label}
+              {progress >= s.pct && progress < (stages[i + 1]?.pct ?? 101) && (
+                <span className="text-gray-500 animate-pulse">…</span>
+              )}
             </div>
           ))}
         </div>
@@ -335,7 +421,7 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
               <p className="text-gray-500 text-xs mt-1">JPG, PNG, WEBP — up to 7 images</p>
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {images.map((img, i) => (
                 <div key={i} className="relative group aspect-square">
                   <img src={URL.createObjectURL(img)} alt=""

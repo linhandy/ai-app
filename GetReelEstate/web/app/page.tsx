@@ -17,6 +17,8 @@ const DEMO_PHOTOS = [
 
 function DemoSection() {
   const [photoIdx, setPhotoIdx] = useState(0);
+  const prevPhoto = () => setPhotoIdx(i => (i - 1 + DEMO_PHOTOS.length) % DEMO_PHOTOS.length);
+  const nextPhoto = () => setPhotoIdx(i => (i + 1) % DEMO_PHOTOS.length);
 
   return (
     <div className="flex flex-col lg:flex-row items-stretch gap-0 rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/60 bg-gray-950">
@@ -28,27 +30,43 @@ function DemoSection() {
           <div className="w-2 h-2 rounded-full bg-red-500/70" />
           <div className="w-2 h-2 rounded-full bg-yellow-500/70" />
           <div className="w-2 h-2 rounded-full bg-green-500/70" />
-          <span className="mx-auto text-xs text-gray-500 font-mono">📸 Listing Photo</span>
+          <span className="mx-auto text-xs text-gray-500 font-mono">Listing Photo</span>
         </div>
 
         {/* Photo — same aspect-video as the reel */}
-        <div className="aspect-video relative overflow-hidden bg-black">
+        <div className="aspect-[16/10] relative overflow-hidden bg-black group">
           {DEMO_PHOTOS.map((url, i) => (
             <img key={i} src={url} alt=""
               className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
               style={{ opacity: i === photoIdx ? 1 : 0 }} />
           ))}
-          {/* Thumbnail strip at bottom */}
-          <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1.5 px-3">
+
+          {/* Left / Right arrows — always visible */}
+          <button onClick={prevPhoto}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/60 hover:bg-black/80 text-white rounded-full w-10 h-10 flex items-center justify-center backdrop-blur-sm border border-white/20 transition-all hover:scale-110 shadow-lg">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+          </button>
+          <button onClick={nextPhoto}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/60 hover:bg-black/80 text-white rounded-full w-10 h-10 flex items-center justify-center backdrop-blur-sm border border-white/20 transition-all hover:scale-110 shadow-lg">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+          </button>
+
+          {/* Photo counter */}
+          <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-2.5 py-1 rounded-full border border-white/10">
+            {photoIdx + 1} / {DEMO_PHOTOS.length}
+          </div>
+
+          {/* Dot indicators */}
+          <div className="absolute bottom-3 inset-x-0 flex justify-center gap-2 px-3">
             {DEMO_PHOTOS.map((_, i) => (
               <button key={i} onClick={() => setPhotoIdx(i)}
-                className={`w-1.5 h-1.5 rounded-full transition-all ${i === photoIdx ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'}`} />
+                className={`rounded-full transition-all ${i === photoIdx ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/40 hover:bg-white/70'}`} />
             ))}
           </div>
         </div>
 
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-900/90 border-t border-white/5 text-xs text-gray-500">
-          <span>Raw photo · JPG</span>
+        <div className="flex items-center justify-between px-4 py-2.5 bg-gray-900/90 border-t border-white/5 text-xs text-gray-500">
+          <span>Raw listing photo</span>
           <span className="text-gray-600">2104 University Club Dr, Austin TX</span>
           <span className="text-amber-400 font-semibold">$1,700,000</span>
         </div>
@@ -85,14 +103,14 @@ function DemoSection() {
           <div className="w-2 h-2 rounded-full bg-red-500/70" />
           <div className="w-2 h-2 rounded-full bg-yellow-500/70" />
           <div className="w-2 h-2 rounded-full bg-green-500/70" />
-          <span className="mx-auto text-xs text-gray-500 font-mono">🎬 AI Reel · 16:9 · MP4</span>
+          <span className="mx-auto text-xs text-gray-500 font-mono">AI Reel · 16:9 · MP4</span>
           <div className="flex items-center gap-1">
             <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
             <span className="text-xs text-amber-400 font-medium">AI</span>
           </div>
         </div>
 
-        <div className="aspect-video bg-black">
+        <div className="aspect-[16/10] bg-black">
           <video
             src="https://zzqylewczbtqkltvxbut.supabase.co/storage/v1/object/public/reels/demo/output.mp4"
             controls
@@ -102,8 +120,8 @@ function DemoSection() {
           />
         </div>
 
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-900/90 border-t border-white/5 text-xs text-gray-500">
-          <span>AI Script + TTS + FFmpeg</span>
+        <div className="flex items-center justify-between px-4 py-2.5 bg-gray-900/90 border-t border-white/5 text-xs text-gray-500">
+          <span>AI-generated video</span>
           <span className="text-amber-400 font-semibold">Ready to post</span>
           <span className="hidden sm:inline">5BR · 5BA · 4,820 sqft</span>
         </div>
@@ -176,9 +194,9 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Paste a Zillow link or upload photos → AI writes the script, generates
-            the voiceover, adds Ken Burns effects & captions → Download your
-            professional 16:9 video.
+            Paste a listing link or upload photos → AI writes the script, generates
+            a professional voiceover with cinematic effects & captions → Download your
+            ready-to-post 16:9 video.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -202,7 +220,7 @@ export default function LandingPage() {
 
       {/* Demo Video */}
       <section id="demo" className="py-16 px-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl font-bold text-center mb-2">See It In Action</h2>
           <p className="text-gray-400 text-center text-sm mb-8">AI-generated reel from a 4BR Austin home listing</p>
           <DemoSection />
@@ -221,13 +239,13 @@ export default function LandingPage() {
                 step: '01',
                 icon: '🔗',
                 title: 'Paste a Link or Upload Photos',
-                desc: 'Enter a Zillow / Realtor.com URL and we auto-fetch the images, price, and description — or upload your own photos directly.',
+                desc: 'Enter a Zillow, Realtor.com, or Redfin URL and we auto-fetch the images, price, and description — or upload your own photos directly.',
               },
               {
                 step: '02',
                 icon: '🤖',
                 title: 'AI Generates Everything',
-                desc: 'Our LLM writes a punchy 60-80 word script. Edge TTS records the voiceover. FFmpeg adds Ken Burns zoom effects and synced captions.',
+                desc: 'AI writes a punchy voiceover script, records a professional narration, and adds cinematic zoom effects with synced captions.',
               },
               {
                 step: '03',
@@ -253,10 +271,10 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold text-center mb-14">Everything You Need</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { icon: '🎙️', title: 'AI Voiceover', desc: 'Deep, energetic Microsoft Neural TTS — sounds like a pro realtor' },
-              { icon: '🎬', title: 'Ken Burns Effect', desc: 'Smooth zoom & pan on every photo — no more static slideshows' },
-              { icon: '📝', title: 'Synced Captions', desc: 'Word-boundary captions that match the audio perfectly' },
-              { icon: '🔗', title: 'Zillow Auto-Fetch', desc: 'Paste a listing URL — we grab photos & description automatically' },
+              { icon: '🎙️', title: 'AI Voiceover', desc: 'Deep, energetic professional voice — sounds like a top-performing realtor' },
+              { icon: '🎬', title: 'Cinematic Effects', desc: 'Smooth zoom & pan on every photo — no more static slideshows' },
+              { icon: '📝', title: 'Synced Captions', desc: 'Auto-generated captions that match the audio perfectly' },
+              { icon: '🔗', title: 'Auto-Fetch Listings', desc: 'Paste a Zillow, Realtor.com, or Redfin URL — we grab photos & description automatically' },
               { icon: '⚡', title: 'Fast Rendering', desc: '~60 seconds from submit to downloadable MP4' },
               { icon: '📱', title: '16:9 Ready', desc: 'Optimized for Instagram, TikTok, YouTube Shorts, and Facebook' },
             ].map(f => (
@@ -285,7 +303,7 @@ export default function LandingPage() {
               <div className="text-4xl font-bold mb-1">$0</div>
               <div className="text-amber-800 text-sm mb-6">completely free</div>
               <ul className="space-y-3 text-sm mb-8">
-                {['Unlimited videos', '16:9 MP4 download', 'AI script + voiceover', 'Ken Burns + captions', 'Zillow auto-fetch', 'Commercial license'].map(f => (
+                {['Unlimited videos', '16:9 MP4 download', 'AI script + voiceover', 'Cinematic effects + captions', 'Multiple video styles', 'Commercial license'].map(f => (
                   <li key={f} className="flex items-center gap-2 text-amber-900">
                     <span className="text-amber-700 font-bold">✓</span> {f}
                   </li>
@@ -319,7 +337,7 @@ export default function LandingPage() {
           <div className="w-5 h-5 rounded bg-amber-500 flex items-center justify-center text-gray-900 font-bold text-xs">G</div>
           <span className="text-gray-400 font-medium">GetReelEstate</span>
         </div>
-        <p>AI real estate video generation · Built with Next.js + FFmpeg</p>
+        <p>AI-powered real estate video generation</p>
         <div className="flex items-center justify-center gap-4 mt-3 text-xs">
           <Link href="/legal/tos" className="hover:text-gray-400 transition-colors">Terms of Service</Link>
           <span>·</span>

@@ -40,9 +40,8 @@ function getAudioDuration(filePath) {
 const CONFIG = {
   zenmuxApiKey: process.env.ZENMUX_API_KEY,
   zenmuxBaseURL: process.env.ZENMUX_BASE_URL || 'https://zenmux.ai/api/v1',
-  llmModel: 'google/gemini-3-pro-preview',
-  // Edge TTS voice — en-US-GuyNeural is deep and energetic, great for real estate
-  ttsVoice: 'en-US-GuyNeural',
+  llmModel: process.env.LLM_MODEL || 'google/gemini-2.5-flash',
+  ttsVoice: process.env.TTS_VOICE || 'en-US-GuyNeural',
   outputDir: './output',
   imagesDir: './test-images',
   // 16:9 landscape — matches reference video vid-1016-Santaluz.mp4 (1280x720)
@@ -69,17 +68,12 @@ const zenmuxClient = new OpenAI({
   baseURL: CONFIG.zenmuxBaseURL,
 });
 
-// ─── Step 1: Generate Voiceover Script ───────────────────────────────────────
+// ─── Video Style Definitions ─────────────────────────────────────────────────
 
-async function generateScript(propertyDescription) {
-  console.log('\n📝 [Step 1] Generating voiceover script...');
-
-  const completion = await zenmuxClient.chat.completions.create({
-    model: CONFIG.llmModel,
-    messages: [
-      {
-        role: 'system',
-        content: `You are an elite real estate marketing copywriter.
+const VIDEO_STYLES = {
+  energetic: {
+    label: 'Energetic',
+    systemPrompt: `You are an elite real estate marketing copywriter.
 Write punchy, high-energy voiceover scripts for social media reels.
 Style: Direct, exciting, like a top-performing realtor talking to camera.
 Rules:
@@ -87,10 +81,85 @@ Rules:
 - No markdown, no bullet points — plain flowing sentences only
 - Use strong selling language (dream home, once-in-a-lifetime, act fast, etc.)
 - End with a clear call to action (e.g. "DM me NOW", "Link in bio to book a tour")`,
+  },
+  luxury: {
+    label: 'Luxury',
+    systemPrompt: `You are a luxury real estate marketing copywriter for high-end properties.
+Write elegant, sophisticated voiceover scripts for premium property videos.
+Style: Refined, aspirational, like a luxury concierge presenting an exclusive estate.
+Rules:
+- Exactly 60-80 English words
+- No markdown, no bullet points — plain flowing sentences only
+- Use premium language (exquisite, unparalleled, bespoke, masterfully crafted, etc.)
+- Emphasize lifestyle, exclusivity, and prestige
+- End with an inviting call to action (e.g. "Schedule your private showing today")`,
+  },
+  cinematic: {
+    label: 'Cinematic',
+    systemPrompt: `You are a cinematic storyteller for real estate video content.
+Write dramatic, visually evocative voiceover scripts that paint a picture.
+Style: Narrative, atmospheric, like a movie trailer narrator.
+Rules:
+- Exactly 60-80 English words
+- No markdown, no bullet points — plain flowing sentences only
+- Use vivid imagery and sensory language (imagine, picture this, sunlight pours through, etc.)
+- Build dramatic tension and end with a powerful reveal
+- End with a compelling call to action`,
+  },
+  warm: {
+    label: 'Warm & Inviting',
+    systemPrompt: `You are a friendly neighborhood real estate agent creating welcoming property videos.
+Write warm, relatable voiceover scripts that make viewers feel at home.
+Style: Friendly, genuine, like a trusted neighbor showing you around.
+Rules:
+- Exactly 60-80 English words
+- No markdown, no bullet points — plain flowing sentences only
+- Use warm, family-oriented language (welcome home, perfect for family gatherings, cozy, etc.)
+- Focus on livability, community, and making memories
+- End with an approachable call to action (e.g. "Come see it for yourself!")`,
+  },
+  modern: {
+    label: 'Modern Minimalist',
+    systemPrompt: `You are a modern real estate copywriter specializing in clean, minimal content.
+Write sleek, concise voiceover scripts with a contemporary edge.
+Style: Clean, confident, like a tech-forward real estate brand.
+Rules:
+- Exactly 60-80 English words
+- No markdown, no bullet points — plain flowing sentences only
+- Use crisp, modern language (smart design, seamless living, curated spaces, etc.)
+- Focus on design, efficiency, and modern lifestyle
+- End with a sharp call to action`,
+  },
+};
+
+/** Parse "[style:xxx]\n..." prefix from prompt, return { style, description } */
+function parseStyledPrompt(prompt) {
+  const match = prompt.match(/^\[style:(\w+)\]\n?([\s\S]*)$/);
+  if (match) {
+    return { style: match[1], description: match[2].trim() };
+  }
+  return { style: 'energetic', description: prompt };
+}
+
+// ─── Step 1: Generate Voiceover Script ───────────────────────────────────────
+
+async function generateScript(propertyDescription) {
+  console.log('\n📝 [Step 1] Generating voiceover script...');
+
+  const { style, description } = parseStyledPrompt(propertyDescription);
+  const styleConfig = VIDEO_STYLES[style] || VIDEO_STYLES.energetic;
+  console.log(`   Style: ${styleConfig.label}`);
+
+  const completion = await zenmuxClient.chat.completions.create({
+    model: CONFIG.llmModel,
+    messages: [
+      {
+        role: 'system',
+        content: styleConfig.systemPrompt,
       },
       {
         role: 'user',
-        content: `Write a 60-80 word voiceover script for this property:\n\n${propertyDescription}`,
+        content: `Write a 60-80 word voiceover script for this property:\n\n${description}`,
       },
     ],
   });

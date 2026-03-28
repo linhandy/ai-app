@@ -12,6 +12,14 @@ const supabase = createClient(
 type Tab    = 'url' | 'upload';
 type Status = 'idle' | 'fetching' | 'waiting' | 'processing' | 'done' | 'error';
 
+const VIDEO_STYLES = [
+  { id: 'energetic', label: 'Energetic', icon: '⚡', desc: 'High-energy, like a top agent' },
+  { id: 'luxury',    label: 'Luxury',    icon: '✨', desc: 'Elegant & sophisticated' },
+  { id: 'cinematic', label: 'Cinematic', icon: '🎬', desc: 'Dramatic, movie-trailer feel' },
+  { id: 'warm',      label: 'Warm',      icon: '🏡', desc: 'Friendly & family-oriented' },
+  { id: 'modern',    label: 'Modern',    icon: '🔷', desc: 'Clean & minimalist' },
+] as const;
+
 async function downloadBlob(url: string, filename: string) {
   const res = await fetch(url);
   const blob = await res.blob();
@@ -32,6 +40,7 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
   const [listingUrl, setUrl]    = useState('');
   const [images, setImages]     = useState<File[]>([]);
   const [description, setDesc]  = useState('');
+  const [style, setStyle]       = useState('energetic');
   const [status, setStatus]     = useState<Status>('idle');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [script, setScript]     = useState<string | null>(null);
@@ -183,7 +192,7 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
       const res  = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: description, sourceUrls: uploadedUrls }),
+        body: JSON.stringify({ prompt: description, sourceUrls: uploadedUrls, style }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -195,7 +204,7 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
 
   const reset = () => {
     setStatus('idle'); setVideoUrl(null); setScript(null);
-    setImages([]); setDesc(''); setUrl(''); setError(null); setVideoId(null);
+    setImages([]); setDesc(''); setUrl(''); setError(null); setVideoId(null); setStyle('energetic');
   };
 
   // ── Send email ────────────────────────────────────────────────────────────
@@ -468,6 +477,27 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
             onChange={e => e.target.files && addImages(e.target.files)} />
         </div>
       )}
+
+      {/* Video Style */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Video Style
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          {VIDEO_STYLES.map(s => (
+            <button key={s.id} type="button" onClick={() => setStyle(s.id)}
+              className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-center transition-all ${
+                style === s.id
+                  ? 'border-amber-500 bg-amber-500/10 text-white'
+                  : 'border-gray-700 bg-gray-900 text-gray-400 hover:border-gray-500 hover:text-gray-200'
+              }`}>
+              <span className="text-lg">{s.icon}</span>
+              <span className="text-xs font-medium">{s.label}</span>
+              <span className="text-[10px] text-gray-500 leading-tight">{s.desc}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Description */}
       <div>

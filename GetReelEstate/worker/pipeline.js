@@ -706,15 +706,21 @@ async function renderVideo({ images, audioPath, words, audioDuration, outputPath
   const clipPaths = [];
   const clipDurations = [];
 
-  // Render intro card
-  const hasIntro = propertyInfo.price || propertyInfo.beds;
-  if (hasIntro) {
-    console.log('   Rendering intro card...');
-    const introPath = path.join(workDir, 'clip_intro.mp4');
-    await renderIntroCard(introPath, propertyInfo, styleConfig, videoWidth, videoHeight, fps, introDuration);
-    clipPaths.push(introPath);
-    clipDurations.push(introDuration);
-    console.log('   ✓ intro card');
+  // Intro/outro cards require drawtext filter (not available in ffmpeg-static).
+  // Try to render intro; skip gracefully if drawtext is unavailable.
+  let hasIntro = false;
+  if (propertyInfo.price || propertyInfo.beds) {
+    try {
+      console.log('   Rendering intro card...');
+      const introPath = path.join(workDir, 'clip_intro.mp4');
+      await renderIntroCard(introPath, propertyInfo, styleConfig, videoWidth, videoHeight, fps, introDuration);
+      clipPaths.push(introPath);
+      clipDurations.push(introDuration);
+      hasIntro = true;
+      console.log('   ✓ intro card');
+    } catch (e) {
+      console.log(`   ⚠ Intro card skipped (drawtext unavailable): ${e.message?.slice(0, 80)}`);
+    }
   }
 
   // Pass 1: render each image with varied camera movements
@@ -729,15 +735,19 @@ async function renderVideo({ images, audioPath, words, audioDuration, outputPath
     clipDurations.push(durationPerImage);
   }
 
-  // Render outro card
-  console.log('   Rendering outro card...');
-  const outroPath = path.join(workDir, 'clip_outro.mp4');
-  await renderOutroCard(outroPath, styleConfig.ctaText, styleConfig, videoWidth, videoHeight, fps, outroDuration);
-  clipPaths.push(outroPath);
-  clipDurations.push(outroDuration);
-  console.log('   ✓ outro card');
+  // Try outro card; skip if drawtext unavailable
+  try {
+    console.log('   Rendering outro card...');
+    const outroPath = path.join(workDir, 'clip_outro.mp4');
+    await renderOutroCard(outroPath, styleConfig.ctaText, styleConfig, videoWidth, videoHeight, fps, outroDuration);
+    clipPaths.push(outroPath);
+    clipDurations.push(outroDuration);
+    console.log('   ✓ outro card');
+  } catch (e) {
+    console.log(`   ⚠ Outro card skipped (drawtext unavailable): ${e.message?.slice(0, 80)}`);
+  }
 
-  // Write ASS subtitles (offset by intro duration)
+  // Write ASS subtitles (offset by intro duration if present)
   const assPath = path.join(workDir, 'captions.ass');
   const introOffset = hasIntro ? introDuration : 0;
   writeAssSubtitles(words, assPath, videoWidth, videoHeight, introOffset);

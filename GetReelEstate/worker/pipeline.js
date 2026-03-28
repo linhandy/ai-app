@@ -20,6 +20,78 @@ ffmpeg.setFfmpegPath(ffmpegStatic);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Generate a minimal solid-color PNG file (no external deps). */
+function writeSolidPng(filePath, width, height, r, g, b) {
+  // Minimal valid PNG: 8-byte sig + IHDR + IDAT (uncompressed) + IEND
+  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+  // IHDR
+  const ihdr = Buffer.alloc(25);
+  ihdr.writeUInt32BE(13, 0);           // chunk length
+  ihdr.write('IHDR', 4);
+  ihdr.writeUInt32BE(width, 8);
+  ihdr.writeUInt32BE(height, 12);
+  ihdr[16] = 8;  // bit depth
+  ihdr[17] = 2;  // color type: RGB
+  ihdr[18] = 0;  // compression
+  ihdr[19] = 0;  // filter
+  ihdr[20] = 0;  // interlace
+  const ihdrCrc = crc32(ihdr.subarray(4, 21));
+  ihdr.writeInt32BE(ihdrCrc, 21);
+
+  // Build raw image data: each row = filter byte (0) + RGB pixels
+  const rowLen = 1 + width * 3;
+  const raw = Buffer.alloc(rowLen * height);
+  for (let y = 0; y < height; y++) {
+    const off = y * rowLen;
+    raw[off] = 0; // no filter
+    for (let x = 0; x < width; x++) {
+      raw[off + 1 + x * 3] = r;
+      raw[off + 2 + x * 3] = g;
+      raw[off + 3 + x * 3] = b;
+    }
+  }
+
+  // Deflate (zlib) the raw data — use Node's built-in zlib
+  const zlib = require('zlib');
+  const compressed = zlib.deflateSync(raw);
+
+  // IDAT
+  const idatData = Buffer.concat([Buffer.from('IDAT'), compressed]);
+  const idatLen = Buffer.alloc(4);
+  idatLen.writeUInt32BE(compressed.length, 0);
+  const idatCrc = Buffer.alloc(4);
+  idatCrc.writeInt32BE(crc32(idatData), 0);
+  const idat = Buffer.concat([idatLen, idatData, idatCrc]);
+
+  // IEND
+  const iend = Buffer.from([0, 0, 0, 0, 73, 69, 78, 68, 0xAE, 0x42, 0x60, 0x82]);
+
+  fs.writeFileSync(filePath, Buffer.concat([sig, ihdr, idat, iend]));
+}
+
+/** CRC32 for PNG chunks */
+function crc32(buf) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) {
+    crc ^= buf[i];
+    for (let j = 0; j < 8; j++) {
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xEDB88320 : 0);
+    }
+  }
+  return (crc ^ 0xFFFFFFFF) | 0;
+}
+
+/** Parse hex color "0xRRGGBB" to {r,g,b} */
+function parseHexColor(hex) {
+  const h = hex.replace('0x', '').replace('#', '');
+  return {
+    r: parseInt(h.substring(0, 2), 16) || 0,
+    g: parseInt(h.substring(2, 4), 16) || 0,
+    b: parseInt(h.substring(4, 6), 16) || 0,
+  };
+}
+
 function getAudioDuration(filePath) {
   return new Promise((resolve) => {
     ffmpeg.ffprobe(filePath, (err, meta) => {
@@ -427,10 +499,15 @@ function renderIntroCard(outputPath, propertyInfo, styleConfig, videoWidth, vide
 
   const filterChain = filters.length > 0 ? ',' + filters.join(',') : '';
 
+  // Generate a solid-color PNG (avoids -f lavfi which isn't available in ffmpeg-static)
+  const bgPng = outputPath.replace(/\.mp4$/, '_bg.png');
+  const { r, g, b } = parseHexColor(bg);
+  writeSolidPng(bgPng, videoWidth, videoHeight, r, g, b);
+
   return new Promise((resolve, reject) => {
     ffmpeg()
-      .input(`color=c=${bg}:s=${videoWidth}x${videoHeight}:d=${duration}:r=${fps}`)
-      .inputOptions(['-f lavfi'])
+      .input(bgPng)
+      .inputOptions(['-loop 1', `-framerate ${fps}`, `-t ${duration}`])
       .complexFilter(
         `[0:v]format=yuv420p${filterChain}[v]`
       )
@@ -442,7 +519,7 @@ function renderIntroCard(outputPath, propertyInfo, styleConfig, videoWidth, vide
       ])
       .output(outputPath)
       .on('stderr', () => {})
-      .on('end', resolve)
+      .on('end', () => { try { fs.unlinkSync(bgPng); } catch {}; resolve(); })
       .on('error', reject)
       .run();
   });
@@ -454,10 +531,15 @@ function renderOutroCard(outputPath, ctaText, styleConfig, videoWidth, videoHeig
   const accent = styleConfig.introAccent;
   const safeText = ctaText.replace(/'/g, "'\\\\\\''");
 
+  // Generate solid-color PNG (avoids -f lavfi)
+  const bgPng = outputPath.replace(/\.mp4$/, '_bg.png');
+  const { r, g, b } = parseHexColor(bg);
+  writeSolidPng(bgPng, videoWidth, videoHeight, r, g, b);
+
   return new Promise((resolve, reject) => {
     ffmpeg()
-      .input(`color=c=${bg}:s=${videoWidth}x${videoHeight}:d=${duration}:r=${fps}`)
-      .inputOptions(['-f lavfi'])
+      .input(bgPng)
+      .inputOptions(['-loop 1', `-framerate ${fps}`, `-t ${duration}`])
       .complexFilter(
         `[0:v]format=yuv420p,` +
         `drawtext=text='${safeText}':fontsize=${Math.floor(videoHeight * 0.05)}:fontcolor=${accent}:` +
@@ -475,7 +557,7 @@ function renderOutroCard(outputPath, ctaText, styleConfig, videoWidth, videoHeig
       ])
       .output(outputPath)
       .on('stderr', () => {})
-      .on('end', resolve)
+      .on('end', () => { try { fs.unlinkSync(bgPng); } catch {}; resolve(); })
       .on('error', reject)
       .run();
   });

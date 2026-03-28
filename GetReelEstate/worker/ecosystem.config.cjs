@@ -3,6 +3,7 @@ module.exports = {
     {
       name: 'getreel-worker',
       script: 'worker.js',
+      cwd: __dirname,        // 确保 dotenv 找到同目录的 .env
       interpreter: 'node',
       interpreter_args: '--experimental-vm-modules',
       instances: 1,          // 单进程，防止同一任务被双处理

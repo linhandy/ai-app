@@ -65,3 +65,88 @@ Stripe 支付接入
 资金中转：Payoneer (派安盈) （用他们提供的虚拟美国账户收 Lemon Squeezy 的钱）。
 支付算力：申请 Payoneer 万事达卡 或注册 WildCard 虚拟卡，用里面的美元余额直接购买国外的高昂 AI API。
 这套体系全是在国内用身份证/护照就能搞定的，合规、安全、而且闭环完整！
+
+Worker 部署到阿里云 ECS
+1. ECS 环境准备（首次）
+SSH 登录 ECS 后执行：
+
+
+# 安装 Node.js 20 LTS
+curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+sudo yum install -y nodejs git   # CentOS/Alibaba Linux
+# 或 Ubuntu: sudo apt install -y nodejs git
+
+# 安装 pm2
+sudo npm install -g pm2
+
+# 验证
+node -v   # ≥ 20
+pm2 -v
+2. 拉代码
+
+cd ~
+git clone https://github.com/linhandy/ai-app.git
+cd ai-app/GetReelEstate/worker
+npm install --production
+3. 配置 .env（只需做一次）
+
+cp /dev/null .env   # 创建空文件
+nano .env           # 或 vim .env
+填入以下内容：
+
+
+SUPABASE_URL=https://zzqylewczbtqkltvxbut.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=你的service_role_key
+ZENMUX_API_KEY=你的zenmux_key
+ZENMUX_BASE_URL=https://zenmux.ai/api/v1
+LLM_MODEL=google/gemini-2.5-flash
+TTS_VOICE=en-US-GuyNeural
+4. 启动 Worker
+
+pm2 start ecosystem.config.cjs
+pm2 save                      # 保存进程列表
+pm2 startup                   # 生成开机自启命令（按提示执行）
+5. 验证
+
+pm2 status                    # 应显示 online
+pm2 logs getreel-worker --lines 30
+输出应看到：
+
+
+[worker] started — listening for paid pending tasks…
+[worker] Realtime status: SUBSCRIBED
+6. 后续更新（一条命令）
+
+cd ~/ai-app && bash GetReelEstate/worker/deploy.sh
+
+这是 Clerk 跨域认证问题。Vercel 反向代理后，Clerk 发现请求来自 handyai.cc 但应用配置的是 ai-app-mauve-six.vercel.app，所以触发了 handshake 跳转，最终乱掉。
+
+多 zone 代理 + Clerk 不兼容，因为 Clerk 的 cookie 和认证绑定在域名上。
+
+推荐方案：用子域名替代路径路由
+不用 proxy，直接给 GetReelEstate 绑一个子域名：
+
+
+handyai.cc          → love-detector（现状不变）
+app.handyai.cc      → GetReelEstate（直连，无代理）
+步骤：
+
+① DNS 加一条 CNAME（在你的域名服务商控制台）
+
+
+app.handyai.cc  →  CNAME  →  cname.vercel-dns.com
+② Vercel GetReelEstate 项目绑定自定义域名
+
+GetReelEstate 项目 → Settings → Domains → 添加 app.handyai.cc
+③ Clerk 允许新域名
+
+Clerk Dashboard → 你的应用 → Domains → 添加 app.handyai.cc
+④ 更新 GetReelEstate 环境变量（Vercel 控制台）
+
+
+NEXT_PUBLIC_APP_URL = https://app.handyai.cc
+⑤ 把 love-detector 首页的链接改成子域名，我来改代码
+
+cd ~/ai-app/GetReelEstate/worker
+git pull origin main
+pm2 restart ecosystem.config.cjs

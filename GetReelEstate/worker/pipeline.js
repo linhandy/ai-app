@@ -13,6 +13,7 @@ import OpenAI from 'openai';
 import { MsEdgeTTS, OUTPUT_FORMAT, MetadataOptions } from 'msedge-tts';
 import fs, { mkdirSync } from 'fs';
 import path from 'path';
+import zlib from 'zlib';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegStatic from 'ffmpeg-static';
 
@@ -53,7 +54,6 @@ function writeSolidPng(filePath, width, height, r, g, b) {
   }
 
   // Deflate (zlib) the raw data — use Node's built-in zlib
-  const zlib = require('zlib');
   const compressed = zlib.deflateSync(raw);
 
   // IDAT

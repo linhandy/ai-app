@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+:root {
+  /* Surface */
+  --bg: #F5F4F1;
+  --surface: #FFFFFF;
+  --surface-2: #F0EFEC;
+  --surface-3: #E8E7E3;
+
+  /* Header */
+  --header-bg: #1A1C1E;
+  --header-text: #FFFFFF;
+  --header-text-muted: rgba(255,255,255,0.55);
+
+  /* Sidebar */
+  --sidebar-bg: #F5F4F1;
+  --sidebar-border: #E2E1DC;
+
+  /* Accent */
+  --accent: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-light: #EFF6FF;
+  --accent-text: #1E40AF;
+
+  /* Text */
+  --text-1: #1A1A1A;
+  --text-2: #4B5563;
+  --text-3: #9CA3AF;
+  --text-4: #D1D5DB;
+
+  /* Border */
+  --border: #E2E1DC;
+  --border-strong: #C8C6C0;
+
+  /* Status */
+  --success: #059669;
+  --success-bg: #ECFDF5;
+  --warning: #D97706;
+  --warning-bg: #FFFBEB;
+  --error: #DC2626;
+  --error-bg: #FEF2F2;
+
+  /* Canvas */
+  --canvas-bg: #FAFAF8;
+  --canvas-grid: #E8E7E3;
+  --dim-color: #2563EB;
+}
+
+@theme inline {
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-text-1: var(--text-1);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* Form elements */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
+
+/* Canvas grid pattern */
+.canvas-grid {
+  background-color: var(--canvas-bg);
+  background-image:
+    linear-gradient(var(--canvas-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--canvas-grid) 1px, transparent 1px);
+  background-size: 50px 50px;
+}

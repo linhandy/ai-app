@@ -1,0 +1,17 @@
+{
+  "name": "yijianfang-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "易建房后台生成 Worker — 运行于 VPS，用 pm2 管理",
+  "scripts": {
+    "start": "tsx worker.ts",
+    "dev": "tsx --watch worker.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "*",
+    "dotenv": "*",
+    "openai": "*",
+    "tsx": "*"
+  }
+}

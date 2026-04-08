@@ -10,7 +10,17 @@ const supabase = createClient(
 );
 
 type Tab    = 'url' | 'upload';
-type Status = 'idle' | 'fetching' | 'waiting' | 'processing' | 'done' | 'error';
+type Status = 'idle' | 'fetching' | 'filling' | 'waiting' | 'processing' | 'done' | 'error';
+
+const QUICK_DEMO = {
+  description: '5BR/5BA luxury home in Austin TX, $1.7M. Stunning pool, chef\'s kitchen, 3-car garage, 4,820 sqft, top-rated schools. Move-in ready — turnkey perfection.',
+  photoUrls: [
+    'https://photos.zillowstatic.com/fp/19f50fcfad0e24a1a8e49787a41f5c2e-cc_ft_1536.jpg',
+    'https://photos.zillowstatic.com/fp/506837ba617ca729d59d46be7e01af3c-cc_ft_1536.jpg',
+    'https://photos.zillowstatic.com/fp/454c9488bb5be80f4f5e72ae03956eb7-cc_ft_1536.jpg',
+    'https://photos.zillowstatic.com/fp/64c84a2522a77476777d88e51b6cd1b1-cc_ft_1536.jpg',
+  ],
+};
 
 const VIDEO_STYLES = [
   { id: 'energetic', label: 'Energetic', icon: '⚡', desc: 'High-energy, like a top agent' },
@@ -128,8 +138,31 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
     return () => { clearInterval(poll); channel.unsubscribe(); };
   }, [videoId]);
 
+  // ── Quick fill with demo data ─────────────────────────────────────────────
+  const fillFromDemo = async () => {
+    setStatus('filling'); setError(null);
+    try {
+      const files = await Promise.all(
+        QUICK_DEMO.photoUrls.map(async (url, i) => {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`Failed to fetch demo image ${i + 1}`);
+          const blob = await res.blob();
+          return new File([blob], `demo_${i}.jpg`, { type: 'image/jpeg' });
+        })
+      );
+      setImages(files);
+      setDesc(QUICK_DEMO.description);
+      setTab('upload');
+    } catch (err: any) {
+      setError('Could not load demo photos: ' + err.message);
+    } finally {
+      setStatus('idle');
+    }
+  };
+
   // ── Image helpers ─────────────────────────────────────────────────────────
-  const addImages = (files: FileList | File[]) => {
+  const addImages = (files: FileList | File[] | null | undefined) => {
+    if (!files) return;
     const valid = Array.from(files).filter(f => f.type.startsWith('image/'));
     setImages(prev => [...prev, ...valid].slice(0, 7));
   };
@@ -410,6 +443,21 @@ export default function VideoGenerator({ defaultVideoId }: Props) {
   // ── Main form ─────────────────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Quick fill */}
+      <div className="flex items-center justify-between bg-gray-900/50 border border-white/5 rounded-xl px-4 py-3">
+        <div>
+          <p className="text-sm font-medium text-gray-200">快捷生成 / Quick Demo</p>
+          <p className="text-xs text-gray-500 mt-0.5">Use a sample Austin TX luxury listing</p>
+        </div>
+        <button type="button" onClick={fillFromDemo}
+          disabled={status === 'filling'}
+          className="bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50 shrink-0">
+          {status === 'filling'
+            ? <span className="flex items-center gap-2"><span className="w-3.5 h-3.5 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />Loading…</span>
+            : '⚡ Quick Fill'}
+        </button>
+      </div>
+
       {/* Tab switcher */}
       <div className="flex bg-gray-900 rounded-xl p-1 border border-white/5">
         {(['url', 'upload'] as Tab[]).map(t => (

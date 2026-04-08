@@ -30,6 +30,18 @@ const APPS = [
     href: process.env.NEXT_PUBLIC_GETREELESTATE_URL || 'https://app.handyai.cc',
     external: true,
   },
+  {
+    id: 'hourse-designer',
+    name: '自建房设计大师',
+    description: 'AI 自动生成专业 CAD 户型图，支持快捷设计、草图识别、AI 评分优化',
+    icon: '🏠',
+    tag: 'AI 建房',
+    meta: '专业CAD · 免费',
+    gradient: 'from-emerald-500 to-teal-600',
+    shadow: 'shadow-emerald-500/30',
+    href: process.env.NEXT_PUBLIC_HOURSE_DESIGNER_URL || 'http://localhost:3000',
+    external: true,
+  },
 ]
 
 export default function AppStorePage() {

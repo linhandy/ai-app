@@ -398,16 +398,24 @@ export default function DesignWorkspace() {
         )}
       </aside>
 
-      {/* ── Main canvas ── */}
-      <main className="flex-1 overflow-hidden">
-        {slot.status === 'done' && slot.design ? (
-          <FloorPlanViewer
-            design={slot.design}
-            province={globalSpec.province}
-            floorHeight={globalSpec.floorHeight}
-            onDesignUpdate={handleDesignUpdate}
-          />
-        ) : (
+      {/* ── Main canvas — keep all completed viewers mounted to preserve scoring ── */}
+      <main className="flex-1 overflow-hidden relative">
+        {(['param', 'quick', 'sketch'] as Mode[]).map(m => {
+          const s = slots[m];
+          if (s.status !== 'done' || !s.design) return null;
+          return (
+            <div key={m} className="absolute inset-0" style={{ display: m === mode ? 'block' : 'none' }}>
+              <FloorPlanViewer
+                design={s.design}
+                province={globalSpec.province}
+                floorHeight={globalSpec.floorHeight}
+                onDesignUpdate={m === mode ? handleDesignUpdate : undefined}
+              />
+            </div>
+          );
+        })}
+        {/* Show empty canvas if current mode has no design */}
+        {(slot.status !== 'done' || !slot.design) && (
           <EmptyCanvas status={slot.status} progress={slot.progress} progressPct={slot.progressPct} />
         )}
       </main>

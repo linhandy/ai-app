@@ -52,23 +52,39 @@ export async function POST(req: NextRequest) {
     });
 
     const content = resp.choices[0]?.message?.content || '';
-    const match = content.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('识别结果格式异常');
+    console.log('[sketch-analyze] raw length:', content.length, 'first 200:', content.slice(0, 200));
 
+    // Try to extract JSON — LLM often wraps in ```json blocks
+    const cleaned = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (!match) {
+      console.error('[sketch-analyze] no JSON found in:', content.slice(0, 500));
+      throw new Error('识别结果格式异常，请重试');
+    }
+
+    // Parse — if summary has unescaped newlines, try to fix them
+    let jsonStr = match[0];
     try {
-      return NextResponse.json(JSON.parse(match[0]));
-    } catch {
-      // Try repair truncated JSON
-      let fragment = match[0];
+      return NextResponse.json(JSON.parse(jsonStr));
+    } catch (parseErr) {
+      console.warn('[sketch-analyze] JSON parse failed, attempting repair');
+      // Fix common LLM issues: unescaped newlines in string values
+      jsonStr = jsonStr.replace(/[\r\n]+/g, '\\n');
+      // Close unclosed brackets
       let braces = 0, brackets = 0;
-      for (const ch of fragment) {
+      for (const ch of jsonStr) {
         if (ch === '{') braces++; else if (ch === '}') braces--;
         if (ch === '[') brackets++; else if (ch === ']') brackets--;
       }
-      fragment = fragment.replace(/,"?[^"]*$/, '');
-      for (let i = 0; i < brackets; i++) fragment += ']';
-      for (let i = 0; i < braces; i++) fragment += '}';
-      return NextResponse.json(JSON.parse(fragment));
+      jsonStr = jsonStr.replace(/,\s*"?[^"{}[\]]*$/, '');
+      for (let i = 0; i < brackets; i++) jsonStr += ']';
+      for (let i = 0; i < braces; i++) jsonStr += '}';
+      try {
+        return NextResponse.json(JSON.parse(jsonStr));
+      } catch {
+        console.error('[sketch-analyze] repair failed:', jsonStr.slice(0, 300));
+        throw new Error('AI 返回格式异常，请重试');
+      }
     }
   } catch (e: any) {
     console.error('[sketch-analyze]', e?.message || e);

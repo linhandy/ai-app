@@ -29,14 +29,14 @@
 
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
-import { generateFloorPlan, generateFromSketch } from '../lib/llm';
+import { generateFloorPlan, generateFromSketch, generateFromQuickPrompt } from '../lib/llm';
 import type { DesignInput, GlobalSpec } from '../lib/types';
 
 // ─── Supabase ─────────────────────────────────────────────────────────────────
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!, // uses service role key (same as Next.js app)
 );
 
 // ─── In-process dedup ─────────────────────────────────────────────────────────
@@ -61,51 +61,57 @@ async function processJob(jobId: string) {
   inFlight.add(jobId);
   console.log(`[worker] ▶ job ${jobId}`);
 
-  // Optimistic lock: pending → processing
-  const { error: lockErr } = await supabase
+  // Optimistic lock: claim only if still pending — prevents double-processing with after()
+  const { data: claimed, error: lockErr } = await supabase
     .from('design_jobs')
     .update({ status: 'processing', updated_at: new Date().toISOString() })
     .eq('id', jobId)
-    .eq('status', 'pending');
-
-  if (lockErr) {
-    console.error(`[worker] lock failed ${jobId}:`, lockErr.message);
-    inFlight.delete(jobId);
-    return;
-  }
-
-  const { data: job, error: fetchErr } = await supabase
-    .from('design_jobs')
-    .select('*')
-    .eq('id', jobId)
-    .eq('status', 'processing')
+    .eq('status', 'pending')
+    .select('id, user_id, title, input_params')
     .single();
 
-  if (fetchErr || !job) {
-    console.log(`[worker] job ${jobId} already taken`);
+  if (lockErr || !claimed) {
+    console.log(`[worker] job ${jobId} already taken, skipping`);
     inFlight.delete(jobId);
     return;
   }
 
   try {
-    const params = job.input_params as Record<string, unknown>;
+    const params = claimed.input_params as Record<string, unknown>;
 
     if (params.mode === 'sketch') {
-      // ── Sketch: single LLM call, auto-detect dims + orientation ────────────
       await upd(jobId, { progress: 15, progress_msg: 'AI 正在识别草图中的房间布局...' });
-      const imageBase64 = params.imageBase64 as string;
-      const design = await generateFromSketch(imageBase64);
+      const design = await generateFromSketch(params.imageBase64 as string);
       await upd(jobId, { status: 'done', progress: 100, progress_msg: '草图识别完成', design_data: design });
       console.log(`[worker] ✓ sketch job ${jobId}`);
 
+    } else if (params.mode === 'quick') {
+      await upd(jobId, { progress: 20, progress_msg: 'AI 正在理解设计需求...' });
+      const design = await generateFromQuickPrompt(
+        params.prompt as string,
+        params.landWidth as number,
+        params.landHeight as number,
+        params.orientation as string,
+      );
+      await upd(jobId, { status: 'done', progress: 100, progress_msg: '快捷设计完成', design_data: design });
+
+      void supabase.from('house_designs').insert({
+        user_id: claimed.user_id,
+        title: `快捷设计 · ${params.landWidth}×${params.landHeight}m`,
+        design_data: design,
+        land_params: { landWidth: params.landWidth, landHeight: params.landHeight, orientation: params.orientation },
+      }).then(({ error: e }) => { if (e) console.warn('[worker] auto-save failed:', e.message); });
+
+      console.log(`[worker] ✓ quick job ${jobId}`);
+
     } else {
-      // ── Param mode: floor-by-floor with progress ────────────────────────────
+      // param mode
       const input: DesignInput = {
-        landWidth:          params.landWidth as number,
-        landHeight:         params.landHeight as number,
-        orientation:        params.orientation as DesignInput['orientation'],
-        numFloors:          params.numFloors as number,
-        floorRequirements:  params.floorRequirements as string[],
+        landWidth:         params.landWidth as number,
+        landHeight:        params.landHeight as number,
+        orientation:       params.orientation as DesignInput['orientation'],
+        numFloors:         params.numFloors as number,
+        floorRequirements: params.floorRequirements as string[],
       };
       const globalSpec = (params.globalSpec ?? {}) as Partial<GlobalSpec>;
       const total = input.numFloors;
@@ -123,10 +129,9 @@ async function processJob(jobId: string) {
 
       await upd(jobId, { status: 'done', progress: 100, progress_msg: '户型设计生成完成', design_data: design });
 
-      // Fire-and-forget: auto-save to house_designs
       void supabase.from('house_designs').insert({
-        user_id: job.user_id,
-        title: job.title ?? `${input.landWidth}×${input.landHeight}m · ${total}层`,
+        user_id: claimed.user_id,
+        title: claimed.title ?? `${input.landWidth}×${input.landHeight}m · ${total}层`,
         design_data: design,
         land_params: {
           landWidth: input.landWidth, landHeight: input.landHeight,

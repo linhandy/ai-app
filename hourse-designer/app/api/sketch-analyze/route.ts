@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 const zenmux = new OpenAI({
   apiKey: process.env.ZENMUX_API_KEY!,
   baseURL: process.env.ZENMUX_BASE_URL || 'https://zenmux.ai/api/v1',

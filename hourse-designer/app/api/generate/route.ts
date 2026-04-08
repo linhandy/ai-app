@@ -13,8 +13,22 @@ async function processJob(jobId: string, params: Record<string, unknown>, userId
   const upd = (fields: Record<string, unknown>) =>
     supabaseAdmin.from('design_jobs').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', jobId);
 
+  // Optimistic lock: only proceed if we can claim the job from 'pending'.
+  // If a pm2 worker already claimed it, this returns no rows and we bail out.
+  const { data: claimed } = await supabaseAdmin
+    .from('design_jobs')
+    .update({ status: 'processing', updated_at: new Date().toISOString() })
+    .eq('id', jobId)
+    .eq('status', 'pending')
+    .select('id')
+    .single();
+
+  if (!claimed) {
+    console.log(`[generate/after] job ${jobId} already claimed by pm2 worker, skipping`);
+    return;
+  }
+
   try {
-    await upd({ status: 'processing' });
 
     if (params.mode === 'sketch') {
       await upd({ progress: 20, progress_msg: 'AI 正在识别草图中的房间布局...' });

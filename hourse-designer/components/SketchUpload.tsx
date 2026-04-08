@@ -30,10 +30,26 @@ export default function SketchUpload({ onGenerate, onGenerateFromAnalysis, disab
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (e) => {
-      setPreview(e.target?.result as string);
-      setAnalysis(null);
-      setEditableText('');
-      setError('');
+      const original = e.target?.result as string;
+      // Compress: resize to max 1200px, quality 0.85 to stay under Vercel 4.5MB body limit
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1200;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+          else { width = Math.round(width * MAX / height); height = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+        const compressed = canvas.toDataURL('image/jpeg', 0.85);
+        setPreview(compressed);
+        setAnalysis(null);
+        setEditableText('');
+        setError('');
+      };
+      img.src = original;
     };
     reader.readAsDataURL(file);
   }, []);

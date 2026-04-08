@@ -39,7 +39,7 @@ const APPS = [
     meta: '专业CAD · 免费',
     gradient: 'from-emerald-500 to-teal-600',
     shadow: 'shadow-emerald-500/30',
-    href: process.env.NEXT_PUBLIC_HOURSE_DESIGNER_URL || 'http://localhost:3000',
+    href: process.env.NEXT_PUBLIC_HOURSE_DESIGNER_URL || 'https://hourse-designer.vercel.app',
     external: true,
   },
 ]

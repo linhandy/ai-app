@@ -1,61 +1,168 @@
-import fs from 'fs'
-import path from 'path'
+import { createClient, Client } from '@libsql/client'
 import crypto from 'crypto'
+import path from 'path'
 
 export type OrderStatus = 'pending' | 'paid' | 'generating' | 'done' | 'failed'
+export type QualityTier = 'standard' | 'premium' | 'ultra'
+export type DesignMode = 'redesign' | 'virtual_staging' | 'paint_walls' | 'change_lighting' | 'add_furniture'
 
 export interface Order {
   id: string
   status: OrderStatus
   style: string
+  quality: QualityTier
+  mode: DesignMode
   uploadId: string
+  roomType: string
+  customPrompt?: string
   resultUrl?: string
   alipayTradeNo?: string
   createdAt: number
   updatedAt: number
 }
 
-function dbPath(): string {
-  return process.env.ORDERS_FILE ?? path.join(process.cwd(), 'orders.json')
+function dbUrl(): string {
+  const raw = process.env.ORDERS_DB ?? path.join(process.cwd(), 'orders.db')
+  if (raw === ':memory:') return ':memory:'
+  return `file:${raw}`
 }
 
-function readAll(): Record<string, Order> {
-  try {
-    const raw = fs.readFileSync(dbPath(), 'utf-8')
-    return JSON.parse(raw)
-  } catch {
-    return {}
+// Singleton client — one connection per process
+let _client: Client | null = null
+
+/** Close and reset the client (used in tests to release the DB file lock). */
+export function closeDb(): void {
+  if (_client) {
+    _client.close()
+    _client = null
   }
 }
 
-function writeAll(db: Record<string, Order>): void {
-  fs.writeFileSync(dbPath(), JSON.stringify(db, null, 2), 'utf-8')
+async function getClient(): Promise<Client> {
+  if (_client) return _client
+
+  _client = createClient({ url: dbUrl() })
+
+  await _client.execute(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id            TEXT PRIMARY KEY,
+      status        TEXT NOT NULL DEFAULT 'pending',
+      style         TEXT NOT NULL,
+      quality       TEXT NOT NULL DEFAULT 'standard',
+      mode          TEXT NOT NULL DEFAULT 'redesign',
+      uploadId      TEXT NOT NULL,
+      resultUrl     TEXT,
+      alipayTradeNo TEXT,
+      createdAt     INTEGER NOT NULL,
+      updatedAt     INTEGER NOT NULL
+    )
+  `)
+
+  // Migration: add mode column for existing databases
+  try {
+    await _client.execute(`ALTER TABLE orders ADD COLUMN mode TEXT NOT NULL DEFAULT 'redesign'`)
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: add roomType column for existing databases
+  try {
+    await _client.execute(`ALTER TABLE orders ADD COLUMN roomType TEXT NOT NULL DEFAULT 'living_room'`)
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: add customPrompt column for existing databases
+  try {
+    await _client.execute(`ALTER TABLE orders ADD COLUMN customPrompt TEXT`)
+  } catch {
+    // Column already exists — ignore
+  }
+
+  return _client
 }
 
-export function createOrder(params: { style: string; uploadId: string }): Order {
-  const db = readAll()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToOrder(row: Record<string, any>): Order {
+  return {
+    id: String(row.id),
+    status: row.status as OrderStatus,
+    style: String(row.style),
+    quality: (row.quality ?? 'standard') as QualityTier,
+    mode: (row.mode ?? 'redesign') as DesignMode,
+    uploadId: String(row.uploadId),
+    roomType: String(row.roomType ?? 'living_room'),
+    customPrompt: row.customPrompt ?? undefined,
+    resultUrl: row.resultUrl ?? undefined,
+    alipayTradeNo: row.alipayTradeNo ?? undefined,
+    createdAt: Number(row.createdAt),
+    updatedAt: Number(row.updatedAt),
+  }
+}
+
+export async function createOrder(params: {
+  style: string
+  uploadId: string
+  quality?: QualityTier
+  mode?: DesignMode
+  roomType?: string
+  customPrompt?: string
+}): Promise<Order> {
+  const client = await getClient()
   const order: Order = {
     id: `ord_${crypto.randomBytes(8).toString('hex')}`,
     status: 'pending',
     style: params.style,
+    quality: params.quality ?? 'standard',
+    mode: params.mode ?? 'redesign',
     uploadId: params.uploadId,
+    roomType: params.roomType ?? 'living_room',
+    customPrompt: params.customPrompt,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }
-  db[order.id] = order
-  writeAll(db)
+
+  await client.execute({
+    sql: `INSERT INTO orders (id, status, style, quality, mode, uploadId, roomType, customPrompt, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [order.id, order.status, order.style, order.quality, order.mode, order.uploadId,
+           order.roomType, order.customPrompt ?? null, order.createdAt, order.updatedAt],
+  })
+
   return order
 }
 
-export function getOrder(id: string): Order | null {
-  const db = readAll()
-  return db[id] ?? null
+export async function getOrder(id: string): Promise<Order | null> {
+  const client = await getClient()
+  const result = await client.execute({
+    sql: 'SELECT * FROM orders WHERE id = ?',
+    args: [id],
+  })
+
+  if (result.rows.length === 0) return null
+  return rowToOrder(result.rows[0])
 }
 
-export function updateOrder(id: string, patch: Partial<Order>): Order | null {
-  const db = readAll()
-  if (!db[id]) return null
-  db[id] = { ...db[id], ...patch, updatedAt: Date.now() }
-  writeAll(db)
-  return db[id]
+export async function updateOrder(id: string, patch: Partial<Order>): Promise<Order | null> {
+  const client = await getClient()
+
+  const fields: string[] = []
+  const values: (string | number | null)[] = []
+
+  if (patch.status !== undefined) { fields.push('status = ?'); values.push(patch.status) }
+  if (patch.resultUrl !== undefined) { fields.push('resultUrl = ?'); values.push(patch.resultUrl ?? null) }
+  if (patch.alipayTradeNo !== undefined) { fields.push('alipayTradeNo = ?'); values.push(patch.alipayTradeNo ?? null) }
+
+  if (fields.length === 0) return getOrder(id)
+
+  fields.push('updatedAt = ?')
+  values.push(Date.now())
+  values.push(id)
+
+  await client.execute({
+    sql: `UPDATE orders SET ${fields.join(', ')} WHERE id = ?`,
+    args: values,
+  })
+
+  return getOrder(id)
 }

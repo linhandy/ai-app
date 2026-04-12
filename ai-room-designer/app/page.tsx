@@ -1,12 +1,13 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 const STYLES = [
-  { key: '北欧简约', color: '#E8F0E9', desc: '原木 · 白墙 · 绿植' },
-  { key: '现代轻奢', color: '#E8E4F0', desc: '大理石 · 金属 · 灰调' },
-  { key: '新中式',   color: '#F0E8E0', desc: '禅意 · 木格 · 留白' },
-  { key: '侘寂风',   color: '#E8E4DC', desc: '不完美 · 自然 · 素色' },
-  { key: '工业风',   color: '#E0E0E0', desc: '裸砖 · 铁艺 · 水泥灰' },
-  { key: '奶油风',   color: '#FFF8ED', desc: '米白 · 柔软 · 治愈系' },
+  { key: '北欧简约', desc: '原木 · 白墙 · 绿植' },
+  { key: '现代轻奢', desc: '大理石 · 金属 · 灰调' },
+  { key: '新中式',   desc: '禅意 · 木格 · 留白' },
+  { key: '侘寂风',   desc: '不完美 · 自然 · 素色' },
+  { key: '工业风',   desc: '裸砖 · 铁艺 · 水泥灰' },
+  { key: '奶油风',   desc: '米白 · 柔软 · 治愈系' },
 ]
 
 export default function HomePage() {
@@ -45,24 +46,18 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Before/After preview placeholder */}
+        {/* Before/After preview */}
         <div className="relative w-full max-w-[1000px] h-[380px] rounded-xl overflow-hidden border border-gray-800 mt-4">
           <div className="absolute inset-0 flex">
-            <div className="w-1/2 bg-gray-800 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-gray-500 text-4xl mb-2">🏠</div>
-                <div className="text-gray-500 text-sm">改造前</div>
-              </div>
+            <div className="w-1/2 relative">
+              <Image src="/styles/before-sample.jpg" alt="改造前" fill className="object-cover" />
             </div>
-            <div className="w-1/2 bg-gray-700 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-amber-500 text-4xl mb-2">✨</div>
-                <div className="text-amber-500 text-sm font-semibold">AI效果图</div>
-              </div>
+            <div className="w-1/2 relative">
+              <Image src="/styles/after-nordic.jpg" alt="北欧简约效果图" fill className="object-cover" />
             </div>
           </div>
           <div className="absolute top-3 left-3 bg-black/80 text-white text-xs font-semibold px-3 h-7 flex items-center rounded">改造前</div>
-          <div className="absolute top-3 right-3 bg-amber-500 text-black text-xs font-bold px-3 h-7 flex items-center rounded">AI效果图</div>
+          <div className="absolute top-3 right-3 bg-amber-500 text-black text-xs font-bold px-3 h-7 flex items-center rounded">✦ AI效果图</div>
           <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-white" />
         </div>
       </section>
@@ -72,10 +67,10 @@ export default function HomePage() {
         <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>6种热门装修风格，一键切换</h2>
         <p className="text-gray-500 text-sm text-center">覆盖当下最流行的室内设计风格，精准还原每一种美学</p>
         <div className="grid grid-cols-6 gap-3 w-full">
-          {STYLES.map(({ key, color, desc }) => (
+          {STYLES.map(({ key, desc }) => (
             <div key={key} className="rounded-lg overflow-hidden border border-gray-800 cursor-pointer hover:border-amber-500 transition-colors group">
-              <div className="h-[110px] flex items-center justify-center text-2xl" style={{ backgroundColor: color }}>
-                🏡
+              <div className="h-[110px] relative">
+                <Image src={`/styles/${key}.jpg`} alt={key} fill className="object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="bg-[#0A0A0A] px-3 py-2">
                 <div className="text-white text-[13px] font-semibold">{key}</div>

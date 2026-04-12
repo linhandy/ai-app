@@ -1,4 +1,5 @@
 'use client'
+import Image from 'next/image'
 
 const STYLES = [
   { key: '北欧简约', desc: '原木 · 白墙 · 绿植' },
@@ -8,15 +9,6 @@ const STYLES = [
   { key: '工业风',   desc: '裸砖 · 铁艺 · 水泥灰' },
   { key: '奶油风',   desc: '米白 · 柔软 · 治愈系' },
 ]
-
-const STYLE_COLORS: Record<string, string> = {
-  '北欧简约': '#E8F0E9',
-  '现代轻奢': '#E8E4F0',
-  '新中式':   '#F0E8E0',
-  '侘寂风':   '#E8E4DC',
-  '工业风':   '#E0E0E0',
-  '奶油风':   '#FFF8ED',
-}
 
 interface Props {
   selected: string
@@ -33,8 +25,8 @@ export default function StyleSelector({ selected, onChange }: Props) {
           className={`rounded-lg overflow-hidden border-2 text-left transition-all
             ${selected === key ? 'border-amber-500' : 'border-gray-800 hover:border-gray-600'}`}
         >
-          <div className="h-[62px] flex items-center justify-center text-2xl" style={{ backgroundColor: STYLE_COLORS[key] }}>
-            🏡
+          <div className="h-[62px] relative">
+            <Image src={`/styles/${key}.jpg`} alt={key} fill className="object-cover" />
           </div>
           <div className="bg-[#0D0D0D] px-3 py-2">
             <div className={`text-xs font-semibold ${selected === key ? 'text-amber-500' : 'text-white'}`}>

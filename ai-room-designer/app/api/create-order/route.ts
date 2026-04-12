@@ -4,7 +4,7 @@ import { createQROrder } from '@/lib/alipay'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
 import { isRateLimited } from '@/lib/rate-limit'
-import { ALL_ROOM_TYPE_KEYS } from '@/lib/design-config'
+import { ALL_ROOM_TYPE_KEYS, ALL_STYLE_KEYS, DESIGN_MODES } from '@/lib/design-config'
 import QRCode from 'qrcode'
 import path from 'path'
 import fs from 'fs'
@@ -46,7 +46,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无效的房间类型' }, { status: 400 })
     }
 
-    const trimmedPrompt = customPrompt?.trim().slice(0, 200)
+    if (!ALL_STYLE_KEYS.includes(style)) {
+      return NextResponse.json({ error: '无效的风格' }, { status: 400 })
+    }
+
+    const validModes = DESIGN_MODES.map((m) => m.key)
+    if (!validModes.includes(mode as string)) {
+      return NextResponse.json({ error: '无效的设计模式' }, { status: 400 })
+    }
+
+    const trimmedPrompt = customPrompt?.trim().slice(0, 200) || undefined
 
     const amount = QUALITY_PRICE[quality] ?? 1
 

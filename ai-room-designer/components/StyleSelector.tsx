@@ -1,6 +1,6 @@
 'use client'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { STYLE_CATEGORIES } from '@/lib/design-config'
 
 // Gradient fallback colors per category key (shown while thumbnail loads or on error)
@@ -27,12 +27,19 @@ export default function StyleSelector({ selected, onChange }: Props) {
   const currentCategory = STYLE_CATEGORIES.find((c) => c.key === activeCat) ?? STYLE_CATEGORIES[0]
   const gradient = CATEGORY_GRADIENT[activeCat] ?? 'from-gray-200 to-gray-400'
 
+  // Sync active category tab when selected style is changed externally
+  useEffect(() => {
+    const cat = STYLE_CATEGORIES.find((c) => c.styles.some((s) => s.key === selected))
+    if (cat && cat.key !== activeCat) setActiveCat(cat.key)
+  }, [selected]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="flex flex-col gap-3">
       {/* Category tab bar */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
         {STYLE_CATEGORIES.map((cat) => (
           <button
+            type="button"
             key={cat.key}
             onClick={() => setActiveCat(cat.key)}
             className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
@@ -55,6 +62,7 @@ export default function StyleSelector({ selected, onChange }: Props) {
 
           return (
             <button
+              type="button"
               key={style.key}
               onClick={() => onChange(style.key)}
               className={`rounded-lg overflow-hidden border-2 text-left transition-all hover:scale-[1.02] ${

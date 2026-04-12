@@ -13,6 +13,7 @@ export default function RoomTypeSelector({ selected, onChange }: Props) {
         const isSelected = selected === key
         return (
           <button
+            type="button"
             key={key}
             onClick={() => onChange(key)}
             className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-lg border transition-all ${

@@ -4,14 +4,15 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import UploadZone from '@/components/UploadZone'
 import StyleSelector from '@/components/StyleSelector'
+import RoomTypeSelector from '@/components/RoomTypeSelector'
 import PaymentModal from '@/components/PaymentModal'
-import { DESIGN_MODES } from '@/lib/zenmux'
+import { DESIGN_MODES } from '@/lib/design-config'
 import type { DesignMode } from '@/lib/orders'
 
 const QUALITY_OPTIONS = [
   { key: 'standard', label: '标准版', price: 1, resolution: '1024×1024', color: 'border-gray-700 text-gray-300' },
-  { key: 'premium', label: '高清版', price: 3, resolution: '2048×2048', color: 'border-amber-500 text-amber-500' },
-  { key: 'ultra', label: '超清版', price: 5, resolution: '4096×4096', color: 'border-purple-500 text-purple-400' },
+  { key: 'premium',  label: '高清版', price: 3, resolution: '2048×2048', color: 'border-amber-500 text-amber-500' },
+  { key: 'ultra',    label: '超清版', price: 5, resolution: '4096×4096', color: 'border-purple-500 text-purple-400' },
 ] as const
 
 export default function GeneratePage() {
@@ -28,9 +29,12 @@ function GeneratePageInner() {
   const initialQuality = searchParams.get('quality') ?? 'standard'
 
   const [uploadId, setUploadId] = useState<string | null>(null)
-  const [style, setStyle] = useState('北欧简约')
+  const [style, setStyle] = useState('nordic_minimal')
   const [quality, setQuality] = useState(initialQuality)
   const [mode, setMode] = useState<DesignMode>('redesign')
+  const [roomType, setRoomType] = useState('living_room')
+  const [customPrompt, setCustomPrompt] = useState('')
+  const [customPromptOpen, setCustomPromptOpen] = useState(false)
 
   const currentMode = DESIGN_MODES.find((m) => m.key === mode) ?? DESIGN_MODES[0]
   const [loading, setLoading] = useState(false)
@@ -48,26 +52,30 @@ function GeneratePageInner() {
       const res = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uploadId, style, quality, mode }),
+        body: JSON.stringify({
+          uploadId,
+          style,
+          quality,
+          mode,
+          roomType,
+          customPrompt: customPrompt.trim() || undefined,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
-       if (data.devSkip) {
-         // Dev bypass: order already paid, trigger AI generation directly
-         setGenerating(true)
-         const genRes = await fetch('/api/generate', {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ orderId: data.orderId }),
-         })
-         const genData = await genRes.json()
-         if (!genRes.ok) {
-           throw new Error(genData.error || 'AI 生成失败，请稍后重试')
-         }
-         router.push(`/result/${data.orderId}`)
-         return
-       }
+      if (data.devSkip) {
+        setGenerating(true)
+        const genRes = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: data.orderId }),
+        })
+        const genData = await genRes.json()
+        if (!genRes.ok) throw new Error(genData.error || 'AI 生成失败，请稍后重试')
+        router.push(`/result/${data.orderId}`)
+        return
+      }
 
       setPayModal({ orderId: data.orderId, qrDataUrl: data.qrDataUrl })
     } catch (err: unknown) {
@@ -100,8 +108,9 @@ function GeneratePageInner() {
           <UploadZone onUpload={(id) => setUploadId(id)} />
         </div>
 
-        {/* Right: Mode + Style + Quality + Pay */}
+        {/* Right: Mode + RoomType + Style + CustomPrompt + Quality + Pay */}
         <div className="flex-1 flex flex-col gap-5">
+
           {/* Mode selector */}
           <div>
             <h2 className="text-white text-xl font-bold">选择设计模式</h2>
@@ -110,6 +119,7 @@ function GeneratePageInner() {
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {DESIGN_MODES.map((m) => (
               <button
+                type="button"
                 key={m.key}
                 onClick={() => setMode(m.key)}
                 className={`flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2.5 rounded-lg border text-center transition-all min-w-[100px] ${
@@ -125,12 +135,19 @@ function GeneratePageInner() {
             ))}
           </div>
 
-          {/* Style selector — hidden when mode doesn't need style */}
+          {/* Room type selector */}
+          <div>
+            <h2 className="text-white text-xl font-bold">选择房间类型</h2>
+            <p className="text-gray-500 text-sm mt-1">告诉AI这是哪种房间，生成效果更精准</p>
+          </div>
+          <RoomTypeSelector selected={roomType} onChange={setRoomType} />
+
+          {/* Style selector */}
           {currentMode.needsStyle ? (
             <>
               <div>
                 <h2 className="text-white text-xl font-bold">选择装修风格</h2>
-                <p className="text-gray-500 text-sm mt-1">选中一种风格，AI将按此风格重新设计您的房间</p>
+                <p className="text-gray-500 text-sm mt-1">40+种风格，选中一种，AI将按此风格重新设计</p>
               </div>
               <StyleSelector selected={style} onChange={setStyle} />
             </>
@@ -140,12 +157,37 @@ function GeneratePageInner() {
             </div>
           )}
 
+          {/* Custom prompt (collapsible) */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setCustomPromptOpen((v) => !v)}
+              className="flex items-center gap-1.5 text-gray-400 text-sm hover:text-gray-200 transition-colors"
+            >
+              <span>{customPromptOpen ? '▾' : '▸'}</span>
+              <span>+ 补充描述（可选）</span>
+            </button>
+            {customPromptOpen && (
+              <div className="mt-2">
+                <textarea
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value.slice(0, 200))}
+                  rows={4}
+                  placeholder="例如：窗帘用亚麻材质，加一张书桌，整体偏暖色调..."
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 resize-none focus:outline-none focus:border-amber-500"
+                />
+                <p className="text-right text-xs text-gray-600 mt-1">{customPrompt.length}/200</p>
+              </div>
+            )}
+          </div>
+
           {/* Quality selector */}
           <div>
             <h3 className="text-white text-sm font-semibold mb-2">画质选择</h3>
             <div className="grid grid-cols-3 gap-2">
               {QUALITY_OPTIONS.map((opt) => (
                 <button
+                  type="button"
                   key={opt.key}
                   onClick={() => setQuality(opt.key)}
                   className={`px-3 py-2.5 rounded-lg border text-center transition-all ${
@@ -171,6 +213,7 @@ function GeneratePageInner() {
               AI生成消耗计算资源，付款后不支持退款
             </div>
             <button
+              type="button"
               onClick={handlePay}
               disabled={loading || generating || !uploadId}
               className="flex items-center justify-center gap-2 w-full h-14 bg-amber-500 text-black font-bold text-base rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.3)]"

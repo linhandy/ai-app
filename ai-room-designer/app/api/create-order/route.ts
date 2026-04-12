@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无效的风格' }, { status: 400 })
     }
 
-    const validModes = DESIGN_MODES.map((m) => m.key)
+    const validModes: string[] = DESIGN_MODES.map((m) => m.key)
     if (!validModes.includes(mode as string)) {
       return NextResponse.json({ error: '无效的设计模式' }, { status: 400 })
     }

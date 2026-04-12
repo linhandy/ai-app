@@ -48,7 +48,7 @@ export async function generateRoomImage(params: {
 
   const response = await client.images.edit({
     model: 'gpt-image-1-mini',
-    image: imageStream as any,
+    image: imageStream as unknown as Parameters<typeof client.images.edit>[0]['image'],
     prompt,
     size: '1024x1024',
   })

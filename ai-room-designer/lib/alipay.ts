@@ -1,4 +1,5 @@
-import AlipaySdk from 'alipay-sdk'
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const AlipaySdk = require('alipay-sdk')
 
 export function getAlipayClient() {
   return new AlipaySdk({

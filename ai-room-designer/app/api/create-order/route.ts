@@ -14,7 +14,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '参数缺失' }, { status: 400 })
     }
 
-    const uploadPath = path.join(UPLOAD_DIR, uploadId)
+    const uploadPath = path.resolve(path.join(UPLOAD_DIR, uploadId))
+    if (!uploadPath.startsWith(path.resolve(UPLOAD_DIR))) {
+      return NextResponse.json({ error: 'Invalid upload ID' }, { status: 400 })
+    }
     if (!fs.existsSync(uploadPath)) {
       return NextResponse.json({ error: '上传文件不存在，请重新上传' }, { status: 400 })
     }

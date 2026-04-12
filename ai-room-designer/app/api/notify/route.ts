@@ -16,7 +16,11 @@ export async function POST(req: NextRequest) {
 
     if (trade_status === 'TRADE_SUCCESS') {
       const order = getOrder(out_trade_no)
-      if (order && order.status === 'pending') {
+      if (!order) {
+        console.warn('[notify] Order not found:', out_trade_no)
+      } else if (order.alipayTradeNo === trade_no) {
+        console.log('[notify] Duplicate callback for trade', trade_no)
+      } else if (order.status === 'pending') {
         updateOrder(out_trade_no, { status: 'paid', alipayTradeNo: trade_no })
       }
     }

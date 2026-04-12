@@ -4,6 +4,7 @@ import { createQROrder } from '@/lib/alipay'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
 import { isRateLimited } from '@/lib/rate-limit'
+import { ALL_ROOM_TYPE_KEYS } from '@/lib/design-config'
 import QRCode from 'qrcode'
 import path from 'path'
 import fs from 'fs'
@@ -21,13 +22,31 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { uploadId, style, quality = 'standard', mode = 'redesign' } = await req.json() as {
-      uploadId: string; style: string; quality?: QualityTier; mode?: DesignMode
+    const {
+      uploadId,
+      style,
+      quality = 'standard',
+      mode = 'redesign',
+      roomType = 'living_room',
+      customPrompt,
+    } = await req.json() as {
+      uploadId: string
+      style: string
+      quality?: QualityTier
+      mode?: DesignMode
+      roomType?: string
+      customPrompt?: string
     }
 
     if (!uploadId || !style) {
       return NextResponse.json({ error: '参数缺失' }, { status: 400 })
     }
+
+    if (!ALL_ROOM_TYPE_KEYS.includes(roomType)) {
+      return NextResponse.json({ error: '无效的房间类型' }, { status: 400 })
+    }
+
+    const trimmedPrompt = customPrompt?.trim().slice(0, 200)
 
     const amount = QUALITY_PRICE[quality] ?? 1
 
@@ -39,23 +58,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '上传文件不存在，请重新上传' }, { status: 400 })
     }
 
-    const order = await createOrder({ style, uploadId, quality, mode })
+    const order = await createOrder({ style, uploadId, quality, mode, roomType, customPrompt: trimmedPrompt })
 
-    logger.info('create-order', 'Order created', { orderId: order.id, style, quality, mode, amount })
+    logger.info('create-order', 'Order created', { orderId: order.id, style, quality, mode, roomType, amount })
 
-    // Dev bypass: skip Alipay, mark order paid immediately
     if (process.env.DEV_SKIP_PAYMENT === 'true') {
       await updateOrder(order.id, { status: 'paid' })
       logger.info('create-order', 'DEV_SKIP_PAYMENT: order auto-paid', { orderId: order.id })
       return NextResponse.json({ orderId: order.id, devSkip: true })
     }
 
-    const qrCodeUrl = await createQROrder({
-      orderId: order.id,
-      style,
-      amount,
-    })
-
+    const qrCodeUrl = await createQROrder({ orderId: order.id, style, amount })
     const qrDataUrl = await QRCode.toDataURL(qrCodeUrl, { width: 240, margin: 2 })
 
     return NextResponse.json({ orderId: order.id, qrDataUrl })

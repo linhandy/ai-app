@@ -26,7 +26,14 @@ export async function POST(req: NextRequest) {
 
     const startTime = Date.now()
     const imagePath = path.join(UPLOAD_DIR, order.uploadId)
-    const resultBuffer = await generateRoomImage({ imagePath, style: order.style, quality: order.quality, mode: order.mode })
+    const resultBuffer = await generateRoomImage({
+      imagePath,
+      style: order.style,
+      quality: order.quality,
+      mode: order.mode,
+      roomType: order.roomType,
+      customPrompt: order.customPrompt,
+    })
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1)
     logger.info('generate', 'AI generation complete', { orderId, duration: `${duration}s`, size: resultBuffer.length })

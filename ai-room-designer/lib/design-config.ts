@@ -282,11 +282,11 @@ export const STYLE_CATEGORIES: StyleCategory[] = [
     icon: '🏭',
     styles: [
       {
-        key: 'industrial',
+        key: 'raw_industrial',
         label: '工业风',
         prompt: '改造成工业风格：裸露砖墙、铁艺管道、水泥灰色、皮质家具、做旧金属，粗犷有个性',
         promptEn: 'Industrial style: exposed brick walls, iron pipes, cement grey, leather furniture, distressed metal, rugged character',
-        thumbnail: '/styles/thumbnails/industrial.jpg',
+        thumbnail: '/styles/thumbnails/raw_industrial.jpg',
       },
       {
         key: 'loft',
@@ -412,7 +412,7 @@ export function findRoomType(key: string): RoomType | undefined {
 }
 
 /** Flat list of all valid style keys — used for validation. */
-export const ALL_STYLE_KEYS: string[] = STYLE_CATEGORIES.flatMap((cat) => cat.styles.map((s) => s.key))
+export const ALL_STYLE_KEYS: readonly string[] = STYLE_CATEGORIES.flatMap((cat) => cat.styles.map((s) => s.key))
 
 /** Flat list of all valid room type keys — used for validation. */
-export const ALL_ROOM_TYPE_KEYS: string[] = ROOM_TYPES.map((r) => r.key)
+export const ALL_ROOM_TYPE_KEYS: readonly string[] = ROOM_TYPES.map((r) => r.key)

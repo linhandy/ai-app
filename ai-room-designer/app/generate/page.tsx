@@ -45,7 +45,7 @@ function GeneratePageInner() {
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
 
   const handlePay = async () => {
-    if (!uploadId) { setError('请先上传房间照片'); return }
+    if (currentMode.needsUpload && !uploadId) { setError('请先上传房间照片'); return }
     setError(null)
     setLoading(true)
     try {
@@ -95,17 +95,36 @@ function GeneratePageInner() {
           <span className="font-bold text-xl">装AI</span>
         </Link>
         <div className="flex-1" />
-        <span className="text-gray-600 text-sm">上传照片 → 选择风格 → 付款生成</span>
+        <span className="text-gray-600 text-sm">
+          {currentMode.needsUpload ? '上传照片 → 选择风格 → 付款生成' : '选择风格 → 描述需求 → 付款生成'}
+        </span>
       </nav>
 
       <div className="flex flex-col md:flex-row px-6 md:px-[120px] pt-12 pb-16 gap-10 items-start">
         {/* Left: Upload */}
         <div className="w-full md:w-[520px] flex flex-col gap-5">
           <div>
-            <h2 className="text-white text-xl font-bold">上传您的房间照片</h2>
-            <p className="text-gray-500 text-sm mt-1">支持 JPG / PNG，建议正面拍摄，效果更佳</p>
+            <h2 className="text-white text-xl font-bold">
+              {currentMode.needsUpload ? '上传您的房间照片' : '自由生成模式'}
+            </h2>
+            <p className="text-gray-500 text-sm mt-1">
+              {currentMode.needsUpload
+                ? (currentMode.key === 'sketch2render'
+                    ? '上传手绘草图，AI 将转换为写实效果图'
+                    : '支持 JPG / PNG，建议正面拍摄，效果更佳')
+                : '无需上传照片，AI 将根据您选择的风格和房间类型从零生成效果图'}
+            </p>
           </div>
-          <UploadZone onUpload={(id) => setUploadId(id)} />
+          {currentMode.needsUpload ? (
+            <UploadZone onUpload={(id) => setUploadId(id)} />
+          ) : (
+            <div className="w-full h-48 border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center bg-gray-900/30">
+              <p className="text-gray-500 text-sm text-center leading-relaxed">
+                ✨ 自由生成模式<br />
+                无需上传照片，AI 从零生成效果图
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Right: Mode + RoomType + Style + CustomPrompt + Quality + Pay */}
@@ -215,7 +234,7 @@ function GeneratePageInner() {
             <button
               type="button"
               onClick={handlePay}
-              disabled={loading || generating || !uploadId}
+              disabled={loading || generating || (currentMode.needsUpload && !uploadId)}
               className="flex items-center justify-center gap-2 w-full h-14 bg-amber-500 text-black font-bold text-base rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.3)]"
             >
               {generating ? 'AI生成中，请稍候...' : loading ? '处理中...' : `⚡ 支付 ¥${currentOption.price} · 立即生成${currentOption.label}效果图`}

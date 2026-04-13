@@ -1,5 +1,5 @@
 import { buildStylePrompt } from '@/lib/zenmux'
-import { STYLE_CATEGORIES, ALL_STYLE_KEYS } from '@/lib/design-config'
+import { STYLE_CATEGORIES, ALL_STYLE_KEYS, DESIGN_MODES, ALL_ROOM_TYPE_KEYS } from '@/lib/design-config'
 
 test('STYLE_CATEGORIES has 8 categories', () => {
   expect(STYLE_CATEGORIES).toHaveLength(8)
@@ -53,4 +53,32 @@ test('paint_walls mode ignores style, appends room type (English)', () => {
 test('change_lighting mode ignores style, appends room type (Chinese)', () => {
   const prompt = buildStylePrompt('nordic_minimal', 'premium', 'change_lighting', 'bedroom')
   expect(prompt).toContain('卧室')
+})
+
+test('DESIGN_MODES has 8 entries', () => {
+  expect(DESIGN_MODES).toHaveLength(8)
+})
+
+test('ALL_ROOM_TYPE_KEYS has 25 entries', () => {
+  expect(ALL_ROOM_TYPE_KEYS).toHaveLength(25)
+})
+
+test('freestyle mode has needsUpload false', () => {
+  const mode = DESIGN_MODES.find((m) => m.key === 'freestyle')
+  expect(mode).toBeDefined()
+  expect(mode?.needsUpload).toBe(false)
+})
+
+test('outdoor_redesign mode has needsStyle false and needsUpload true', () => {
+  const mode = DESIGN_MODES.find((m) => m.key === 'outdoor_redesign')
+  expect(mode).toBeDefined()
+  expect(mode?.needsStyle).toBe(false)
+  expect(mode?.needsUpload).toBe(true)
+})
+
+test('sketch2render mode has needsStyle true and needsUpload true', () => {
+  const mode = DESIGN_MODES.find((m) => m.key === 'sketch2render')
+  expect(mode).toBeDefined()
+  expect(mode?.needsStyle).toBe(true)
+  expect(mode?.needsUpload).toBe(true)
 })

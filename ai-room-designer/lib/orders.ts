@@ -4,7 +4,7 @@ import path from 'path'
 
 export type OrderStatus = 'pending' | 'paid' | 'generating' | 'done' | 'failed'
 export type QualityTier = 'standard' | 'premium' | 'ultra'
-export type DesignMode = 'redesign' | 'virtual_staging' | 'paint_walls' | 'change_lighting' | 'add_furniture'
+export type DesignMode = 'redesign' | 'virtual_staging' | 'add_furniture' | 'paint_walls' | 'change_lighting' | 'sketch2render' | 'freestyle' | 'outdoor_redesign'
 
 export interface Order {
   id: string

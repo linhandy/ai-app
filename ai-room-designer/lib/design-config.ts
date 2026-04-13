@@ -387,14 +387,23 @@ export const ROOM_TYPES: RoomType[] = [
   { key: 'hotel_room',     label: '酒店客房', icon: '🏨', promptHint: 'hotel room with bed and amenities',              promptHintCn: '酒店客房，配有床铺和设施' },
   { key: 'retail_store',   label: '零售店',  icon: '🛍️', promptHint: 'retail shop with display shelves and counter',   promptHintCn: '零售店，配有展示架和收银台' },
   { key: 'gym',            label: '健身房',  icon: '🏋️', promptHint: 'gym with exercise equipment',                    promptHintCn: '健身房，配有健身器械' },
+  // 室外空间
+  { key: 'garden',     label: '花园',     icon: '🌳', promptHint: 'backyard garden with lawn and plants',           promptHintCn: '花园，有草坪和植物' },
+  { key: 'patio',      label: '露台',     icon: '🪑', promptHint: 'patio or terrace outdoor seating area',          promptHintCn: '露台，户外休闲区' },
+  { key: 'front_yard', label: '前院',     icon: '🏡', promptHint: 'front yard entrance garden',                     promptHintCn: '前院，入口花园' },
+  { key: 'rooftop',    label: '屋顶花园', icon: '🌇', promptHint: 'rooftop terrace garden with city view',          promptHintCn: '屋顶花园，城市景观' },
+  { key: 'pool_area',  label: '泳池区',   icon: '🏊', promptHint: 'pool area with surrounding landscape',           promptHintCn: '泳池区，周边景观' },
 ]
 
-export const DESIGN_MODES: { key: DesignMode; label: string; icon: string; desc: string; needsStyle: boolean }[] = [
-  { key: 'redesign',        label: '风格改造', icon: '🎨', desc: '改变整体装修风格',   needsStyle: true  },
-  { key: 'virtual_staging', label: '虚拟家装', icon: '🛋️', desc: '空房间添加全套家具', needsStyle: true  },
-  { key: 'add_furniture',   label: '添加家具', icon: '🪑', desc: '现有房间增添家具',   needsStyle: true  },
-  { key: 'paint_walls',     label: '墙面换色', icon: '🖌️', desc: '改变墙面颜色材质',   needsStyle: false },
-  { key: 'change_lighting', label: '灯光优化', icon: '💡', desc: '改善房间光照效果',   needsStyle: false },
+export const DESIGN_MODES: { key: DesignMode; label: string; icon: string; desc: string; needsStyle: boolean; needsUpload: boolean }[] = [
+  { key: 'redesign',         label: '风格改造', icon: '🎨', desc: '改变整体装修风格',   needsStyle: true,  needsUpload: true  },
+  { key: 'virtual_staging',  label: '虚拟家装', icon: '🛋️', desc: '空房间添加全套家具', needsStyle: true,  needsUpload: true  },
+  { key: 'add_furniture',    label: '添加家具', icon: '🪑', desc: '现有房间增添家具',   needsStyle: true,  needsUpload: true  },
+  { key: 'paint_walls',      label: '墙面换色', icon: '🖌️', desc: '改变墙面颜色材质',   needsStyle: false, needsUpload: true  },
+  { key: 'change_lighting',  label: '灯光优化', icon: '💡', desc: '改善房间光照效果',   needsStyle: false, needsUpload: true  },
+  { key: 'sketch2render',    label: '草图生成', icon: '✏️', desc: '草图变效果图',       needsStyle: true,  needsUpload: true  },
+  { key: 'freestyle',        label: '自由生成', icon: '✨', desc: '无需上传照片',       needsStyle: true,  needsUpload: false },
+  { key: 'outdoor_redesign', label: '户外设计', icon: '🌿', desc: '庭院景观改造',       needsStyle: false, needsUpload: true  },
 ]
 
 /** Look up a Style by its English key across all categories. Returns undefined if not found. */

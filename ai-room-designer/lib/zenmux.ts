@@ -94,7 +94,7 @@ function getGenAIClient(): GoogleGenAI {
 }
 
 export async function generateRoomImage(params: {
-  imagePath: string
+  imagePath: string | null
   style: string
   quality?: string
   mode?: DesignMode
@@ -108,19 +108,27 @@ export async function generateRoomImage(params: {
   const model = QUALITY_MODEL[quality] ?? QUALITY_MODEL.standard
   const prompt = buildStylePrompt(params.style, quality, mode, roomType, params.customPrompt)
 
-  const imageBuffer = fs.readFileSync(params.imagePath)
-  const base64Image = imageBuffer.toString('base64')
-  const mimeType = params.imagePath.endsWith('.png') ? 'image/png' : 'image/jpeg'
+  let contentParts: { inlineData?: { mimeType: string; data: string }; text?: string }[]
+
+  if (params.imagePath) {
+    const imageBuffer = fs.readFileSync(params.imagePath)
+    const base64Image = imageBuffer.toString('base64')
+    const mimeType = params.imagePath.endsWith('.png') ? 'image/png' : 'image/jpeg'
+    contentParts = [
+      { inlineData: { mimeType, data: base64Image } },
+      { text: prompt },
+    ]
+  } else {
+    // Freestyle mode — text-only generation, no input image
+    contentParts = [{ text: prompt }]
+  }
 
   const response = await client.models.generateContent({
     model,
     contents: [
       {
         role: 'user',
-        parts: [
-          { inlineData: { mimeType, data: base64Image } },
-          { text: prompt },
-        ],
+        parts: contentParts,
       },
     ],
     config: {

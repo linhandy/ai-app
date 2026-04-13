@@ -403,7 +403,7 @@ export const DESIGN_MODES: { key: DesignMode; label: string; icon: string; desc:
   { key: 'change_lighting',  label: '灯光优化', icon: '💡', desc: '改善房间光照效果',   needsStyle: false, needsUpload: true  },
   { key: 'sketch2render',    label: '草图生成', icon: '✏️', desc: '草图变效果图',       needsStyle: true,  needsUpload: true  },
   { key: 'freestyle',        label: '自由生成', icon: '✨', desc: '无需上传照片',       needsStyle: true,  needsUpload: false },
-  { key: 'outdoor_redesign', label: '户外设计', icon: '🌿', desc: '庭院景观改造',       needsStyle: false, needsUpload: true  },
+  { key: 'outdoor_redesign', label: '户外设计', icon: '🌿', desc: '庭院景观改造',       needsStyle: false, needsUpload: true  }, // fixed landscaping prompt — interior styles don't apply
 ]
 
 /** Look up a Style by its English key across all categories. Returns undefined if not found. */

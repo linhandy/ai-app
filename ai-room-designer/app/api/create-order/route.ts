@@ -24,30 +24,18 @@ export async function POST(req: NextRequest) {
   try {
     const {
       uploadId,
-      style,
+      style = '',
       quality = 'standard',
       mode = 'redesign',
       roomType = 'living_room',
       customPrompt,
     } = await req.json() as {
-      uploadId: string
-      style: string
+      uploadId?: string
+      style?: string
       quality?: QualityTier
       mode?: DesignMode
       roomType?: string
       customPrompt?: string
-    }
-
-    if (!uploadId || !style) {
-      return NextResponse.json({ error: '参数缺失' }, { status: 400 })
-    }
-
-    if (!ALL_ROOM_TYPE_KEYS.includes(roomType)) {
-      return NextResponse.json({ error: '无效的房间类型' }, { status: 400 })
-    }
-
-    if (!ALL_STYLE_KEYS.includes(style)) {
-      return NextResponse.json({ error: '无效的风格' }, { status: 400 })
     }
 
     const validModes: string[] = DESIGN_MODES.map((m) => m.key)
@@ -55,19 +43,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无效的设计模式' }, { status: 400 })
     }
 
+    const modeConfig = DESIGN_MODES.find((m) => m.key === mode)!
+
+    // uploadId required for all modes that need an upload
+    if (modeConfig.needsUpload && !uploadId) {
+      return NextResponse.json({ error: '请先上传图片' }, { status: 400 })
+    }
+
+    if (!ALL_ROOM_TYPE_KEYS.includes(roomType)) {
+      return NextResponse.json({ error: '无效的房间类型' }, { status: 400 })
+    }
+
+    // style only validated when this mode requires a style selection
+    if (modeConfig.needsStyle && !ALL_STYLE_KEYS.includes(style)) {
+      return NextResponse.json({ error: '无效的风格' }, { status: 400 })
+    }
+
     const trimmedPrompt = customPrompt?.trim().slice(0, 200) || undefined
 
     const amount = QUALITY_PRICE[quality] ?? 1
 
-    const uploadPath = path.resolve(path.join(UPLOAD_DIR, uploadId))
-    if (!uploadPath.startsWith(path.resolve(UPLOAD_DIR))) {
-      return NextResponse.json({ error: 'Invalid upload ID' }, { status: 400 })
-    }
-    if (!fs.existsSync(uploadPath)) {
-      return NextResponse.json({ error: '上传文件不存在，请重新上传' }, { status: 400 })
+    // File existence check only when an upload is required
+    if (modeConfig.needsUpload && uploadId) {
+      const uploadPath = path.resolve(path.join(UPLOAD_DIR, uploadId))
+      if (!uploadPath.startsWith(path.resolve(UPLOAD_DIR))) {
+        return NextResponse.json({ error: 'Invalid upload ID' }, { status: 400 })
+      }
+      if (!fs.existsSync(uploadPath)) {
+        return NextResponse.json({ error: '上传文件不存在，请重新上传' }, { status: 400 })
+      }
     }
 
-    const order = await createOrder({ style, uploadId, quality, mode, roomType, customPrompt: trimmedPrompt })
+    const order = await createOrder({
+      style,
+      uploadId: uploadId ?? null,
+      quality,
+      mode,
+      roomType,
+      customPrompt: trimmedPrompt,
+    })
 
     logger.info('create-order', 'Order created', { orderId: order.id, style, quality, mode, roomType, amount })
 

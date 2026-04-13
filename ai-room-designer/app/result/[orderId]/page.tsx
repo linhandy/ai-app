@@ -59,7 +59,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
 
   if (order.status !== 'done' || !order.resultUrl) notFound()
 
-  const beforeUrl = `/api/preview?uploadId=${encodeURIComponent(order.uploadId)}`
+  const beforeUrl = order.uploadId ? `/api/preview?uploadId=${encodeURIComponent(order.uploadId)}` : undefined
 
   // Build the full page URL for sharing
   const headersList = await headers()

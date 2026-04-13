@@ -20,6 +20,9 @@ export async function POST(req: NextRequest) {
     if (order.status !== 'paid') {
       return NextResponse.json({ error: '订单未完成支付' }, { status: 402 })
     }
+    if (!order.uploadId) {
+      return NextResponse.json({ error: '订单缺少上传文件' }, { status: 400 })
+    }
 
     await updateOrder(orderId, { status: 'generating' })
     logger.info('generate', 'Starting AI generation', { orderId, style: order.style, quality: order.quality })

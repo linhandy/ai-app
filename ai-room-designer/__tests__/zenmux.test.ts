@@ -82,3 +82,34 @@ test('sketch2render mode has needsStyle true and needsUpload true', () => {
   expect(mode?.needsStyle).toBe(true)
   expect(mode?.needsUpload).toBe(true)
 })
+
+test('buildStylePrompt sketch2render returns English sketch prompt for standard', () => {
+  const prompt = buildStylePrompt('nordic_minimal', 'standard', 'sketch2render', 'living_room')
+  expect(prompt).toContain('sketch')
+  expect(prompt.length).toBeGreaterThan(50)
+})
+
+test('buildStylePrompt sketch2render returns Chinese sketch prompt for premium', () => {
+  const prompt = buildStylePrompt('nordic_minimal', 'premium', 'sketch2render', 'bedroom')
+  expect(prompt).toContain('草图')
+})
+
+test('buildStylePrompt freestyle returns English generation prompt for standard', () => {
+  const prompt = buildStylePrompt('nordic_minimal', 'standard', 'freestyle', 'living_room')
+  expect(prompt).toContain('Generate a brand new')
+})
+
+test('buildStylePrompt freestyle returns Chinese generation prompt for premium', () => {
+  const prompt = buildStylePrompt('nordic_minimal', 'premium', 'freestyle', 'bedroom')
+  expect(prompt).toContain('生成一张全新')
+})
+
+test('buildStylePrompt outdoor_redesign returns English landscaping prompt for standard', () => {
+  const prompt = buildStylePrompt('nordic_minimal', 'standard', 'outdoor_redesign', 'garden')
+  expect(prompt).toContain('landscaping')
+})
+
+test('buildStylePrompt outdoor_redesign returns Chinese landscaping prompt for premium', () => {
+  const prompt = buildStylePrompt('nordic_minimal', 'premium', 'outdoor_redesign', 'patio')
+  expect(prompt).toContain('户外')
+})

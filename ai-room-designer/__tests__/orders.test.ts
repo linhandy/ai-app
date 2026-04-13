@@ -63,3 +63,25 @@ test('DB migration adds roomType column to existing DB', async () => {
   const order = await createOrder({ style: 'nordic_minimal', uploadId: 'mig1' })
   expect(order.roomType).toBe('living_room')
 })
+
+test('createOrder accepts null uploadId for freestyle mode', async () => {
+  const order = await createOrder({
+    style: 'nordic_minimal',
+    uploadId: null,
+    mode: 'freestyle',
+    roomType: 'living_room',
+  })
+  expect(order.uploadId).toBeNull()
+  expect(order.mode).toBe('freestyle')
+})
+
+test('getOrder returns null uploadId for freestyle order', async () => {
+  const created = await createOrder({
+    style: 'nordic_minimal',
+    uploadId: null,
+    mode: 'freestyle',
+    roomType: 'living_room',
+  })
+  const found = await getOrder(created.id)
+  expect(found?.uploadId).toBeNull()
+})

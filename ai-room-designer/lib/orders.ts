@@ -12,7 +12,7 @@ export interface Order {
   style: string
   quality: QualityTier
   mode: DesignMode
-  uploadId: string
+  uploadId: string | null
   roomType: string
   customPrompt?: string
   resultUrl?: string
@@ -90,7 +90,7 @@ function rowToOrder(row: Record<string, any>): Order {
     style: String(row.style),
     quality: (row.quality ?? 'standard') as QualityTier,
     mode: (row.mode ?? 'redesign') as DesignMode,
-    uploadId: String(row.uploadId),
+    uploadId: row.uploadId === '' || row.uploadId == null ? null : String(row.uploadId),
     roomType: String(row.roomType ?? 'living_room'),
     customPrompt: row.customPrompt ?? undefined,
     resultUrl: row.resultUrl ?? undefined,
@@ -102,7 +102,7 @@ function rowToOrder(row: Record<string, any>): Order {
 
 export async function createOrder(params: {
   style: string
-  uploadId: string
+  uploadId?: string | null
   quality?: QualityTier
   mode?: DesignMode
   roomType?: string
@@ -115,7 +115,7 @@ export async function createOrder(params: {
     style: params.style,
     quality: params.quality ?? 'standard',
     mode: params.mode ?? 'redesign',
-    uploadId: params.uploadId,
+    uploadId: params.uploadId ?? null,
     roomType: params.roomType ?? 'living_room',
     customPrompt: params.customPrompt,
     createdAt: Date.now(),
@@ -125,7 +125,8 @@ export async function createOrder(params: {
   await client.execute({
     sql: `INSERT INTO orders (id, status, style, quality, mode, uploadId, roomType, customPrompt, createdAt, updatedAt)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [order.id, order.status, order.style, order.quality, order.mode, order.uploadId,
+    args: [order.id, order.status, order.style, order.quality, order.mode,
+           order.uploadId ?? '',
            order.roomType, order.customPrompt ?? null, order.createdAt, order.updatedAt],
   })
 

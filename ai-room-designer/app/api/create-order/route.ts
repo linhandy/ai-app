@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createOrder, updateOrder, type DesignMode, type QualityTier } from '@/lib/orders'
+import { createOrder, getOrder, updateOrder, type DesignMode, type QualityTier } from '@/lib/orders'
 import { createQROrder } from '@/lib/alipay'
 import { getRemainingFreeUses, consumeFreeUse } from '@/lib/free-uses'
 import { UPLOAD_DIR } from '@/lib/paths'
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       mode = 'redesign',
       roomType = 'living_room',
       customPrompt,
+      unlockOrderId,          // new: orderId of the free order to unlock
     } = await req.json() as {
       uploadId?: string
       style?: string
@@ -37,10 +38,29 @@ export async function POST(req: NextRequest) {
       mode?: DesignMode
       roomType?: string
       customPrompt?: string
+      unlockOrderId?: string  // new
+    }
+
+    // Unlock flow: pay ¥1 to remove watermark from a free order
+    if (unlockOrderId) {
+      const targetOrder = await getOrder(unlockOrderId)
+      if (!targetOrder || !targetOrder.isFree || targetOrder.status !== 'done') {
+        return NextResponse.json({ error: '无效的解锁订单' }, { status: 400 })
+      }
+      const unlockOrder = await createOrder({
+        style: 'unlock',
+        uploadId: unlockOrderId,
+        quality: 'standard',
+        mode: 'unlock' as DesignMode,
+        roomType: 'living_room',
+      })
+      const qrCodeUrl = await createQROrder({ orderId: unlockOrder.id, style: '去水印', amount: 1 })
+      const qrDataUrl = await QRCode.toDataURL(qrCodeUrl, { width: 240, margin: 2 })
+      return NextResponse.json({ orderId: unlockOrder.id, qrDataUrl })
     }
 
     const validModes: string[] = DESIGN_MODES.map((m) => m.key)
-    if (!validModes.includes(mode as string)) {
+    if (mode !== 'unlock' && !validModes.includes(mode as string)) {
       return NextResponse.json({ error: '无效的设计模式' }, { status: 400 })
     }
 

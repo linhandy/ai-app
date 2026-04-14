@@ -25,6 +25,22 @@ export async function POST(req: NextRequest) {
     await updateOrder(orderId, { status: 'generating' })
     logger.info('generate', 'Starting AI generation', { orderId, style: order.style, quality: order.quality })
 
+    // Unlock mode: remove watermark from linked free order
+    if (order.mode === 'unlock' && order.uploadId) {
+      const linkedOrderId = order.uploadId
+      const linked = await getOrder(linkedOrderId)
+      if (!linked) {
+        await updateOrder(orderId, { status: 'failed' })
+        return NextResponse.json({ error: '原订单不存在' }, { status: 404 })
+      }
+      // Point linked order's resultUrl to the clean (non-watermarked) image
+      const cleanFilename = `result-${linkedOrderId}.png`
+      const cleanUrl = `/api/preview?uploadId=${encodeURIComponent(cleanFilename)}`
+      await updateOrder(linkedOrderId, { isFree: false, resultUrl: cleanUrl })
+      await updateOrder(orderId, { status: 'done', resultUrl: cleanUrl })
+      return NextResponse.json({ resultUrl: cleanUrl })
+    }
+
     const startTime = Date.now()
     const imagePath = order.uploadId
       ? path.join(UPLOAD_DIR, order.uploadId)

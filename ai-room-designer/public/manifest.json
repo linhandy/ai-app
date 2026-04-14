@@ -1,0 +1,19 @@
+{
+  "name": "装AI - AI装修效果图",
+  "short_name": "装AI",
+  "description": "上传房间照片，AI秒出专业装修效果图。48种风格，1元起。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait-primary",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

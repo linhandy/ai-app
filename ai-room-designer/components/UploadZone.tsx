@@ -39,7 +39,7 @@ export default function UploadZone({ onUpload }: Props) {
       onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
       onDragLeave={() => setDragging(false)}
       onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
-      className={`relative w-full h-[280px] rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors
+      className={`relative w-full h-[200px] md:h-[280px] rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors
         ${dragging ? 'border-amber-500 bg-amber-500/5' : 'border-gray-700 bg-[#0A0A0A] hover:border-gray-500'}`}
       onClick={() => document.getElementById('file-input')?.click()}
     >

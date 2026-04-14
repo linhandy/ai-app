@@ -95,13 +95,13 @@ function GeneratePageInner() {
 
   return (
     <main className="min-h-screen bg-black">
-      <nav className="flex items-center px-6 md:px-[120px] h-16 border-b border-gray-900">
+      <nav className="flex items-center px-4 md:px-[120px] h-16 border-b border-gray-900">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">装</div>
           <span className="font-bold text-xl">装AI</span>
         </Link>
         <div className="flex-1" />
-        <span className="text-gray-600 text-sm">
+        <span className="text-gray-600 text-xs md:text-sm hidden sm:block">
           {currentMode.needsUpload ? '上传照片 → 选择风格 → 付款生成' : '选择风格 → 描述需求 → 付款生成'}
         </span>
       </nav>

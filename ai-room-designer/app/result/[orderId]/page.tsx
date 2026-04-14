@@ -78,14 +78,14 @@ export default async function ResultPage({ params }: { params: { orderId: string
 
   return (
     <main className="min-h-screen bg-black">
-      <nav className="flex items-center px-[120px] h-16 border-b border-gray-900">
+      <nav className="flex items-center px-4 md:px-[120px] h-16 border-b border-gray-900">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">装</div>
           <span className="font-bold text-xl">装AI</span>
         </Link>
         <div className="flex-1" />
-        <Link href="/history" className="text-gray-500 text-sm mr-6 hover:text-gray-300 transition-colors">历史记录</Link>
-        <div className="flex items-center gap-1.5 px-3.5 h-8 rounded-full bg-green-950 text-green-400 text-sm font-semibold">
+        <Link href="/history" className="text-gray-500 text-sm mr-4 hover:text-gray-300 transition-colors hidden md:block">历史记录</Link>
+        <div className="flex items-center gap-1.5 px-3 h-8 rounded-full bg-green-950 text-green-400 text-sm font-semibold">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
@@ -93,8 +93,8 @@ export default async function ResultPage({ params }: { params: { orderId: string
         </div>
       </nav>
 
-      <div className="flex flex-col items-center px-[120px] pt-12 pb-16 gap-8">
-        <h1 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>
+      <div className="flex flex-col items-center px-4 md:px-[120px] pt-8 md:pt-12 pb-16 gap-6 md:gap-8">
+        <h1 className="text-xl md:text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>
           {order.mode === 'paint_walls' ? '墙面换色效果图已生成'
             : order.mode === 'change_lighting' ? '灯光优化效果图已生成'
             : order.mode === 'virtual_staging' ? `您的${order.style}虚拟家装效果图已生成`
@@ -107,7 +107,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
 
         {/* De-watermark CTA for free orders */}
         {order.isFree && (
-          <div className="w-full max-w-[1100px] mt-4 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex items-center justify-between gap-4">
+          <div className="w-full max-w-[1100px] mt-2 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <p className="text-amber-400 font-semibold text-sm">当前为免费体验版（含水印）</p>
               <p className="text-gray-500 text-xs mt-0.5">支付 ¥1 解锁无水印高清版本</p>
@@ -116,14 +116,13 @@ export default async function ResultPage({ params }: { params: { orderId: string
           </div>
         )}
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full max-w-[600px]">
           <a
             href={order.resultUrl}
             download="AI装修效果图.png"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2.5 px-8 bg-amber-500 text-black font-bold text-base rounded hover:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.3)]"
-            style={{ height: '52px' }}
+            className="flex items-center justify-center gap-2.5 px-8 h-14 bg-amber-500 text-black font-bold text-base rounded hover:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.3)] flex-1"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -132,31 +131,27 @@ export default async function ResultPage({ params }: { params: { orderId: string
           </a>
           <Link
             href="/generate"
-            className="flex items-center gap-2 px-7 border border-gray-700 text-gray-400 text-base rounded hover:border-gray-500 transition-colors"
-            style={{ height: '52px' }}
+            className="flex items-center justify-center gap-2 px-7 h-14 border border-gray-700 text-gray-400 text-base rounded hover:border-gray-500 transition-colors flex-1"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            换个风格再试一次
+            再试一次
           </Link>
         </div>
 
         <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={shareUrl} referralCount={referralCount} />
 
         {/* Info strip */}
-        <div className="flex items-center gap-8 px-8 py-5 rounded-lg bg-[#0A0A0A] border border-gray-800">
+        <div className="w-full max-w-[600px] grid grid-cols-3 divide-x divide-gray-800 rounded-lg bg-[#0A0A0A] border border-gray-800 overflow-hidden">
           {[
             { label: '装修风格', value: order.style, color: 'text-amber-500' },
-            { label: '图片分辨率', value: order.quality === 'ultra' ? '4096×4096' : order.quality === 'premium' ? '2048×2048' : '1024×1024', color: 'text-white' },
-            { label: '本次费用', value: order.quality === 'ultra' ? '¥5.00' : order.quality === 'premium' ? '¥3.00' : '¥1.00', color: 'text-white' },
-          ].map(({ label, value, color }, i) => (
-            <div key={label} className="flex items-center gap-8">
-              {i > 0 && <div className="w-px h-9 bg-gray-800" />}
-              <div className="flex flex-col items-center gap-1">
-                <span className={`${color} text-base font-bold`}>{value}</span>
-                <span className="text-gray-500 text-xs">{label}</span>
-              </div>
+            { label: '分辨率', value: order.quality === 'ultra' ? '4096×4096' : order.quality === 'premium' ? '2048×2048' : '1024×1024', color: 'text-white' },
+            { label: '本次费用', value: order.quality === 'ultra' ? '¥5' : order.quality === 'premium' ? '¥3' : '¥1', color: 'text-white' },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="flex flex-col items-center gap-1 py-4 px-2">
+              <span className={`${color} text-sm font-bold truncate max-w-full text-center`}>{value}</span>
+              <span className="text-gray-500 text-xs">{label}</span>
             </div>
           ))}
         </div>

@@ -19,11 +19,11 @@ export default function HomePage() {
         <p className="text-gray-400 text-lg text-center max-w-lg">
           上传任意角度的房间照片，30秒内看到专业室内设计师级别的装修效果图
         </p>
-        <div className="flex items-center gap-4 mt-2">
-          <Link href="/generate" className="bg-amber-500 text-black font-bold text-base px-8 rounded flex items-center gap-2 hover:bg-amber-400 transition-colors shadow-[0_8px_24px_rgba(255,152,0,0.3)]" style={{height:'52px'}}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-2 w-full max-w-sm sm:max-w-none">
+          <Link href="/generate" className="bg-amber-500 text-black font-bold text-base px-8 rounded flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-[0_8px_24px_rgba(255,152,0,0.3)]" style={{height:'52px'}}>
             ¥1 立即生成效果图
           </Link>
-          <a href="#examples" className="text-gray-400 text-base px-7 rounded border border-gray-700 hover:border-gray-500 transition-colors flex items-center" style={{height:'52px'}}>
+          <a href="#examples" className="text-gray-400 text-base px-7 rounded border border-gray-700 hover:border-gray-500 transition-colors flex items-center justify-center" style={{height:'52px'}}>
             查看示例效果
           </a>
         </div>
@@ -86,7 +86,7 @@ export default function HomePage() {
           <p className="text-gray-500 text-sm text-center">按次收费，无需订阅 · 支持支付宝扫码</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-[960px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 w-full max-w-[960px]">
           {/* Standard */}
           <div className="p-6 rounded-xl bg-[#0D0D0D] border border-gray-800 flex flex-col gap-4">
             <div>

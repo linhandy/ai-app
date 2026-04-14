@@ -40,7 +40,7 @@ export function closeDb(): void {
   }
 }
 
-async function getClient(): Promise<Client> {
+export async function getClient(): Promise<Client> {
   if (_client) return _client
 
   _client = createClient({ url: dbUrl() })

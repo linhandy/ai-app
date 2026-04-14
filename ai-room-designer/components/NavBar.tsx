@@ -26,7 +26,7 @@ export default async function NavBar() {
       <Link href="/history" className="text-gray-500 text-sm mr-8 hover:text-gray-300 transition-colors hidden md:block">历史记录</Link>
 
       {user ? (
-        <div className="flex items-center gap-3 mr-6 hidden md:flex">
+        <div className="items-center gap-3 mr-6 hidden md:flex">
           {user.wechat_avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

@@ -68,7 +68,6 @@ export default async function ResultPage({ params }: { params: { orderId: string
   const headersList = await headers()
   const host = headersList.get('host') ?? 'localhost:3000'
   const proto = host.startsWith('localhost') ? 'http' : 'https'
-  const pageUrl = `${proto}://${host}/result/${order.id}`
 
   // Generate refCode from current viewer's IP for sharing
   const visitorForwarded = headersList.get('x-forwarded-for')

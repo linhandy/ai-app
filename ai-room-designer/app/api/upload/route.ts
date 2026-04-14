@@ -4,6 +4,7 @@ import path from 'path'
 import crypto from 'crypto'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { isRateLimited } from '@/lib/rate-limit'
+import { saveUploadData } from '@/lib/orders'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
@@ -12,8 +13,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true })
-
     const formData = await req.formData()
     const file = formData.get('image') as File | null
 
@@ -32,10 +31,18 @@ export async function POST(req: NextRequest) {
 
     const ext = file.type === 'image/png' ? '.png' : '.jpg'
     const uploadId = `${crypto.randomBytes(12).toString('hex')}${ext}`
-    const savePath = path.join(UPLOAD_DIR, uploadId)
-
     const buffer = Buffer.from(await file.arrayBuffer())
-    fs.writeFileSync(savePath, buffer)
+
+    // Save to DB for serverless persistence across function invocations
+    await saveUploadData(uploadId, buffer)
+
+    // Also write to disk as fallback for local dev
+    try {
+      fs.mkdirSync(UPLOAD_DIR, { recursive: true })
+      fs.writeFileSync(path.join(UPLOAD_DIR, uploadId), buffer)
+    } catch {
+      // Disk write is best-effort; DB is the source of truth
+    }
 
     return NextResponse.json({ uploadId })
   } catch (err) {

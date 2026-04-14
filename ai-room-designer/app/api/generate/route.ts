@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getOrder, updateOrder } from '@/lib/orders'
+import { getOrder, updateOrder, setOrderResultData, getUploadData } from '@/lib/orders'
 import { generateRoomImage } from '@/lib/zenmux'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
-import { applyWatermark } from '@/lib/watermark'
 import path from 'path'
 import fs from 'fs'
 
@@ -25,7 +24,7 @@ export async function POST(req: NextRequest) {
     await updateOrder(orderId, { status: 'generating' })
     logger.info('generate', 'Starting AI generation', { orderId, style: order.style, quality: order.quality })
 
-    // Unlock mode: remove watermark from linked free order
+    // Unlock mode: mark linked free order as paid (watermark removed at serve time)
     if ((order.mode as string) === 'unlock' && order.uploadId) {
       const linkedOrderId = order.uploadId
       const linked = await getOrder(linkedOrderId)
@@ -33,18 +32,28 @@ export async function POST(req: NextRequest) {
         await updateOrder(orderId, { status: 'failed' })
         return NextResponse.json({ error: '原订单不存在' }, { status: 404 })
       }
-      // Point linked order's resultUrl to the clean (non-watermarked) image
-      const cleanFilename = `result-${linkedOrderId}.png`
-      const cleanUrl = `/api/preview?uploadId=${encodeURIComponent(cleanFilename)}`
+      const cleanUrl = `/api/result-image/${linkedOrderId}`
       await updateOrder(linkedOrderId, { isFree: false, resultUrl: cleanUrl })
       await updateOrder(orderId, { status: 'done', resultUrl: cleanUrl })
       return NextResponse.json({ resultUrl: cleanUrl })
     }
 
     const startTime = Date.now()
-    const imagePath = order.uploadId
-      ? path.join(UPLOAD_DIR, order.uploadId)
-      : null
+
+    // Get uploaded image — try DB first (serverless), then filesystem fallback (local dev)
+    let imagePath: string | null = null
+    if (order.uploadId) {
+      const uploadData = await getUploadData(order.uploadId)
+      if (uploadData) {
+        fs.mkdirSync(UPLOAD_DIR, { recursive: true })
+        imagePath = path.join(UPLOAD_DIR, order.uploadId)
+        fs.writeFileSync(imagePath, uploadData)
+      } else {
+        const fsPath = path.join(UPLOAD_DIR, order.uploadId)
+        if (fs.existsSync(fsPath)) imagePath = fsPath
+      }
+    }
+
     const resultBuffer = await generateRoomImage({
       imagePath,
       style: order.style,
@@ -57,20 +66,10 @@ export async function POST(req: NextRequest) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(1)
     logger.info('generate', 'AI generation complete', { orderId, duration: `${duration}s`, size: resultBuffer.length })
 
-    // Save generated image to disk
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true })
-    const resultFilename = `result-${orderId}.png`
-    const resultPath = path.join(UPLOAD_DIR, resultFilename)
-    fs.writeFileSync(resultPath, resultBuffer)
+    // Store clean result in DB — watermark applied at serve time for free orders
+    await setOrderResultData(orderId, resultBuffer)
 
-    // Store a URL that the preview API can serve
-    let resultUrl = `/api/preview?uploadId=${encodeURIComponent(resultFilename)}`
-    if (order.isFree) {
-      const watermarkedBuffer = await applyWatermark(resultBuffer)
-      const wmFilename = `result-${orderId}-wm.png`
-      fs.writeFileSync(path.join(UPLOAD_DIR, wmFilename), watermarkedBuffer)
-      resultUrl = `/api/preview?uploadId=${encodeURIComponent(wmFilename)}`
-    }
+    const resultUrl = `/api/result-image/${orderId}`
     await updateOrder(orderId, { status: 'done', resultUrl })
 
     return NextResponse.json({ resultUrl })

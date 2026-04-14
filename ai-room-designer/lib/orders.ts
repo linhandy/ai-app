@@ -102,6 +102,22 @@ export async function getClient(): Promise<Client> {
     // Column already exists — ignore
   }
 
+  // Migration: add resultData column to store image bytes in DB (for serverless)
+  try {
+    await _client.execute(`ALTER TABLE orders ADD COLUMN resultData TEXT`)
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Uploads table — stores raw uploaded images so they persist across serverless invocations
+  await _client.execute(`
+    CREATE TABLE IF NOT EXISTS uploads (
+      id        TEXT PRIMARY KEY,
+      data      TEXT NOT NULL,
+      createdAt INTEGER NOT NULL
+    )
+  `)
+
   return _client
 }
 
@@ -200,6 +216,47 @@ export async function updateOrder(id: string, patch: Partial<Order>): Promise<Or
 
   return getOrder(id)
 }
+
+/** Save an uploaded image to the uploads table (serverless-safe). */
+export async function saveUploadData(uploadId: string, data: Buffer): Promise<void> {
+  const client = await getClient()
+  await client.execute({
+    sql: `INSERT OR REPLACE INTO uploads (id, data, createdAt) VALUES (?, ?, ?)`,
+    args: [uploadId, data.toString('base64'), Date.now()],
+  })
+}
+
+/** Read an uploaded image from the uploads table. Returns null if not found. */
+export async function getUploadData(uploadId: string): Promise<Buffer | null> {
+  const client = await getClient()
+  const result = await client.execute({
+    sql: `SELECT data FROM uploads WHERE id = ?`,
+    args: [uploadId],
+  })
+  if (result.rows.length === 0 || !result.rows[0].data) return null
+  return Buffer.from(String(result.rows[0].data), 'base64')
+}
+
+/** Store a generated image buffer in the DB (base64). Used on serverless where /tmp is ephemeral. */
+export async function setOrderResultData(id: string, data: Buffer): Promise<void> {
+  const client = await getClient()
+  await client.execute({
+    sql: `UPDATE orders SET resultData = ?, updatedAt = ? WHERE id = ?`,
+    args: [data.toString('base64'), Date.now(), id],
+  })
+}
+
+/** Read a stored result image back as a Buffer. Returns null if not found. */
+export async function getOrderResultData(id: string): Promise<Buffer | null> {
+  const client = await getClient()
+  const result = await client.execute({
+    sql: `SELECT resultData FROM orders WHERE id = ?`,
+    args: [id],
+  })
+  if (result.rows.length === 0 || !result.rows[0].resultData) return null
+  return Buffer.from(String(result.rows[0].resultData), 'base64')
+}
+
 
 export async function getOrdersByUserId(userId: string, limit = 50): Promise<Order[]> {
   const client = await getClient()

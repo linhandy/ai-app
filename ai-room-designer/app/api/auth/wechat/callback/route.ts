@@ -49,7 +49,7 @@ export async function GET(req: Request) {
     const token = createSessionToken(user.userId)
     const res = NextResponse.redirect(baseUrl)
     res.cookies.delete('wechat_state')
-    res.cookies.set('auth_token', token, {
+    res.cookies.set('session', token, {
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60,

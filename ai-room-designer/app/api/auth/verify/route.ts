@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     const token = createSessionToken(result.userId)
 
     const res = NextResponse.json({ user: { id: result.userId, phone: result.phone } })
-    res.cookies.set('auth_token', token, {
+    res.cookies.set('session', token, {
       path: '/',
       httpOnly: true,
       sameSite: 'lax',

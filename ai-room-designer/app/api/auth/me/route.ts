@@ -5,7 +5,7 @@ import { parseSessionToken, getUser } from '@/lib/auth'
 export async function GET() {
   try {
     const cookieStore = await cookies()
-    const token = cookieStore.get('auth_token')?.value
+    const token = cookieStore.get('session')?.value
 
     if (!token) {
       return NextResponse.json({ user: null })

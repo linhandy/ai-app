@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     }
 
     const validModes: string[] = DESIGN_MODES.map((m) => m.key)
-    if (mode !== 'unlock' && !validModes.includes(mode as string)) {
+    if ((mode as string) !== 'unlock' && !validModes.includes(mode as string)) {
       return NextResponse.json({ error: '无效的设计模式' }, { status: 400 })
     }
 

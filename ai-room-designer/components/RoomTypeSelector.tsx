@@ -8,7 +8,7 @@ interface Props {
 
 export default function RoomTypeSelector({ selected, onChange }: Props) {
   return (
-    <div className="grid grid-cols-5 gap-1.5">
+    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
       {ROOM_TYPES.map(({ key, label, icon }) => {
         const isSelected = selected === key
         return (

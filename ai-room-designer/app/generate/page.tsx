@@ -10,9 +10,9 @@ import { DESIGN_MODES } from '@/lib/design-config'
 import type { DesignMode } from '@/lib/orders'
 
 const QUALITY_OPTIONS = [
-  { key: 'standard', label: '标准版', price: 1, resolution: '1024×1024', color: 'border-gray-700 text-gray-300' },
-  { key: 'premium',  label: '高清版', price: 3, resolution: '2048×2048', color: 'border-amber-500 text-amber-500' },
-  { key: 'ultra',    label: '超清版', price: 5, resolution: '4096×4096', color: 'border-purple-500 text-purple-400' },
+  { key: 'standard', label: '标准', price: 1, resolution: '1024px', color: 'border-gray-700 text-gray-300' },
+  { key: 'premium',  label: '高清', price: 3, resolution: '2048px', color: 'border-amber-500 text-amber-500' },
+  { key: 'ultra',    label: '超清', price: 5, resolution: '4096px', color: 'border-purple-500 text-purple-400' },
 ] as const
 
 export default function GeneratePage() {
@@ -44,6 +44,7 @@ function GeneratePageInner() {
   const [generating, setGenerating] = useState(false)
 
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
+  const canGenerate = !currentMode.needsUpload || !!uploadId
 
   const handlePay = async () => {
     if (currentMode.needsUpload && !uploadId) { setError('请先上传房间照片'); return }
@@ -53,14 +54,7 @@ function GeneratePageInner() {
       const res = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          uploadId,
-          style,
-          quality,
-          mode,
-          roomType,
-          customPrompt: customPrompt.trim() || undefined,
-        }),
+        body: JSON.stringify({ uploadId, style, quality, mode, roomType, customPrompt: customPrompt.trim() || undefined }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -94,95 +88,88 @@ function GeneratePageInner() {
   }
 
   return (
-    <main className="min-h-screen bg-black">
-      <nav className="flex items-center px-4 md:px-[120px] h-16 border-b border-gray-900">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">装</div>
-          <span className="font-bold text-xl">装AI</span>
+    <main className="min-h-screen bg-black pb-24 md:pb-0">
+      {/* Nav */}
+      <nav className="flex items-center px-4 md:px-[120px] h-14 border-b border-gray-900">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-sm">装</div>
+          <span className="font-bold text-lg">装AI</span>
         </Link>
         <div className="flex-1" />
-        <span className="text-gray-600 text-xs md:text-sm hidden sm:block">
-          {currentMode.needsUpload ? '上传照片 → 选择风格 → 付款生成' : '选择风格 → 描述需求 → 付款生成'}
+        <span className="text-gray-600 text-xs hidden sm:block">
+          {currentMode.needsUpload ? '上传照片 → 选择风格 → 生成' : '选择风格 → 描述需求 → 生成'}
         </span>
       </nav>
 
-      <div className="flex flex-col md:flex-row px-6 md:px-[120px] pt-12 pb-16 gap-10 items-start">
-        {/* Left: Upload */}
-        <div className="w-full md:w-[520px] flex flex-col gap-5">
+      <div className="flex flex-col md:flex-row px-4 md:px-[120px] pt-6 md:pt-12 pb-4 md:pb-16 gap-6 md:gap-10 items-start">
+
+        {/* ── Left column: Upload ── */}
+        <div className="w-full md:w-[520px] flex flex-col gap-4">
           <div>
-            <h2 className="text-white text-xl font-bold">
-              {currentMode.needsUpload ? '上传您的房间照片' : '自由生成模式'}
+            <h2 className="text-white text-base md:text-xl font-bold">
+              {currentMode.needsUpload ? '上传房间照片' : '自由生成模式'}
             </h2>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-gray-500 text-xs md:text-sm mt-1">
               {currentMode.needsUpload
-                ? (currentMode.key === 'sketch2render'
-                    ? '上传手绘草图，AI 将转换为写实效果图'
-                    : '支持 JPG / PNG，建议正面拍摄，效果更佳')
-                : '无需上传照片，AI 将根据您选择的风格和房间类型从零生成效果图'}
+                ? (currentMode.key === 'sketch2render' ? '上传手绘草图，AI转换为写实效果图' : '支持 JPG / PNG，建议正面拍摄')
+                : '无需照片，AI根据风格从零生成效果图'}
             </p>
           </div>
           {currentMode.needsUpload ? (
             <UploadZone onUpload={(id) => setUploadId(id)} />
           ) : (
-            <div className="w-full h-48 border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center bg-gray-900/30">
+            <div className="w-full h-[160px] md:h-[200px] border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center bg-gray-900/30">
               <p className="text-gray-500 text-sm text-center leading-relaxed">
-                ✨ 自由生成模式<br />
-                无需上传照片，AI 从零生成效果图
+                ✨ 自由生成<br />AI 从零生成效果图
               </p>
             </div>
           )}
         </div>
 
-        {/* Right: Mode + RoomType + Style + CustomPrompt + Quality + Pay */}
-        <div className="flex-1 flex flex-col gap-5">
+        {/* ── Right column: Settings ── */}
+        <div className="flex-1 w-full flex flex-col gap-4 md:gap-5">
 
           {/* Mode selector */}
           <div>
-            <h2 className="text-white text-xl font-bold">选择设计模式</h2>
-            <p className="text-gray-500 text-sm mt-1">选择AI处理方式，不同模式适合不同需求</p>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {DESIGN_MODES.map((m) => (
-              <button
-                type="button"
-                key={m.key}
-                onClick={() => setMode(m.key)}
-                className={`flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2.5 rounded-lg border text-center transition-all min-w-[100px] ${
-                  mode === m.key
-                    ? 'border-amber-500 bg-amber-500/10 text-white'
-                    : 'border-gray-800 text-gray-500 hover:border-gray-600'
-                }`}
-              >
-                <span className="text-xl leading-none">{m.icon}</span>
-                <span className="text-xs font-semibold whitespace-nowrap">{m.label}</span>
-                <span className="text-[10px] opacity-70 whitespace-nowrap">{m.desc}</span>
-              </button>
-            ))}
+            <h2 className="text-white text-base md:text-xl font-bold mb-2">设计模式</h2>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {DESIGN_MODES.map((m) => (
+                <button
+                  type="button"
+                  key={m.key}
+                  onClick={() => setMode(m.key)}
+                  className={`flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-lg border text-center transition-all min-w-[84px] ${
+                    mode === m.key
+                      ? 'border-amber-500 bg-amber-500/10 text-white'
+                      : 'border-gray-800 text-gray-500 hover:border-gray-600'
+                  }`}
+                >
+                  <span className="text-lg leading-none">{m.icon}</span>
+                  <span className="text-xs font-semibold whitespace-nowrap">{m.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Room type selector */}
+          {/* Room type */}
           <div>
-            <h2 className="text-white text-xl font-bold">选择房间类型</h2>
-            <p className="text-gray-500 text-sm mt-1">告诉AI这是哪种房间，生成效果更精准</p>
+            <h2 className="text-white text-base md:text-xl font-bold mb-2">房间类型</h2>
+            <RoomTypeSelector selected={roomType} onChange={setRoomType} />
           </div>
-          <RoomTypeSelector selected={roomType} onChange={setRoomType} />
 
           {/* Style selector */}
           {currentMode.needsStyle ? (
-            <>
-              <div>
-                <h2 className="text-white text-xl font-bold">选择装修风格</h2>
-                <p className="text-gray-500 text-sm mt-1">40+种风格，选中一种，AI将按此风格重新设计</p>
-              </div>
+            <div>
+              <h2 className="text-white text-base md:text-xl font-bold mb-2">装修风格</h2>
               <StyleSelector selected={style} onChange={setStyle} />
-            </>
+            </div>
           ) : (
             <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-gray-800 bg-gray-900/50">
-              <span className="text-gray-500 text-sm">此模式无需选择风格，AI将自动优化处理</span>
+              <span className="text-gray-500 text-sm">此模式无需选择风格</span>
             </div>
           )}
 
-          {/* Custom prompt (collapsible) */}
+          {/* Custom prompt */}
           <div>
             <button
               type="button"
@@ -197,8 +184,8 @@ function GeneratePageInner() {
                 <textarea
                   value={customPrompt}
                   onChange={(e) => setCustomPrompt(e.target.value.slice(0, 200))}
-                  rows={4}
-                  placeholder="例如：窗帘用亚麻材质，加一张书桌，整体偏暖色调..."
+                  rows={3}
+                  placeholder="例如：窗帘用亚麻材质，整体偏暖色调..."
                   className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 resize-none focus:outline-none focus:border-amber-500"
                 />
                 <p className="text-right text-xs text-gray-600 mt-1">{customPrompt.length}/200</p>
@@ -215,24 +202,23 @@ function GeneratePageInner() {
                   type="button"
                   key={opt.key}
                   onClick={() => setQuality(opt.key)}
-                  className={`px-3 py-2.5 rounded-lg border text-center transition-all ${
-                    quality === opt.key
-                      ? opt.color + ' bg-white/5'
-                      : 'border-gray-800 text-gray-500 hover:border-gray-600'
+                  className={`py-2.5 px-2 rounded-lg border text-center transition-all ${
+                    quality === opt.key ? opt.color + ' bg-white/5' : 'border-gray-800 text-gray-500 hover:border-gray-600'
                   }`}
                 >
                   <div className="text-sm font-semibold">{opt.label}</div>
-                  <div className="text-xs mt-0.5 opacity-70">{opt.resolution}</div>
+                  <div className="text-[10px] mt-0.5 opacity-70">{opt.resolution}</div>
                   <div className="text-xs mt-0.5 font-bold">¥{opt.price}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="border-t border-gray-800 pt-4 flex flex-col gap-3">
+          {/* Desktop CTA — hidden on mobile (mobile uses sticky bar below) */}
+          <div className="hidden md:flex flex-col gap-3 border-t border-gray-800 pt-4">
             {error && <p className="text-red-400 text-sm">{error}</p>}
             <div className="flex items-center gap-2 text-gray-500 text-sm">
-              <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
               AI生成消耗计算资源，付款后不支持退款
@@ -240,24 +226,37 @@ function GeneratePageInner() {
             <button
               type="button"
               onClick={handlePay}
-              disabled={loading || generating || (currentMode.needsUpload && !uploadId)}
+              disabled={loading || generating || !canGenerate}
               className="flex items-center justify-center gap-2 w-full h-14 bg-amber-500 text-black font-bold text-base rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.3)]"
             >
               {generating ? 'AI生成中，请稍候...' : loading ? '处理中...' : `⚡ 支付 ¥${currentOption.price} · 立即生成${currentOption.label}效果图`}
             </button>
-            <p className="text-gray-600 text-xs text-center">扫码支付宝完成付款 · 30秒内自动生成 · 高清图片下载</p>
+            <p className="text-gray-600 text-xs text-center">扫码支付宝付款 · 30秒内自动生成</p>
             {freeRemaining !== null && freeRemaining > 0 && (
-              <p className="text-gray-500 text-xs text-center mt-2">
-                还剩 {freeRemaining} 次免费体验
-              </p>
-            )}
-            {freeRemaining === 0 && (
-              <p className="text-gray-500 text-xs text-center mt-2">
-                免费次数已用完，后续生成将按质量收费
-              </p>
+              <p className="text-amber-500 text-xs text-center">还剩 {freeRemaining} 次免费体验</p>
             )}
           </div>
         </div>
+      </div>
+
+      {/* ── Mobile sticky CTA bar ── */}
+      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-black/95 backdrop-blur border-t border-gray-800 px-4 py-3 z-40">
+        {error && <p className="text-red-400 text-xs mb-2 text-center">{error}</p>}
+        {freeRemaining !== null && freeRemaining > 0 && (
+          <p className="text-amber-500 text-xs text-center mb-1">还剩 {freeRemaining} 次免费体验</p>
+        )}
+        <button
+          type="button"
+          onClick={handlePay}
+          disabled={loading || generating || !canGenerate}
+          className="flex items-center justify-center gap-2 w-full h-13 bg-amber-500 text-black font-bold text-base rounded-xl disabled:opacity-50 disabled:cursor-not-allowed active:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.4)]"
+          style={{ height: '52px' }}
+        >
+          {generating ? '⏳ AI生成中...' : loading ? '处理中...' : `⚡ 支付 ¥${currentOption.price} · 立即生成`}
+        </button>
+        {!canGenerate && (
+          <p className="text-gray-500 text-xs text-center mt-1">请先上传房间照片</p>
+        )}
       </div>
 
       {payModal && (

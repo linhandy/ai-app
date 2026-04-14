@@ -30,7 +30,7 @@ export default function HomePage() {
 
         {/* Before/After side-by-side direct comparison */}
         <div className="w-full max-w-[1100px] mt-8">
-          <div className="grid grid-cols-2 gap-3 md:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5">
             <div className="relative rounded-xl overflow-hidden border border-gray-700">
               <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
                 <Image

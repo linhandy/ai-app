@@ -3,7 +3,7 @@ const nextConfig = {
   images: { unoptimized: true },
   experimental: {
     instrumentationHook: true,
-    serverComponentsExternalPackages: ['@libsql/client'],
+    serverComponentsExternalPackages: ['@libsql/client', '@libsql/client/web'],
   },
   webpack: (config, { isServer }) => {
     if (isServer) {

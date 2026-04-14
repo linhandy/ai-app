@@ -1,10 +1,16 @@
 /**
- * Returns the correct @libsql/client based on the environment:
- * - Vercel (serverless): uses @libsql/client/web — pure HTTP/WebSocket, no native bindings
- * - Local dev: uses @libsql/client — supports file: URLs for local SQLite
+ * Thin wrapper to create the correct libsql client.
+ * Both @libsql/client and @libsql/client/web are listed in
+ * serverComponentsExternalPackages so webpack won't bundle them.
  */
 import type { Client, Config } from '@libsql/client'
 import path from 'path'
+
+// Static top-level imports so webpack sees them as external (not dynamic requires)
+// @libsql/client/web — pure HTTP/WebSocket, works on serverless without native bindings
+import { createClient as createClientWeb } from '@libsql/client/web'
+// @libsql/client — full client supporting file: and :memory: for local dev
+import { createClient as createClientNode } from '@libsql/client'
 
 export function dbUrl(): string {
   const raw = process.env.ORDERS_DB ?? path.join(
@@ -21,16 +27,11 @@ export function makeClient(): Client {
   const authToken = process.env.LIBSQL_AUTH_TOKEN
   const config: Config = authToken && url !== ':memory:' ? { url, authToken } : { url }
 
-  // On Vercel (or any env with a remote ORDERS_DB URL), use the web client
-  // to avoid issues with native bindings in serverless environments.
+  // Remote Turso URLs — use the web client (no native bindings)
   if (url.startsWith('libsql://') || url.startsWith('https://')) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { createClient } = require('@libsql/client/web') as typeof import('@libsql/client')
-    return createClient(config)
+    return createClientWeb(config)
   }
 
-  // Local dev: use the full client that supports file: and :memory: URLs
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { createClient } = require('@libsql/client') as typeof import('@libsql/client')
-  return createClient(config)
+  // Local dev (file: or :memory:) — use the full Node.js client
+  return createClientNode(config)
 }

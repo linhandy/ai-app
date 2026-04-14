@@ -11,7 +11,7 @@ export default function HomePage() {
       {/* Hero */}
       <section className="flex flex-col items-center px-6 md:px-[120px] pt-16 pb-12 gap-6">
         <div className="flex items-center gap-2 px-3.5 h-7 rounded-full bg-amber-950 border border-amber-500 text-amber-500 text-sm font-semibold">
-          ✦ 限时体验价 ¥1/张
+          ✦ 免费生成 · 满意再付费
         </div>
         <h1 className="text-4xl md:text-6xl font-bold text-center leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
           拍一张照片<br />AI秒变理想装修
@@ -21,7 +21,7 @@ export default function HomePage() {
         </p>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-2 w-full max-w-sm sm:max-w-none">
           <Link href="/generate" className="bg-amber-500 text-black font-bold text-base px-8 rounded flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-[0_8px_24px_rgba(255,152,0,0.3)]" style={{height:'52px'}}>
-            ¥1 立即生成效果图
+            免费生成效果图
           </Link>
           <a href="#examples" className="text-gray-400 text-base px-7 rounded border border-gray-700 hover:border-gray-500 transition-colors flex items-center justify-center" style={{height:'52px'}}>
             查看示例效果
@@ -35,8 +35,10 @@ export default function HomePage() {
               <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
                 <Image
                   src="/styles/before-sample.jpg"
-                  alt="改造前"
+                  alt="改造前的房间照片"
                   fill
+                  priority
+                  sizes="(max-width: 640px) 100vw, 50vw"
                   className="object-cover"
                   style={{ filter: 'brightness(1.25) contrast(1.05)' }}
                 />
@@ -49,7 +51,7 @@ export default function HomePage() {
             <div className="relative rounded-xl overflow-hidden border border-amber-500/50">
               <div className="absolute inset-0 rounded-xl ring-1 ring-amber-500/30 pointer-events-none z-10" />
               <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
-                <Image src="/styles/hero-after.jpg" alt="AI效果图" fill className="object-cover" />
+                <Image src="/styles/hero-after.jpg" alt="AI生成的装修效果图" fill priority sizes="(max-width: 640px) 100vw, 50vw" className="object-cover" />
               </div>
               <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-amber-500 text-black text-xs font-bold px-3 h-7 rounded-full z-20">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -61,7 +63,7 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center justify-center gap-6 mt-3">
-            <span className="text-gray-600 text-xs">昏暗杂乱的老旧客厅</span>
+            <span className="text-gray-600 text-xs">普通未装修的客厅</span>
             <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
@@ -83,7 +85,7 @@ export default function HomePage() {
       <section id="pricing" className="px-6 md:px-[120px] py-16 flex flex-col items-center gap-8">
         <div className="flex flex-col items-center gap-3">
           <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>选择适合你的方案</h2>
-          <p className="text-gray-500 text-sm text-center">按次收费，无需订阅 · 支持支付宝扫码</p>
+          <p className="text-gray-500 text-sm text-center">免费生成带水印预览 · 满意后付费下载无水印版</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 w-full max-w-[960px]">
@@ -102,7 +104,7 @@ export default function HomePage() {
                 '40+ 装修风格任选',
                 '标准画质（1024×1024）',
                 '30秒快速出图',
-                '支付宝扫码付款',
+                '免费生成带水印预览',
               ].map(item => (
                 <li key={item} className="text-gray-400 text-sm flex items-start gap-2">
                   <span className="text-green-500 mt-0.5">✓</span> {item}
@@ -197,15 +199,11 @@ export default function HomePage() {
               },
               {
                 q: '如何付款？',
-                a: '我们使用支付宝当面付，点击生成按钮后会弹出支付宝二维码，使用支付宝 APP 扫码即可完成支付。付款成功后自动开始生成效果图。',
+                a: '效果图免费生成（带水印预览），满意后再付费下载无水印版。在效果图页面点击"解锁无水印"，使用支付宝扫码即可完成支付。先体验，后付费，零风险。',
               },
               {
                 q: '生成的效果图可以商用吗？',
-                a: '可以。您付费生成的效果图拥有完整的使用权，可以用于个人参考、社交媒体分享、与装修公司沟通方案等任何合法用途。',
-              },
-              {
-                q: '支持退款吗？',
-                a: '由于 AI 生成服务的特殊性，每次生成都会消耗计算资源，因此付款后不支持退款。建议您先使用标准版（¥1）体验效果，满意后再选择更高画质版本。',
+                a: '可以。您付费解锁的无水印效果图拥有完整的使用权，可以用于个人参考、社交媒体分享、与装修公司沟通方案等任何合法用途。',
               },
               {
                 q: '生成的图片会被保存多久？',

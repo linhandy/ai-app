@@ -6,6 +6,7 @@ import UploadZone from '@/components/UploadZone'
 import StyleSelector from '@/components/StyleSelector'
 import RoomTypeSelector from '@/components/RoomTypeSelector'
 import PaymentModal from '@/components/PaymentModal'
+import PackagePurchaseModal from '@/components/PackagePurchaseModal'
 import { DESIGN_MODES } from '@/lib/design-config'
 import type { DesignMode } from '@/lib/orders'
 import { saveToHistory } from '@/lib/history'
@@ -43,10 +44,15 @@ function GeneratePageInner() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [payModal, setPayModal] = useState<{ orderId: string; qrDataUrl: string; amount: number } | null>(null)
+  const [buyPackageModal, setBuyPackageModal] = useState<{
+    orderId: string; qrDataUrl: string; amount: number; count: number; label: string
+  } | null>(null)
   const [generating, setGenerating] = useState(false)
 
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
   const canGenerate = !currentMode.needsUpload || !!uploadId
+
+  const initialPackageId = searchParams.get('package')
 
   useEffect(() => {
     fetch('/api/credits/balance')
@@ -54,6 +60,34 @@ function GeneratePageInner() {
       .then(d => setCreditBalance(d.balance ?? 0))
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (!initialPackageId || buyPackageModal) return
+    // Auto-call buy-package API for the specified package
+    fetch('/api/buy-package', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ packageId: initialPackageId }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.credited) {
+          // DEV_SKIP_PAYMENT mode — credits already added
+          setCreditBalance(prev => prev + (data.count ?? 0))
+          return
+        }
+        if (data.qrDataUrl) {
+          setBuyPackageModal({
+            orderId: data.orderId,
+            qrDataUrl: data.qrDataUrl,
+            amount: data.amount,
+            count: data.count,
+            label: initialPackageId === 'pkg_5' ? '基础包' : initialPackageId === 'pkg_10' ? '进阶包' : '专业包',
+          })
+        }
+      })
+      .catch(() => {})
+  }, [initialPackageId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePay = async () => {
     if (currentMode.needsUpload && !uploadId) { setError('请先上传房间照片'); return }
@@ -301,6 +335,13 @@ function GeneratePageInner() {
           qrDataUrl={payModal.qrDataUrl}
           amount={payModal.amount}
           onClose={() => setPayModal(null)}
+        />
+      )}
+      {buyPackageModal && (
+        <PackagePurchaseModal
+          {...buyPackageModal}
+          onSuccess={(count) => setCreditBalance(prev => prev + count)}
+          onClose={() => setBuyPackageModal(null)}
         />
       )}
     </main>

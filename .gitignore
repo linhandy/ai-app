@@ -29,6 +29,9 @@ GetReelEstate/phase1/output/
 # ── Claude Code workspace ───────────────────────────────────────
 .claude/
 
+# ── Git worktrees ────────────────────────────────────────────────
+.worktrees/
+
 # ── OS / editors ────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

@@ -31,6 +31,18 @@ const APPS = [
     external: true,
   },
   {
+    id: 'ai-room-designer',
+    name: 'AI装修设计师',
+    description: '拍一张照片，AI 秒变理想装修效果图，30秒出图，多种风格随心切换',
+    icon: '🛋️',
+    tag: 'AI 装修',
+    meta: '¥1/张 · 30秒',
+    gradient: 'from-amber-500 to-yellow-500',
+    shadow: 'shadow-amber-500/30',
+    href: process.env.NEXT_PUBLIC_AI_ROOM_DESIGNER_URL || 'https://ai-room-designer-kohl.vercel.app',
+    external: true,
+  },
+  {
     id: 'hourse-designer',
     name: '自建房设计大师',
     description: 'AI 自动生成专业 CAD 户型图，支持快捷设计、草图识别、AI 评分优化',

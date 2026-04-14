@@ -84,6 +84,20 @@ function GeneratePageInner() {
         return
       }
 
+      if (data.creditUsed) {
+        setGenerating(true)
+        const genRes = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: data.orderId }),
+        })
+        const genData = await genRes.json()
+        if (!genRes.ok) throw new Error(genData.error || 'AI 生成失败，请稍后重试')
+        setCreditBalance(prev => Math.max(0, prev - 1))
+        router.push(`/result/${data.orderId}`)
+        return
+      }
+
       if (data.isFree) {
         setFreeRemaining(0)
       } else if (typeof data.remainingFreeUses === 'number') {

@@ -29,6 +29,8 @@ function dbUrl(): string {
     'orders.db',
   )
   if (raw === ':memory:') return ':memory:'
+  // Turso cloud URLs start with libsql:// — pass through as-is
+  if (raw.startsWith('libsql://') || raw.startsWith('https://')) return raw
   return `file:${raw}`
 }
 
@@ -46,7 +48,9 @@ export function closeDb(): void {
 export async function getClient(): Promise<Client> {
   if (_client) return _client
 
-  _client = createClient({ url: dbUrl() })
+  const url = dbUrl()
+  const authToken = process.env.LIBSQL_AUTH_TOKEN
+  _client = createClient(authToken && url !== ':memory:' ? { url, authToken } : { url })
 
   await _client.execute(`
     CREATE TABLE IF NOT EXISTS orders (

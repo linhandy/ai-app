@@ -10,6 +10,7 @@ function dbUrl(): string {
     'orders.db',
   )
   if (raw === ':memory:') return ':memory:'
+  if (raw.startsWith('libsql://') || raw.startsWith('https://')) return raw
   return `file:${raw}`
 }
 
@@ -18,7 +19,9 @@ let _client: Client | null = null
 async function getClient(): Promise<Client> {
   if (_client) return _client
 
-  _client = createClient({ url: dbUrl() })
+  const url = dbUrl()
+  const authToken = process.env.LIBSQL_AUTH_TOKEN
+  _client = createClient(authToken && url !== ':memory:' ? { url, authToken } : { url })
 
   // phone allows NULL (WeChat users have no phone number)
   await _client.execute(`

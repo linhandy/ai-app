@@ -9,8 +9,8 @@ const REQUIRED_VARS = [
 export function validateEnv(): void {
   const missing = REQUIRED_VARS.filter((k) => !process.env[k])
   if (missing.length > 0) {
-    throw new Error(
-      `Missing required environment variables:\n  ${missing.join('\n  ')}\n\nPlease check your .env.local file.`,
+    console.warn(
+      `[warn] Missing environment variables (some features may be disabled):\n  ${missing.join('\n  ')}`,
     )
   }
 }

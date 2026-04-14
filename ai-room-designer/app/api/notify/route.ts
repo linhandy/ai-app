@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
             await addCredits(owner, pkg.count)
             await updateOrder(out_trade_no, { status: 'done' })
             logger.info('notify', 'Package credits added', { orderId: out_trade_no, pkgId, count: pkg.count, owner })
+          } else {
+            console.error(`Package ${pkgId} not found for order ${out_trade_no} - order stuck as paid, manual intervention needed`)
           }
         }
       }

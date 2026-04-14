@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai'
 import fs from 'fs'
+import sharp from 'sharp'
 import type { DesignMode } from './orders'
 import { findStyleByKey, findRoomType } from './design-config'
 
@@ -8,9 +9,16 @@ export { STYLE_CATEGORIES, DESIGN_MODES } from './design-config'
 
 /** Map quality tier → ZenMux Gemini image model */
 const QUALITY_MODEL: Record<string, string> = {
-  standard: 'google/gemini-2.5-flash-image',
-  premium:  'google/gemini-3.1-flash-image-preview',
+  standard: 'google/gemini-3-pro-image-preview',
+  premium:  'google/gemini-3-pro-image-preview',
   ultra:    'google/gemini-3-pro-image-preview',
+}
+
+/** Max pixel dimension per quality tier (null = no resize) */
+const QUALITY_MAX_PX: Record<string, number | null> = {
+  standard: 1024,
+  premium: 2048,
+  ultra: null, // no resize, keep native
 }
 
 export function buildStylePrompt(
@@ -139,7 +147,16 @@ export async function generateRoomImage(params: {
   const parts = response.candidates?.[0]?.content?.parts || []
   for (const part of parts) {
     if (part.inlineData?.data) {
-      return Buffer.from(part.inlineData.data, 'base64')
+      const buffer = Buffer.from(part.inlineData.data, 'base64')
+      const maxPx = QUALITY_MAX_PX[quality ?? 'standard'] ?? QUALITY_MAX_PX.standard
+      if (maxPx !== null) {
+        const resized = await sharp(buffer)
+          .resize(maxPx, maxPx, { fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: 92, progressive: true })
+          .toBuffer()
+        return resized
+      }
+      return buffer
     }
   }
 

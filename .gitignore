@@ -39,6 +39,12 @@ Thumbs.db
 *.tsbuildinfo
 next-env.d.ts
 
+# ── Local SQLite DB & data dumps ────────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+orders.json
+
 # ── Logs ────────────────────────────────────────────────────────
 *.log
 npm-debug.log*

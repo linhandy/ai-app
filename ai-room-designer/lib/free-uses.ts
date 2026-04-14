@@ -1,4 +1,6 @@
-import { createClient, Client } from '@libsql/client'
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { createClient } = require('@libsql/client') as typeof import('@libsql/client')
+import type { Client } from '@libsql/client'
 import path from 'path'
 
 const FREE_USES_PER_PERIOD = 3

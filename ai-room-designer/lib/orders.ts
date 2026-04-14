@@ -1,4 +1,6 @@
-import { createClient, Client } from '@libsql/client'
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { createClient } = require('@libsql/client') as typeof import('@libsql/client')
+import type { Client } from '@libsql/client'
 import crypto from 'crypto'
 import path from 'path'
 

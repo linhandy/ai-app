@@ -49,7 +49,7 @@ export default function HomePage() {
             <div className="relative rounded-xl overflow-hidden border border-amber-500/50">
               <div className="absolute inset-0 rounded-xl ring-1 ring-amber-500/30 pointer-events-none z-10" />
               <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
-                <Image src="/styles/hero-after.png" alt="AI效果图" fill className="object-cover" />
+                <Image src="/styles/hero-after.jpg" alt="AI效果图" fill className="object-cover" />
               </div>
               <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-amber-500 text-black text-xs font-bold px-3 h-7 rounded-full z-20">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">

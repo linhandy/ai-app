@@ -3,6 +3,7 @@ import { getOrder, updateOrder } from '@/lib/orders'
 import { generateRoomImage } from '@/lib/zenmux'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
+import { applyWatermark } from '@/lib/watermark'
 import path from 'path'
 import fs from 'fs'
 
@@ -46,7 +47,13 @@ export async function POST(req: NextRequest) {
     fs.writeFileSync(resultPath, resultBuffer)
 
     // Store a URL that the preview API can serve
-    const resultUrl = `/api/preview?uploadId=${encodeURIComponent(resultFilename)}`
+    let resultUrl = `/api/preview?uploadId=${encodeURIComponent(resultFilename)}`
+    if (order.isFree) {
+      const watermarkedBuffer = await applyWatermark(resultBuffer)
+      const wmFilename = `result-${orderId}-wm.png`
+      fs.writeFileSync(path.join(UPLOAD_DIR, wmFilename), watermarkedBuffer)
+      resultUrl = `/api/preview?uploadId=${encodeURIComponent(wmFilename)}`
+    }
     await updateOrder(orderId, { status: 'done', resultUrl })
 
     return NextResponse.json({ resultUrl })

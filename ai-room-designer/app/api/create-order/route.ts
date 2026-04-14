@@ -139,7 +139,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ orderId: order.id, qrDataUrl, remainingFreeUses: Math.max(0, remaining - 1) })
   } catch (err) {
     logger.error('create-order', 'Failed to create order', { error: String(err) })
-    const e = err as Error
-    return NextResponse.json({ error: '创建订单失败，请重试', _d: String(err), _stack: e.stack?.split('\n').slice(0,5) }, { status: 500 })
+    return NextResponse.json({ error: '创建订单失败，请重试' }, { status: 500 })
   }
 }

@@ -4,6 +4,7 @@ import { getOrder } from '@/lib/orders'
 import ComparePanel from '@/components/ComparePanel'
 import SaveToHistory from '@/components/SaveToHistory'
 import SharePanel from '@/components/SharePanel'
+import UnwatermarkButton from '@/components/UnwatermarkButton'
 import PollingRefresh from '@/components/PollingRefresh'
 import Link from 'next/link'
 
@@ -95,6 +96,17 @@ export default async function ResultPage({ params }: { params: { orderId: string
 
         <SaveToHistory orderId={order.id} style={order.style} quality={order.quality} mode={order.mode} createdAt={order.createdAt} />
         <ComparePanel beforeUrl={beforeUrl} afterUrl={order.resultUrl} style={order.style} />
+
+        {/* De-watermark CTA for free orders */}
+        {order.isFree && (
+          <div className="w-full max-w-[1100px] mt-4 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-amber-400 font-semibold text-sm">当前为免费体验版（含水印）</p>
+              <p className="text-gray-500 text-xs mt-0.5">支付 ¥1 解锁无水印高清版本</p>
+            </div>
+            <UnwatermarkButton orderId={order.id} />
+          </div>
+        )}
 
         <div className="flex items-center gap-4">
           <a

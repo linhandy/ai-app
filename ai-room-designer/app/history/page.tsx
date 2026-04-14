@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { getHistory, clearHistory, type HistoryItem } from '@/lib/history'
 
 interface OrderData {
@@ -109,6 +110,42 @@ export default function HistoryPage() {
 
     loadHistory()
   }, [])
+
+  // Auto-refresh generating orders every 30 seconds
+  useEffect(() => {
+    const generatingIds = items
+      .map((item) => item.orderId)
+      .filter((id) => {
+        const o = orders[id]
+        return !o || o.status === 'generating' || o.status === 'pending'
+      })
+
+    if (generatingIds.length === 0) return
+
+    const intervalId = setInterval(async () => {
+      const updates = await Promise.all(
+        generatingIds.map(async (id) => {
+          try {
+            const res = await fetch(`/api/query-order?orderId=${id}`)
+            if (!res.ok) return [id, orders[id]] as const
+            const data = await res.json()
+            if (data.status === 'done' && orders[id]?.status !== 'done') {
+              toast.success('效果图已生成！', {
+                action: { label: '查看', onClick: () => { window.location.href = `/result/${id}` } },
+                duration: 8000,
+              })
+            }
+            return [id, data] as const
+          } catch {
+            return [id, orders[id]] as const
+          }
+        })
+      )
+      setOrders((prev) => ({ ...prev, ...Object.fromEntries(updates) }))
+    }, 30000)
+
+    return () => clearInterval(intervalId)
+  }, [items, orders])
 
   const handleClear = () => {
     if (confirm('确定清除所有历史记录？')) {

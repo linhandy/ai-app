@@ -11,7 +11,7 @@ export default async function NavBar() {
   const cookieStore = await cookies()
   const token = cookieStore.get('auth_token')?.value
   const session = token ? parseSessionToken(token) : null
-  const user = session ? await getUser(session.userId) : null
+  const user = session ? await getUser(session.userId).catch(() => null) : null
 
   return (
     <nav className="flex items-center px-6 md:px-[120px] h-16 border-b border-gray-900">

@@ -5,6 +5,7 @@ import { createQROrder } from '@/lib/alipay'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
 import { isRateLimited } from '@/lib/rate-limit'
+import { getBalance, consumeCredit } from '@/lib/credits'
 import { ALL_ROOM_TYPE_KEYS, ALL_STYLE_KEYS, DESIGN_MODES } from '@/lib/design-config'
 import QRCode from 'qrcode'
 import path from 'path'
@@ -101,14 +102,13 @@ export async function POST(req: NextRequest) {
 
     // Check credit balance — credits take priority over free uses
     const owner = session?.userId ?? ip
-    const { getBalance, consumeCredit } = await import('@/lib/credits')
     const creditBalance = await getBalance(owner)
     if (creditBalance > 0) {
       const consumed = await consumeCredit(owner)
       if (consumed) {
         const order = await createOrder({ style, uploadId: uploadId ?? null, quality, mode, roomType, customPrompt: trimmedPrompt, userId: session?.userId, isFree: false })
         await updateOrder(order.id, { status: 'paid' })
-        return NextResponse.json({ orderId: order.id, creditUsed: true, remainingCredits: creditBalance - 1 })
+        return NextResponse.json({ orderId: order.id, creditUsed: true })
       }
     }
 

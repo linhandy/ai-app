@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -12,6 +12,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [codeSent, setCodeSent] = useState(false)
+  const [isWechat, setIsWechat] = useState<boolean | undefined>(undefined)
+  const [authError, setAuthError] = useState<string | null>(null)
 
   const sendCode = async () => {
     if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
@@ -60,6 +62,13 @@ export default function LoginPage() {
     }
   }
 
+  useEffect(() => {
+    setIsWechat(/MicroMessenger/i.test(navigator.userAgent))
+    const params = new URLSearchParams(window.location.search)
+    const err = params.get('error')
+    if (err) setAuthError(err)
+  }, [])
+
   return (
     <main className="min-h-screen bg-black">
       <nav className="flex items-center px-6 md:px-[120px] h-16 border-b border-gray-900">
@@ -80,6 +89,16 @@ export default function LoginPage() {
             <p className="text-gray-500 text-sm">未注册手机号将自动创建账号</p>
           </div>
 
+          {authError === 'wechat_failed' && (
+            <div className="mb-4 px-4 py-3 rounded-lg bg-red-950 border border-red-800 text-red-400 text-sm">
+              微信登录失败，请重试
+            </div>
+          )}
+          {authError === 'wechat_not_configured' && (
+            <div className="mb-4 px-4 py-3 rounded-lg bg-red-950 border border-red-800 text-red-400 text-sm">
+              微信登录暂未开通
+            </div>
+          )}
           {DEV_MODE && (
             <div className="mb-6 px-4 py-3 rounded-lg bg-amber-950 border border-amber-800 text-amber-400 text-sm">
               开发模式：任意6位数字即可登录
@@ -153,17 +172,27 @@ export default function LoginPage() {
               跳过登录，直接体验
             </Link>
 
-            {/* WeChat -- coming soon */}
-            <button
-              disabled
-              className="w-full h-12 bg-[#07c160]/40 text-white/50 font-bold text-base rounded flex items-center justify-center gap-2 cursor-not-allowed"
-              title="微信登录即将上线"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8.5 3C4.91 3 2 5.69 2 9c0 2.1 1.47 3.93 3.5 4.78.25.1.42.34.42.62 0 .13-.02.26-.08.38l-.4 1.45c-.13.47.32.85.74.61l1.64-.88c.2-.11.42-.16.64-.16.17 0 .34.03.5.08.57.2 1.2.31 1.84.31 3.59 0 6.5-2.69 6.5-6C18 5.69 15.09 3 8.5 3zM5.5 7.5c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm6 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z" />
-              </svg>
-              微信一键登录（即将上线）
-            </button>
+            {isWechat ? (
+              <a
+                href="/api/auth/wechat"
+                className="w-full h-12 bg-[#07c160] text-white font-bold text-base rounded flex items-center justify-center gap-2 hover:bg-[#06ad56] transition-colors"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8.5 3C4.91 3 2 5.69 2 9c0 2.1 1.47 3.93 3.5 4.78.25.1.42.34.42.62 0 .13-.02.26-.08.38l-.4 1.45c-.13.47.32.85.74.61l1.64-.88c.2-.11.42-.16.64-.16.17 0 .34.03.5.08.57.2 1.2.31 1.84.31 3.59 0 6.5-2.69 6.5-6C18 5.69 15.09 3 8.5 3zM5.5 7.5c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm6 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z" />
+                </svg>
+                微信一键登录
+              </a>
+            ) : (
+              <div
+                className="w-full h-12 bg-[#07c160]/30 text-white/40 font-bold text-base rounded flex items-center justify-center gap-2 cursor-not-allowed select-none"
+                title="请在微信中打开使用"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8.5 3C4.91 3 2 5.69 2 9c0 2.1 1.47 3.93 3.5 4.78.25.1.42.34.42.62 0 .13-.02.26-.08.38l-.4 1.45c-.13.47.32.85.74.61l1.64-.88c.2-.11.42-.16.64-.16.17 0 .34.03.5.08.57.2 1.2.31 1.84.31 3.59 0 6.5-2.69 6.5-6C18 5.69 15.09 3 8.5 3zM5.5 7.5c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm6 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z" />
+                </svg>
+                微信登录（请在微信中打开）
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -18,6 +18,7 @@ export interface Order {
   resultUrl?: string
   alipayTradeNo?: string
   isFree?: boolean
+  userId?: string
   createdAt: number
   updatedAt: number
 }
@@ -87,6 +88,13 @@ async function getClient(): Promise<Client> {
     // Column already exists — ignore
   }
 
+  // Migration: add userId column for cloud history
+  try {
+    await _client.execute(`ALTER TABLE orders ADD COLUMN userId TEXT`)
+  } catch {
+    // Column already exists — ignore
+  }
+
   return _client
 }
 
@@ -104,6 +112,7 @@ function rowToOrder(row: Record<string, any>): Order {
     resultUrl: row.resultUrl ?? undefined,
     alipayTradeNo: row.alipayTradeNo ?? undefined,
     isFree: Boolean(row.is_free),
+    userId: row.userId ? String(row.userId) : undefined,
     createdAt: Number(row.createdAt),
     updatedAt: Number(row.updatedAt),
   }
@@ -117,6 +126,7 @@ export async function createOrder(params: {
   roomType?: string
   customPrompt?: string
   isFree?: boolean
+  userId?: string
 }): Promise<Order> {
   const client = await getClient()
   const order: Order = {
@@ -129,17 +139,19 @@ export async function createOrder(params: {
     roomType: params.roomType ?? 'living_room',
     customPrompt: params.customPrompt,
     isFree: params.isFree ?? false,
+    userId: params.userId,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }
 
   await client.execute({
-    sql: `INSERT INTO orders (id, status, style, quality, mode, uploadId, roomType, customPrompt, is_free, createdAt, updatedAt)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    sql: `INSERT INTO orders (id, status, style, quality, mode, uploadId, roomType, customPrompt, is_free, userId, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [order.id, order.status, order.style, order.quality, order.mode,
            order.uploadId ?? '',
            order.roomType, order.customPrompt ?? null,
            order.isFree ? 1 : 0,
+           order.userId ?? null,
            order.createdAt, order.updatedAt],
   })
 
@@ -180,4 +192,16 @@ export async function updateOrder(id: string, patch: Partial<Order>): Promise<Or
   })
 
   return getOrder(id)
+}
+
+export async function getOrdersByUserId(userId: string, limit = 50): Promise<Order[]> {
+  const client = await getClient()
+  const result = await client.execute({
+    sql: `SELECT * FROM orders
+          WHERE userId = ? AND status = 'done'
+          ORDER BY createdAt DESC
+          LIMIT ?`,
+    args: [userId, limit],
+  })
+  return result.rows.map(rowToOrder)
 }

@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
+import { createHash } from 'crypto'
 import { getOrder } from '@/lib/orders'
+import { getReferralCount } from '@/lib/referral'
 import ComparePanel from '@/components/ComparePanel'
 import SaveToHistory from '@/components/SaveToHistory'
 import SharePanel from '@/components/SharePanel'
@@ -68,6 +70,13 @@ export default async function ResultPage({ params }: { params: { orderId: string
   const proto = host.startsWith('localhost') ? 'http' : 'https'
   const pageUrl = `${proto}://${host}/result/${order.id}`
 
+  // Generate refCode from current viewer's IP for sharing
+  const visitorForwarded = headersList.get('x-forwarded-for')
+  const visitorIp = visitorForwarded?.split(',')[0]?.trim() ?? 'unknown'
+  const refCode = createHash('sha256').update(visitorIp).digest('hex').slice(0, 6)
+  const shareUrl = `${proto}://${host}/r/${order.id}?ref=${refCode}`
+  const referralCount = await getReferralCount(refCode)
+
   return (
     <main className="min-h-screen bg-black">
       <nav className="flex items-center px-[120px] h-16 border-b border-gray-900">
@@ -134,7 +143,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
           </Link>
         </div>
 
-        <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={pageUrl} />
+        <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={shareUrl} referralCount={referralCount} />
 
         {/* Info strip */}
         <div className="flex items-center gap-8 px-8 py-5 rounded-lg bg-[#0A0A0A] border border-gray-800">

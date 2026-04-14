@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { parseSessionToken } from '@/lib/auth'
 import { createOrder, getOrder, updateOrder, type DesignMode, type QualityTier } from '@/lib/orders'
 import { createQROrder } from '@/lib/alipay'
-import { getRemainingFreeUses, consumeFreeUse } from '@/lib/free-uses'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
 import { isRateLimited } from '@/lib/rate-limit'
@@ -42,20 +41,21 @@ export async function POST(req: NextRequest) {
       unlockOrderId?: string  // new
     }
 
-    // Unlock flow: pay ¥1 to remove watermark from a free order
+    // Unlock flow: pay to remove watermark from a free order
     if (unlockOrderId) {
       const targetOrder = await getOrder(unlockOrderId)
       if (!targetOrder || !targetOrder.isFree || targetOrder.status !== 'done') {
         return NextResponse.json({ error: '无效的解锁订单' }, { status: 400 })
       }
+      const unlockAmount = QUALITY_PRICE[targetOrder.quality] ?? 1
       const unlockOrder = await createOrder({
         style: 'unlock',
         uploadId: unlockOrderId,
-        quality: 'standard',
+        quality: targetOrder.quality,
         mode: 'unlock' as DesignMode,
         roomType: 'living_room',
       })
-      const qrCodeUrl = await createQROrder({ orderId: unlockOrder.id, style: '去水印', amount: 1 })
+      const qrCodeUrl = await createQROrder({ orderId: unlockOrder.id, style: '去水印', amount: unlockAmount })
       const qrDataUrl = await QRCode.toDataURL(qrCodeUrl, { width: 240, margin: 2 })
       return NextResponse.json({ orderId: unlockOrder.id, qrDataUrl })
     }
@@ -83,8 +83,6 @@ export async function POST(req: NextRequest) {
 
     const trimmedPrompt = customPrompt?.trim().slice(0, 200) || undefined
 
-    const amount = QUALITY_PRICE[quality] ?? 1
-
     // File existence check only when an upload is required
     if (modeConfig.needsUpload && uploadId) {
       const uploadPath = path.resolve(path.join(UPLOAD_DIR, uploadId))
@@ -101,14 +99,20 @@ export async function POST(req: NextRequest) {
     const session = sessionToken ? parseSessionToken(sessionToken) : null
     const userId = session?.userId
 
-    // Free tier check: if IP has quota, skip Alipay
-    const remaining = await getRemainingFreeUses(ip)
-    const isFree = remaining > 0
-
-    if (isFree) {
-      await consumeFreeUse(ip)
+    // Check credit balance — credits take priority over free uses
+    const owner = session?.userId ?? ip
+    const { getBalance, consumeCredit } = await import('@/lib/credits')
+    const creditBalance = await getBalance(owner)
+    if (creditBalance > 0) {
+      const consumed = await consumeCredit(owner)
+      if (consumed) {
+        const order = await createOrder({ style, uploadId: uploadId ?? null, quality, mode, roomType, customPrompt: trimmedPrompt, userId: session?.userId, isFree: false })
+        await updateOrder(order.id, { status: 'paid' })
+        return NextResponse.json({ orderId: order.id, creditUsed: true, remainingCredits: creditBalance - 1 })
+      }
     }
 
+    // All generation orders are free (with watermark). Users pay later to unlock.
     const order = await createOrder({
       style,
       uploadId: uploadId ?? null,
@@ -116,27 +120,14 @@ export async function POST(req: NextRequest) {
       mode,
       roomType,
       customPrompt: trimmedPrompt,
-      isFree,
+      isFree: true,
       userId,
     })
 
-    logger.info('create-order', 'Order created', { orderId: order.id, style, quality, mode, roomType, amount })
+    await updateOrder(order.id, { status: 'paid' })
+    logger.info('create-order', 'Order created (free generation)', { orderId: order.id, style, quality, mode, roomType })
 
-    if (process.env.DEV_SKIP_PAYMENT === 'true') {
-      await updateOrder(order.id, { status: 'paid' })
-      logger.info('create-order', 'DEV_SKIP_PAYMENT: order auto-paid', { orderId: order.id })
-      return NextResponse.json({ orderId: order.id, devSkip: true })
-    }
-
-    if (isFree) {
-      await updateOrder(order.id, { status: 'paid' })
-      return NextResponse.json({ orderId: order.id, isFree: true })
-    }
-
-    const qrCodeUrl = await createQROrder({ orderId: order.id, style, amount })
-    const qrDataUrl = await QRCode.toDataURL(qrCodeUrl, { width: 240, margin: 2 })
-
-    return NextResponse.json({ orderId: order.id, qrDataUrl, remainingFreeUses: Math.max(0, remaining - 1) })
+    return NextResponse.json({ orderId: order.id })
   } catch (err) {
     logger.error('create-order', 'Failed to create order', { error: String(err) })
     return NextResponse.json({ error: '创建订单失败，请重试' }, { status: 500 })

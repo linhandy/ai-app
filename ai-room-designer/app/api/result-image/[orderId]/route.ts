@@ -23,7 +23,7 @@ export async function GET(
     data = await applyWatermark(data)
   }
 
-  return new NextResponse(data, {
+  return new NextResponse(new Uint8Array(data), {
     headers: {
       'Content-Type': 'image/png',
       'Cache-Control': 'public, max-age=86400',

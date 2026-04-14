@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   const dbBuffer = await getUploadData(uploadId)
   if (dbBuffer) {
-    return new Response(dbBuffer, {
+    return new Response(dbBuffer.buffer as ArrayBuffer, {
       headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=3600' },
     })
   }

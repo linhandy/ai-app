@@ -53,7 +53,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span className="text-green-400 text-sm">支付成功</span>
+              <span className="text-green-400 text-sm">订单已创建</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center animate-pulse shrink-0">
@@ -82,7 +82,42 @@ export default async function ResultPage({ params }: { params: { orderId: string
     )
   }
 
+  // Generation failed — show error with retry link
+  if (order.status === 'failed') {
+    return (
+      <main className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 max-w-sm px-6 text-center">
+          <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center">
+            <svg className="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-red-400 font-semibold text-lg">生成失败</p>
+          <p className="text-gray-400 text-sm">AI 生成遇到问题，请重新尝试</p>
+          <Link href="/generate" className="flex items-center justify-center gap-2 px-8 h-12 bg-amber-500 text-black font-bold text-sm rounded hover:bg-amber-400 transition-colors">
+            重新生成
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
   if (order.status !== 'done' || !order.resultUrl) notFound()
+
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
+  const fullResultUrl = order.resultUrl?.startsWith('http')
+    ? order.resultUrl
+    : `${base}${order.resultUrl}`
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ImageObject',
+    name: `${order.style}风格装修效果图`,
+    description: `AI生成的${order.style}风格室内装修效果图`,
+    contentUrl: fullResultUrl,
+    creator: { '@type': 'Organization', name: '装AI', url: base },
+    dateCreated: order.createdAt,
+  }
 
   const beforeUrl = order.uploadId ? `/api/preview?uploadId=${encodeURIComponent(order.uploadId)}` : undefined
 
@@ -100,6 +135,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
 
   return (
     <main className="min-h-screen bg-black">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav className="flex items-center px-4 md:px-[120px] h-16 border-b border-gray-900">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">装</div>
@@ -127,14 +163,16 @@ export default async function ResultPage({ params }: { params: { orderId: string
         <SaveToHistory orderId={order.id} style={order.style} quality={order.quality} mode={order.mode} createdAt={order.createdAt} />
         <ComparePanel beforeUrl={beforeUrl} afterUrl={order.resultUrl} style={order.style} />
 
-        {/* De-watermark CTA for free orders */}
+        {/* De-watermark CTA — shown for all watermarked orders */}
         {order.isFree && (
           <div className="w-full max-w-[1100px] mt-2 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <p className="text-amber-400 font-semibold text-sm">当前为免费体验版（含水印）</p>
-              <p className="text-gray-500 text-xs mt-0.5">支付 ¥1 解锁无水印高清版本</p>
+              <p className="text-amber-400 font-semibold text-sm">当前为预览版（含水印）</p>
+              <p className="text-gray-500 text-xs mt-0.5">
+                支付 ¥{order.quality === 'ultra' ? 5 : order.quality === 'premium' ? 3 : 1} 解锁无水印高清版本
+              </p>
             </div>
-            <UnwatermarkButton orderId={order.id} />
+            <UnwatermarkButton orderId={order.id} price={order.quality === 'ultra' ? 5 : order.quality === 'premium' ? 3 : 1} />
           </div>
         )}
 
@@ -170,7 +208,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
           {[
             { label: '装修风格', value: order.style, color: 'text-amber-500' },
             { label: '分辨率', value: order.quality === 'ultra' ? '4096×4096' : order.quality === 'premium' ? '2048×2048' : '1024×1024', color: 'text-white' },
-            { label: '本次费用', value: order.quality === 'ultra' ? '¥5' : order.quality === 'premium' ? '¥3' : '¥1', color: 'text-white' },
+            { label: order.isFree ? '解锁价格' : '已付费', value: order.quality === 'ultra' ? '¥5' : order.quality === 'premium' ? '¥3' : '¥1', color: order.isFree ? 'text-amber-500' : 'text-green-400' },
           ].map(({ label, value, color }) => (
             <div key={label} className="flex flex-col items-center gap-1 py-4 px-2">
               <span className={`${color} text-sm font-bold truncate max-w-full text-center`}>{value}</span>

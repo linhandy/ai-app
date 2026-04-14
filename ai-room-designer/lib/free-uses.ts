@@ -5,7 +5,10 @@ const FREE_USES_PER_PERIOD = 3
 const RESET_PERIOD_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
 function dbUrl(): string {
-  const raw = process.env.ORDERS_DB ?? path.join(process.cwd(), 'orders.db')
+  const raw = process.env.ORDERS_DB ?? path.join(
+    process.env.VERCEL ? '/tmp' : process.cwd(),
+    'orders.db',
+  )
   if (raw === ':memory:') return ':memory:'
   return `file:${raw}`
 }

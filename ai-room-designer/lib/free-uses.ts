@@ -1,20 +1,8 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { createClient } = require('@libsql/client') as typeof import('@libsql/client')
 import type { Client } from '@libsql/client'
-import path from 'path'
+import { makeClient } from '@/lib/db-client'
 
 const FREE_USES_PER_PERIOD = 3
 const RESET_PERIOD_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
-
-function dbUrl(): string {
-  const raw = process.env.ORDERS_DB ?? path.join(
-    process.env.VERCEL ? '/tmp' : process.cwd(),
-    'orders.db',
-  )
-  if (raw === ':memory:') return ':memory:'
-  if (raw.startsWith('libsql://') || raw.startsWith('https://')) return raw
-  return `file:${raw}`
-}
 
 let _client: Client | null = null
 
@@ -27,9 +15,7 @@ export function closeDb(): void {
 
 export async function getDb(): Promise<Client> {
   if (_client) return _client
-  const url = dbUrl()
-  const authToken = process.env.LIBSQL_AUTH_TOKEN
-  _client = createClient(authToken && url !== ':memory:' ? { url, authToken } : { url })
+  _client = makeClient()
   await _client.execute(`
     CREATE TABLE IF NOT EXISTS ip_free_uses (
       ip TEXT PRIMARY KEY,

@@ -1,8 +1,6 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { createClient } = require('@libsql/client') as typeof import('@libsql/client')
 import type { Client } from '@libsql/client'
+import { makeClient } from '@/lib/db-client'
 import crypto from 'crypto'
-import path from 'path'
 
 export type OrderStatus = 'pending' | 'paid' | 'generating' | 'done' | 'failed'
 export type QualityTier = 'standard' | 'premium' | 'ultra'
@@ -25,17 +23,6 @@ export interface Order {
   updatedAt: number
 }
 
-function dbUrl(): string {
-  const raw = process.env.ORDERS_DB ?? path.join(
-    process.env.VERCEL ? '/tmp' : process.cwd(),
-    'orders.db',
-  )
-  if (raw === ':memory:') return ':memory:'
-  // Turso cloud URLs start with libsql:// — pass through as-is
-  if (raw.startsWith('libsql://') || raw.startsWith('https://')) return raw
-  return `file:${raw}`
-}
-
 // Singleton client — one connection per process
 let _client: Client | null = null
 
@@ -50,9 +37,7 @@ export function closeDb(): void {
 export async function getClient(): Promise<Client> {
   if (_client) return _client
 
-  const url = dbUrl()
-  const authToken = process.env.LIBSQL_AUTH_TOKEN
-  _client = createClient(authToken && url !== ':memory:' ? { url, authToken } : { url })
+  _client = makeClient()
 
   await _client.execute(`
     CREATE TABLE IF NOT EXISTS orders (

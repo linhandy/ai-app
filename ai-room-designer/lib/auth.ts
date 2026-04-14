@@ -1,29 +1,15 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { createClient } = require('@libsql/client') as typeof import('@libsql/client')
 import type { Client } from '@libsql/client'
+import { makeClient } from '@/lib/db-client'
 import crypto from 'crypto'
-import path from 'path'
 
 // ---- DB connection (same DB as orders) ----
-
-function dbUrl(): string {
-  const raw = process.env.ORDERS_DB ?? path.join(
-    process.env.VERCEL ? '/tmp' : process.cwd(),
-    'orders.db',
-  )
-  if (raw === ':memory:') return ':memory:'
-  if (raw.startsWith('libsql://') || raw.startsWith('https://')) return raw
-  return `file:${raw}`
-}
 
 let _client: Client | null = null
 
 async function getClient(): Promise<Client> {
   if (_client) return _client
 
-  const url = dbUrl()
-  const authToken = process.env.LIBSQL_AUTH_TOKEN
-  _client = createClient(authToken && url !== ':memory:' ? { url, authToken } : { url })
+  _client = makeClient()
 
   // phone allows NULL (WeChat users have no phone number)
   await _client.execute(`

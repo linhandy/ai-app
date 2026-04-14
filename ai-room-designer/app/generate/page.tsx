@@ -1,5 +1,5 @@
 'use client'
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import UploadZone from '@/components/UploadZone'
@@ -39,6 +39,7 @@ function GeneratePageInner() {
 
   const currentMode = DESIGN_MODES.find((m) => m.key === mode) ?? DESIGN_MODES[0]
   const [freeRemaining, setFreeRemaining] = useState<number | null>(null)
+  const [creditBalance, setCreditBalance] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [payModal, setPayModal] = useState<{ orderId: string; qrDataUrl: string; amount: number } | null>(null)
@@ -46,6 +47,13 @@ function GeneratePageInner() {
 
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
   const canGenerate = !currentMode.needsUpload || !!uploadId
+
+  useEffect(() => {
+    fetch('/api/credits/balance')
+      .then(r => r.json())
+      .then(d => setCreditBalance(d.balance ?? 0))
+      .catch(() => {})
+  }, [])
 
   const handlePay = async () => {
     if (currentMode.needsUpload && !uploadId) { setError('请先上传房间照片'); return }
@@ -239,6 +247,11 @@ function GeneratePageInner() {
             {freeRemaining !== null && freeRemaining > 0 && (
               <p className="text-amber-500 text-xs text-center">还剩 {freeRemaining} 次免费体验</p>
             )}
+            {creditBalance > 0 && (
+              <div className="text-amber-400 text-sm font-medium text-center">
+                剩余额度: {creditBalance}次
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -248,6 +261,11 @@ function GeneratePageInner() {
         {error && <p className="text-red-400 text-xs mb-2 text-center">{error}</p>}
         {freeRemaining !== null && freeRemaining > 0 && (
           <p className="text-amber-500 text-xs text-center mb-1">还剩 {freeRemaining} 次免费体验</p>
+        )}
+        {creditBalance > 0 && (
+          <div className="text-amber-400 text-sm font-medium text-center mb-1">
+            剩余额度: {creditBalance}次
+          </div>
         )}
         <button
           type="button"

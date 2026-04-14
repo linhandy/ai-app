@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createHash } from 'crypto'
+import type { Metadata } from 'next'
 import { getOrder } from '@/lib/orders'
 import { getReferralCount } from '@/lib/referral'
 import ComparePanel from '@/components/ComparePanel'
@@ -8,33 +9,46 @@ import SaveToHistory from '@/components/SaveToHistory'
 import SharePanel from '@/components/SharePanel'
 import UnwatermarkButton from '@/components/UnwatermarkButton'
 import PollingRefresh from '@/components/PollingRefresh'
+import ProgressBar from '@/components/ProgressBar'
+import ShareModalTrigger from '@/components/ShareModalTrigger'
 import Link from 'next/link'
+
+export async function generateMetadata(
+  { params }: { params: { orderId: string } }
+): Promise<Metadata> {
+  const order = await getOrder(params.orderId)
+  if (!order || order.status !== 'done') return { title: '装AI' }
+
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
+  const imageUrl = order.resultUrl?.startsWith('http')
+    ? order.resultUrl
+    : `${base}${order.resultUrl}`
+
+  return {
+    title: `${order.style}风格装修效果图 | 装AI`,
+    description: `用AI生成的${order.style}风格装修效果图，效果超乎想象。`,
+    openGraph: {
+      title: `${order.style}风格装修效果图`,
+      description: `AI生成的${order.style}风格装修，30秒出图，1元起`,
+      images: [{ url: imageUrl, width: 1024, height: 1024, alt: `${order.style}装修效果图` }],
+    },
+  }
+}
 
 export default async function ResultPage({ params }: { params: { orderId: string } }) {
   const order = await getOrder(params.orderId)
 
   if (!order) notFound()
 
-  // Still generating — show spinner with auto-refresh and progress animation
+  // Still generating — show progress bar with auto-refresh
   if (order.status === 'paid' || order.status === 'generating') {
     return (
       <main className="min-h-screen bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center gap-6 max-w-sm px-6">
-          {/* Animated spinner */}
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-amber-500/20 rounded-full" />
-            <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin absolute top-0 left-0" />
-          </div>
-
-          <div className="text-center space-y-2">
-            <p className="text-white font-semibold text-xl">AI 正在生成装修效果图</p>
-            <p className="text-gray-400 text-sm">AI正在分析房间结构，重新设计装修风格，请稍候...</p>
-          </div>
-
-          {/* Progress steps */}
+        <div className="flex flex-col items-center gap-8 max-w-sm w-full px-6">
+          {/* Steps */}
           <div className="w-full space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shrink-0">
                 <svg className="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
@@ -42,18 +56,26 @@ export default async function ResultPage({ params }: { params: { orderId: string
               <span className="text-green-400 text-sm">支付成功</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center animate-pulse">
+              <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center animate-pulse shrink-0">
                 <div className="w-2 h-2 bg-black rounded-full" />
               </div>
-              <span className="text-amber-400 text-sm">AI 生成中...</span>
+              <span className="text-amber-400 text-sm font-semibold">AI 生成中...</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center" />
+              <div className="w-6 h-6 rounded-full bg-gray-700 shrink-0" />
               <span className="text-gray-500 text-sm">生成完成</span>
             </div>
           </div>
 
-          <p className="text-gray-500 text-xs">大约需要 20-30 秒，页面将自动刷新</p>
+          <ProgressBar isComplete={false} />
+
+          <p className="text-gray-600 text-xs text-center">
+            大约需要 20–30 秒&nbsp;·&nbsp;
+            <a href="/history" className="text-gray-400 underline underline-offset-2 hover:text-gray-200">
+              你也可以去其他页面，完成后在历史记录查看 →
+            </a>
+          </p>
+
           <PollingRefresh orderId={params.orderId} />
         </div>
       </main>
@@ -143,6 +165,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
         <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={shareUrl} referralCount={referralCount} />
 
         {/* Info strip */}
+
         <div className="w-full max-w-[600px] grid grid-cols-3 divide-x divide-gray-800 rounded-lg bg-[#0A0A0A] border border-gray-800 overflow-hidden">
           {[
             { label: '装修风格', value: order.style, color: 'text-amber-500' },
@@ -156,6 +179,13 @@ export default async function ResultPage({ params }: { params: { orderId: string
           ))}
         </div>
       </div>
+
+      <ShareModalTrigger
+        orderId={order.id}
+        style={order.style}
+        pageUrl={shareUrl}
+        resultUrl={order.resultUrl}
+      />
     </main>
   )
 }

@@ -176,6 +176,42 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+
+        <div className="w-full max-w-[960px] mt-8 pt-8 border-t border-gray-800">
+          <h3 className="text-xl font-bold text-center mb-2">批量套餐更划算</h3>
+          <p className="text-gray-500 text-sm text-center mb-6">一次购买，按次使用，不限风格和画质</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { label: '基础包', count: 5, price: 9.9, unit: '¥1.98/张', badge: null, id: 'pkg_5' },
+              { label: '进阶包', count: 10, price: 29.9, unit: '¥2.99/张', badge: '最受欢迎', id: 'pkg_10' },
+              { label: '专业包', count: 50, price: 99, unit: '¥1.98/张', badge: '最划算', id: 'pkg_50' },
+            ].map(pkg => (
+              <div key={pkg.label} className={`p-5 rounded-xl bg-[#0D0D0D] border ${pkg.badge ? 'border-amber-500' : 'border-gray-800'} flex flex-col gap-3 relative`}>
+                {pkg.badge && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-black text-xs font-bold px-3 py-1 rounded-full">
+                    {pkg.badge}
+                  </div>
+                )}
+                <div className="flex items-end justify-between">
+                  <div>
+                    <h4 className="text-white font-bold">{pkg.label}</h4>
+                    <p className="text-gray-500 text-xs mt-0.5">{pkg.count}次生成额度</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-2xl font-bold text-amber-500">¥{pkg.price}</span>
+                    <p className="text-gray-600 text-xs">{pkg.unit}</p>
+                  </div>
+                </div>
+                <Link
+                  href={`/generate?package=${pkg.id}`}
+                  className="flex items-center justify-center h-10 bg-white/10 text-white font-semibold text-sm rounded hover:bg-white/15 transition-colors"
+                >
+                  立即购买
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* FAQ */}

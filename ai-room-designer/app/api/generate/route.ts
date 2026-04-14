@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     logger.info('generate', 'Starting AI generation', { orderId, style: order.style, quality: order.quality })
 
     // Unlock mode: remove watermark from linked free order
-    if (order.mode === 'unlock' && order.uploadId) {
+    if ((order.mode as string) === 'unlock' && order.uploadId) {
       const linkedOrderId = order.uploadId
       const linked = await getOrder(linkedOrderId)
       if (!linked) {

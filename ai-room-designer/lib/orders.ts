@@ -119,6 +119,16 @@ export async function getClient(): Promise<Client> {
     // Column already exists — ignore
   }
 
+  // Credits table — tracks per-user credit balance
+  await _client.execute(`
+    CREATE TABLE IF NOT EXISTS credits (
+      owner TEXT PRIMARY KEY,
+      balance INTEGER NOT NULL DEFAULT 0,
+      total_purchased INTEGER NOT NULL DEFAULT 0,
+      updated_at INTEGER NOT NULL
+    )
+  `)
+
   return _client
 }
 

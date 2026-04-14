@@ -9,27 +9,13 @@ export const PACKAGES = [
 
 export type PackageId = typeof PACKAGES[number]['id']
 
-export async function ensureCreditsTable() {
-  const db = await getClient()
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS credits (
-      owner TEXT PRIMARY KEY,
-      balance INTEGER NOT NULL DEFAULT 0,
-      total_purchased INTEGER NOT NULL DEFAULT 0,
-      updated_at INTEGER NOT NULL
-    )
-  `)
-}
-
 export async function getBalance(owner: string): Promise<number> {
-  await ensureCreditsTable()
   const db = await getClient()
   const row = await db.execute({ sql: 'SELECT balance FROM credits WHERE owner = ?', args: [owner] })
-  return (row.rows[0]?.balance as number) ?? 0
+  return Number(row.rows[0]?.balance ?? 0)
 }
 
 export async function addCredits(owner: string, amount: number): Promise<void> {
-  await ensureCreditsTable()
   const db = await getClient()
   const now = Date.now()
   await db.execute({
@@ -44,7 +30,6 @@ export async function addCredits(owner: string, amount: number): Promise<void> {
 }
 
 export async function consumeCredit(owner: string): Promise<boolean> {
-  await ensureCreditsTable()
   const db = await getClient()
   const now = Date.now()
   const result = await db.execute({

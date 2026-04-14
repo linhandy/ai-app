@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
     logger.info('generate', 'AI generation complete', { orderId, duration: `${duration}s`, size: resultBuffer.length })
 
     // Save generated image to disk
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true })
     const resultFilename = `result-${orderId}.png`
     const resultPath = path.join(UPLOAD_DIR, resultFilename)
     fs.writeFileSync(resultPath, resultBuffer)
@@ -76,6 +77,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     logger.error('generate', 'AI generation failed', { orderId, error: String(err) })
     if (orderId) await updateOrder(orderId, { status: 'failed' })
-    return NextResponse.json({ error: 'AI生成失败，请稍后重试', _debug: String(err) }, { status: 500 })
+    return NextResponse.json({ error: 'AI生成失败，请稍后重试' }, { status: 500 })
   }
 }

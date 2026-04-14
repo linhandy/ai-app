@@ -41,6 +41,7 @@ async function getClient(): Promise<Client> {
   try { await _client.execute(`ALTER TABLE users ADD COLUMN wechat_openid   TEXT`) } catch { /* already exists */ }
   try { await _client.execute(`ALTER TABLE users ADD COLUMN wechat_nickname TEXT`) } catch { /* already exists */ }
   try { await _client.execute(`ALTER TABLE users ADD COLUMN wechat_avatar   TEXT`) } catch { /* already exists */ }
+  try { await _client.execute(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_wechat_openid ON users (wechat_openid) WHERE wechat_openid IS NOT NULL`) } catch { /* already exists */ }
 
   return _client
 }
@@ -114,6 +115,7 @@ export async function findOrCreateWechatUser(params: {
 }): Promise<{ userId: string; openid: string; nickname: string; avatar: string }> {
   const client = await getClient()
 
+  // Check if user with this openid already exists
   const existing = await client.execute({
     sql: 'SELECT id FROM users WHERE wechat_openid = ?',
     args: [params.openid],
@@ -121,12 +123,14 @@ export async function findOrCreateWechatUser(params: {
 
   let userId: string
   if (existing.rows.length > 0) {
+    // User exists, update their info
     userId = String(existing.rows[0].id)
     await client.execute({
-      sql: 'UPDATE users SET wechat_nickname = ?, wechat_avatar = ? WHERE id = ?',
+      sql: `UPDATE users SET wechat_nickname = ?, wechat_avatar = ? WHERE id = ?`,
       args: [params.nickname, params.avatar, userId],
     })
   } else {
+    // Create new user
     userId = `usr_${crypto.randomBytes(8).toString('hex')}`
     await client.execute({
       sql: `INSERT INTO users (id, phone, wechat_openid, wechat_nickname, wechat_avatar, createdAt)
@@ -135,7 +139,12 @@ export async function findOrCreateWechatUser(params: {
     })
   }
 
-  return { userId, openid: params.openid, nickname: params.nickname, avatar: params.avatar }
+  return {
+    userId,
+    openid: params.openid,
+    nickname: params.nickname,
+    avatar: params.avatar,
+  }
 }
 
 // ---- Session tokens (base64-encoded JSON, no JWT lib) ----
@@ -162,7 +171,7 @@ export function parseSessionToken(token: string): { userId: string } | null {
 
 export async function getUser(
   id: string,
-): Promise<{ id: string; phone: string; createdAt: number } | null> {
+): Promise<{ id: string; phone: string | null; createdAt: number } | null> {
   const client = await getClient()
   const result = await client.execute({
     sql: 'SELECT * FROM users WHERE id = ?',
@@ -172,7 +181,7 @@ export async function getUser(
   const row = result.rows[0]
   return {
     id: String(row.id),
-    phone: String(row.phone),
+    phone: row.phone != null ? String(row.phone) : null,
     createdAt: Number(row.createdAt),
   }
 }

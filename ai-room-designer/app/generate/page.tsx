@@ -1,5 +1,5 @@
 'use client'
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import UploadZone from '@/components/UploadZone'
@@ -53,6 +53,7 @@ function GeneratePageInner() {
   const canGenerate = !currentMode.needsUpload || !!uploadId
 
   const initialPackageId = searchParams.get('package')
+  const packagePurchaseTriggeredRef = useRef(false)
 
   useEffect(() => {
     fetch('/api/credits/balance')
@@ -62,7 +63,8 @@ function GeneratePageInner() {
   }, [])
 
   useEffect(() => {
-    if (!initialPackageId || buyPackageModal) return
+    if (!initialPackageId || packagePurchaseTriggeredRef.current) return
+    packagePurchaseTriggeredRef.current = true
     // Auto-call buy-package API for the specified package
     fetch('/api/buy-package', {
       method: 'POST',
@@ -87,7 +89,7 @@ function GeneratePageInner() {
         }
       })
       .catch(() => {})
-  }, [initialPackageId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialPackageId])
 
   const handlePay = async () => {
     if (currentMode.needsUpload && !uploadId) { setError('请先上传房间照片'); return }

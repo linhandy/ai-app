@@ -14,6 +14,8 @@ interface Props {
 export default function PackagePurchaseModal({ orderId, qrDataUrl, amount, count, label, onSuccess, onClose }: Props) {
   const [status, setStatus] = useState<'waiting' | 'success' | 'failed'>('waiting')
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const onSuccessRef = useRef(onSuccess)
+  useEffect(() => { onSuccessRef.current = onSuccess }, [onSuccess])
 
   useEffect(() => {
     const poll = async () => {
@@ -23,7 +25,7 @@ export default function PackagePurchaseModal({ orderId, qrDataUrl, amount, count
 
         if (data.status === 'done') {
           setStatus('success')
-          onSuccess(count)
+          onSuccessRef.current(count)
           return
         }
 
@@ -39,7 +41,7 @@ export default function PackagePurchaseModal({ orderId, qrDataUrl, amount, count
 
     timerRef.current = setTimeout(poll, 2000)
     return () => clearTimeout(timerRef.current)
-  }, [orderId, count, onSuccess])
+  }, [orderId, count])
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={status === 'success' ? onClose : undefined}>

@@ -8,6 +8,7 @@ import RoomTypeSelector from '@/components/RoomTypeSelector'
 import PaymentModal from '@/components/PaymentModal'
 import { DESIGN_MODES } from '@/lib/design-config'
 import type { DesignMode } from '@/lib/orders'
+import { saveToHistory } from '@/lib/history'
 
 const QUALITY_OPTIONS = [
   { key: 'standard', label: '标准', price: 1, resolution: '1024px', color: 'border-gray-700 text-gray-300' },
@@ -58,6 +59,9 @@ function GeneratePageInner() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
+
+      // Save to history immediately so user can navigate away during generation
+      saveToHistory({ orderId: data.orderId, style, quality, mode, createdAt: Date.now() })
 
       if (data.devSkip) {
         setGenerating(true)

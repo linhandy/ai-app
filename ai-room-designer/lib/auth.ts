@@ -169,9 +169,14 @@ export function parseSessionToken(token: string): { userId: string } | null {
 
 // ---- User lookup ----
 
-export async function getUser(
-  id: string,
-): Promise<{ id: string; phone: string | null; createdAt: number } | null> {
+export async function getUser(id: string): Promise<{
+  id: string
+  phone: string | null
+  wechat_openid: string | null
+  wechat_nickname: string | null
+  wechat_avatar: string | null
+  createdAt: number
+} | null> {
   const client = await getClient()
   const result = await client.execute({
     sql: 'SELECT * FROM users WHERE id = ?',
@@ -182,6 +187,9 @@ export async function getUser(
   return {
     id: String(row.id),
     phone: row.phone != null ? String(row.phone) : null,
+    wechat_openid: row.wechat_openid != null ? String(row.wechat_openid) : null,
+    wechat_nickname: row.wechat_nickname != null ? String(row.wechat_nickname) : null,
+    wechat_avatar: row.wechat_avatar != null ? String(row.wechat_avatar) : null,
     createdAt: Number(row.createdAt),
   }
 }

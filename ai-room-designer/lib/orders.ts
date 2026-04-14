@@ -17,6 +17,7 @@ export interface Order {
   customPrompt?: string
   resultUrl?: string
   alipayTradeNo?: string
+  isFree?: boolean
   createdAt: number
   updatedAt: number
 }
@@ -79,6 +80,13 @@ async function getClient(): Promise<Client> {
     // Column already exists — ignore
   }
 
+  // Migration: add is_free column for free tier
+  try {
+    await _client.execute(`ALTER TABLE orders ADD COLUMN is_free INTEGER NOT NULL DEFAULT 0`)
+  } catch {
+    // Column already exists — ignore
+  }
+
   return _client
 }
 
@@ -95,6 +103,7 @@ function rowToOrder(row: Record<string, any>): Order {
     customPrompt: row.customPrompt ?? undefined,
     resultUrl: row.resultUrl ?? undefined,
     alipayTradeNo: row.alipayTradeNo ?? undefined,
+    isFree: Boolean(row.is_free),
     createdAt: Number(row.createdAt),
     updatedAt: Number(row.updatedAt),
   }
@@ -107,6 +116,7 @@ export async function createOrder(params: {
   mode?: DesignMode
   roomType?: string
   customPrompt?: string
+  isFree?: boolean
 }): Promise<Order> {
   const client = await getClient()
   const order: Order = {
@@ -118,16 +128,19 @@ export async function createOrder(params: {
     uploadId: params.uploadId ?? null,
     roomType: params.roomType ?? 'living_room',
     customPrompt: params.customPrompt,
+    isFree: params.isFree ?? false,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }
 
   await client.execute({
-    sql: `INSERT INTO orders (id, status, style, quality, mode, uploadId, roomType, customPrompt, createdAt, updatedAt)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    sql: `INSERT INTO orders (id, status, style, quality, mode, uploadId, roomType, customPrompt, is_free, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [order.id, order.status, order.style, order.quality, order.mode,
            order.uploadId ?? '',
-           order.roomType, order.customPrompt ?? null, order.createdAt, order.updatedAt],
+           order.roomType, order.customPrompt ?? null,
+           order.isFree ? 1 : 0,
+           order.createdAt, order.updatedAt],
   })
 
   return order
@@ -153,6 +166,7 @@ export async function updateOrder(id: string, patch: Partial<Order>): Promise<Or
   if (patch.status !== undefined) { fields.push('status = ?'); values.push(patch.status) }
   if (patch.resultUrl !== undefined) { fields.push('resultUrl = ?'); values.push(patch.resultUrl ?? null) }
   if (patch.alipayTradeNo !== undefined) { fields.push('alipayTradeNo = ?'); values.push(patch.alipayTradeNo ?? null) }
+  if (patch.isFree !== undefined) { fields.push('is_free = ?'); values.push(patch.isFree ? 1 : 0) }
 
   if (fields.length === 0) return getOrder(id)
 

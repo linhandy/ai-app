@@ -85,3 +85,35 @@ test('getOrder returns null uploadId for freestyle order', async () => {
   const found = await getOrder(created.id)
   expect(found?.uploadId).toBeNull()
 })
+
+test('createOrder stores userId when provided', async () => {
+  const order = await createOrder({ style: '北欧简约', uploadId: 'abc', userId: 'usr_test1' })
+  const found = await getOrder(order.id)
+  expect(found?.userId).toBe('usr_test1')
+})
+
+test('getOrdersByUserId returns done orders for user', async () => {
+  const o1 = await createOrder({ style: '现代轻奢', uploadId: 'x1', userId: 'usr_abc' })
+  const o2 = await createOrder({ style: '新中式', uploadId: 'x2', userId: 'usr_abc' })
+  const o3 = await createOrder({ style: '工业风', uploadId: 'x3', userId: 'usr_other' })
+
+  await updateOrder(o1.id, { status: 'done', resultUrl: '/api/preview?uploadId=r1.png' })
+  await updateOrder(o2.id, { status: 'done', resultUrl: '/api/preview?uploadId=r2.png' })
+  await updateOrder(o3.id, { status: 'done', resultUrl: '/api/preview?uploadId=r3.png' })
+
+  const { getOrdersByUserId } = await import('@/lib/orders')
+  const results = await getOrdersByUserId('usr_abc')
+  expect(results).toHaveLength(2)
+  expect(results.map(r => r.id)).toContain(o1.id)
+  expect(results.map(r => r.id)).toContain(o2.id)
+})
+
+test('getOrdersByUserId returns max 50 items', async () => {
+  const { getOrdersByUserId } = await import('@/lib/orders')
+  for (let i = 0; i < 55; i++) {
+    const o = await createOrder({ style: '北欧简约', uploadId: `u${i}`, userId: 'usr_many' })
+    await updateOrder(o.id, { status: 'done', resultUrl: `/api/preview?uploadId=r${i}.png` })
+  }
+  const results = await getOrdersByUserId('usr_many')
+  expect(results.length).toBe(50)
+})

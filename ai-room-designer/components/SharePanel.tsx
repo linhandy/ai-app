@@ -6,6 +6,7 @@ interface Props {
   style: string
   resultUrl: string    // relative /api/preview?... URL for the result image
   pageUrl?: string     // full URL of the result page (passed from server)
+  referralCount?: number
 }
 
 type Modal = 'wechat' | 'douyin' | 'xiaohongshu' | null
@@ -21,7 +22,7 @@ function useCopy() {
   return { copied, copy }
 }
 
-export default function SharePanel({ style, pageUrl }: Props) {
+export default function SharePanel({ style, pageUrl, referralCount = 0 }: Props) {
   const [modal, setModal] = useState<Modal>(null)
   const [qrDataUrl, setQrDataUrl] = useState<string>('')
   const [canNativeShare, setCanNativeShare] = useState(false)
@@ -129,6 +130,11 @@ export default function SharePanel({ style, pageUrl }: Props) {
             ))}
           </div>
         </div>
+        {referralCount > 0 && (
+          <p className="text-gray-600 text-xs mt-1">
+            已有 {referralCount} 人通过你的链接体验
+          </p>
+        )}
       </div>
 
       {/* WeChat QR modal */}

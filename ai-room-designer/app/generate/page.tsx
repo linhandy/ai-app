@@ -37,6 +37,7 @@ function GeneratePageInner() {
   const [customPromptOpen, setCustomPromptOpen] = useState(false)
 
   const currentMode = DESIGN_MODES.find((m) => m.key === mode) ?? DESIGN_MODES[0]
+  const [freeRemaining, setFreeRemaining] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [payModal, setPayModal] = useState<{ orderId: string; qrDataUrl: string } | null>(null)
@@ -77,6 +78,11 @@ function GeneratePageInner() {
         return
       }
 
+      if (data.isFree) {
+        setFreeRemaining(0)
+      } else if (typeof data.remainingFreeUses === 'number') {
+        setFreeRemaining(data.remainingFreeUses)
+      }
       setPayModal({ orderId: data.orderId, qrDataUrl: data.qrDataUrl })
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '创建订单失败'
@@ -240,6 +246,16 @@ function GeneratePageInner() {
               {generating ? 'AI生成中，请稍候...' : loading ? '处理中...' : `⚡ 支付 ¥${currentOption.price} · 立即生成${currentOption.label}效果图`}
             </button>
             <p className="text-gray-600 text-xs text-center">扫码支付宝完成付款 · 30秒内自动生成 · 高清图片下载</p>
+            {freeRemaining !== null && freeRemaining > 0 && (
+              <p className="text-gray-500 text-xs text-center mt-2">
+                还剩 {freeRemaining} 次免费体验
+              </p>
+            )}
+            {freeRemaining === 0 && (
+              <p className="text-gray-500 text-xs text-center mt-2">
+                免费次数已用完，后续生成将按质量收费
+              </p>
+            )}
           </div>
         </div>
       </div>

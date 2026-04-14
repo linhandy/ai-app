@@ -43,32 +43,71 @@ export default function HistoryPage() {
   const [items, setItems] = useState<HistoryItem[]>([])
   const [orders, setOrders] = useState<Record<string, OrderData>>({})
   const [loading, setLoading] = useState(true)
+  const [isCloud, setIsCloud] = useState(false)
 
   useEffect(() => {
-    const history = getHistory()
-    setItems(history)
-
-    if (history.length === 0) {
-      setLoading(false)
-      return
-    }
-
-    // Fetch status for each order
-    Promise.all(
-      history.map(async (item) => {
-        try {
-          const res = await fetch(`/api/query-order?orderId=${item.orderId}`)
-          if (!res.ok) return [item.orderId, { status: 'expired' }] as const
+    async function loadHistory() {
+      // Try cloud history first (logged-in users)
+      try {
+        const res = await fetch('/api/history')
+        if (res.ok) {
           const data = await res.json()
-          return [item.orderId, data] as const
-        } catch {
-          return [item.orderId, { status: 'expired' }] as const
+          // Cloud history items have the same shape as HistoryItem
+          const cloudItems: HistoryItem[] = data.items.map((o: {
+            orderId: string; style: string; mode?: string; quality?: string; createdAt: number
+          }) => ({
+            orderId: o.orderId,
+            style: o.style,
+            mode: o.mode ?? 'redesign',
+            quality: o.quality ?? 'standard',
+            createdAt: o.createdAt,
+          }))
+          setItems(cloudItems)
+          setIsCloud(true)
+          // Fetch order statuses for cloud items
+          const results = await Promise.all(
+            cloudItems.map(async (item) => {
+              try {
+                const r = await fetch(`/api/query-order?orderId=${item.orderId}`)
+                if (!r.ok) return [item.orderId, { status: 'done', resultUrl: undefined }] as const
+                return [item.orderId, await r.json()] as const
+              } catch {
+                return [item.orderId, { status: 'done', resultUrl: undefined }] as const
+              }
+            })
+          )
+          setOrders(Object.fromEntries(results))
+          setLoading(false)
+          return
         }
-      })
-    ).then((results) => {
+      } catch {
+        // Not logged in or network error — fall through to localStorage
+      }
+
+      // Fallback: localStorage
+      const history = getHistory()
+      setItems(history)
+      if (history.length === 0) {
+        setLoading(false)
+        return
+      }
+      const results = await Promise.all(
+        history.map(async (item) => {
+          try {
+            const res = await fetch(`/api/query-order?orderId=${item.orderId}`)
+            if (!res.ok) return [item.orderId, { status: 'expired' }] as const
+            const data = await res.json()
+            return [item.orderId, data] as const
+          } catch {
+            return [item.orderId, { status: 'expired' }] as const
+          }
+        })
+      )
       setOrders(Object.fromEntries(results))
       setLoading(false)
-    })
+    }
+
+    loadHistory()
   }, [])
 
   const handleClear = () => {
@@ -96,7 +135,7 @@ export default function HistoryPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>生成历史</h1>
-            <p className="text-gray-500 text-sm mt-1">保存在本设备，图片7天后自动清理</p>
+            <p className="text-gray-500 text-sm mt-1">{isCloud ? '已登录，历史同步至云端' : '保存在本设备，图片7天后自动清理'}</p>
           </div>
           {items.length > 0 && (
             <button onClick={handleClear} className="text-gray-600 text-sm hover:text-gray-400 transition-colors">

@@ -3,6 +3,7 @@ import { getOrder, updateOrder } from '@/lib/orders'
 import { generateRoomImage } from '@/lib/zenmux'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
+import { applyWatermark } from '@/lib/watermark'
 import path from 'path'
 import fs from 'fs'
 
@@ -23,6 +24,22 @@ export async function POST(req: NextRequest) {
 
     await updateOrder(orderId, { status: 'generating' })
     logger.info('generate', 'Starting AI generation', { orderId, style: order.style, quality: order.quality })
+
+    // Unlock mode: remove watermark from linked free order
+    if (order.mode === 'unlock' && order.uploadId) {
+      const linkedOrderId = order.uploadId
+      const linked = await getOrder(linkedOrderId)
+      if (!linked) {
+        await updateOrder(orderId, { status: 'failed' })
+        return NextResponse.json({ error: '原订单不存在' }, { status: 404 })
+      }
+      // Point linked order's resultUrl to the clean (non-watermarked) image
+      const cleanFilename = `result-${linkedOrderId}.png`
+      const cleanUrl = `/api/preview?uploadId=${encodeURIComponent(cleanFilename)}`
+      await updateOrder(linkedOrderId, { isFree: false, resultUrl: cleanUrl })
+      await updateOrder(orderId, { status: 'done', resultUrl: cleanUrl })
+      return NextResponse.json({ resultUrl: cleanUrl })
+    }
 
     const startTime = Date.now()
     const imagePath = order.uploadId
@@ -46,7 +63,13 @@ export async function POST(req: NextRequest) {
     fs.writeFileSync(resultPath, resultBuffer)
 
     // Store a URL that the preview API can serve
-    const resultUrl = `/api/preview?uploadId=${encodeURIComponent(resultFilename)}`
+    let resultUrl = `/api/preview?uploadId=${encodeURIComponent(resultFilename)}`
+    if (order.isFree) {
+      const watermarkedBuffer = await applyWatermark(resultBuffer)
+      const wmFilename = `result-${orderId}-wm.png`
+      fs.writeFileSync(path.join(UPLOAD_DIR, wmFilename), watermarkedBuffer)
+      resultUrl = `/api/preview?uploadId=${encodeURIComponent(wmFilename)}`
+    }
     await updateOrder(orderId, { status: 'done', resultUrl })
 
     return NextResponse.json({ resultUrl })

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createOrder, updateOrder, type DesignMode, type QualityTier } from '@/lib/orders'
+import { parseSessionToken } from '@/lib/auth'
+import { createOrder, getOrder, updateOrder, type DesignMode, type QualityTier } from '@/lib/orders'
 import { createQROrder } from '@/lib/alipay'
+import { getRemainingFreeUses, consumeFreeUse } from '@/lib/free-uses'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
 import { isRateLimited } from '@/lib/rate-limit'
@@ -29,6 +31,7 @@ export async function POST(req: NextRequest) {
       mode = 'redesign',
       roomType = 'living_room',
       customPrompt,
+      unlockOrderId,          // new: orderId of the free order to unlock
     } = await req.json() as {
       uploadId?: string
       style?: string
@@ -36,10 +39,29 @@ export async function POST(req: NextRequest) {
       mode?: DesignMode
       roomType?: string
       customPrompt?: string
+      unlockOrderId?: string  // new
+    }
+
+    // Unlock flow: pay ¥1 to remove watermark from a free order
+    if (unlockOrderId) {
+      const targetOrder = await getOrder(unlockOrderId)
+      if (!targetOrder || !targetOrder.isFree || targetOrder.status !== 'done') {
+        return NextResponse.json({ error: '无效的解锁订单' }, { status: 400 })
+      }
+      const unlockOrder = await createOrder({
+        style: 'unlock',
+        uploadId: unlockOrderId,
+        quality: 'standard',
+        mode: 'unlock' as DesignMode,
+        roomType: 'living_room',
+      })
+      const qrCodeUrl = await createQROrder({ orderId: unlockOrder.id, style: '去水印', amount: 1 })
+      const qrDataUrl = await QRCode.toDataURL(qrCodeUrl, { width: 240, margin: 2 })
+      return NextResponse.json({ orderId: unlockOrder.id, qrDataUrl })
     }
 
     const validModes: string[] = DESIGN_MODES.map((m) => m.key)
-    if (!validModes.includes(mode as string)) {
+    if (mode !== 'unlock' && !validModes.includes(mode as string)) {
       return NextResponse.json({ error: '无效的设计模式' }, { status: 400 })
     }
 
@@ -74,6 +96,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Extract userId from session cookie (optional — guests have no userId)
+    const sessionToken = req.cookies.get('session')?.value
+    const session = sessionToken ? parseSessionToken(sessionToken) : null
+    const userId = session?.userId
+
+    // Free tier check: if IP has quota, skip Alipay
+    const remaining = await getRemainingFreeUses(ip)
+    const isFree = remaining > 0
+
+    if (isFree) {
+      await consumeFreeUse(ip)
+    }
+
     const order = await createOrder({
       style,
       uploadId: uploadId ?? null,
@@ -81,6 +116,8 @@ export async function POST(req: NextRequest) {
       mode,
       roomType,
       customPrompt: trimmedPrompt,
+      isFree,
+      userId,
     })
 
     logger.info('create-order', 'Order created', { orderId: order.id, style, quality, mode, roomType, amount })
@@ -91,10 +128,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ orderId: order.id, devSkip: true })
     }
 
+    if (isFree) {
+      await updateOrder(order.id, { status: 'paid' })
+      return NextResponse.json({ orderId: order.id, isFree: true })
+    }
+
     const qrCodeUrl = await createQROrder({ orderId: order.id, style, amount })
     const qrDataUrl = await QRCode.toDataURL(qrCodeUrl, { width: 240, margin: 2 })
 
-    return NextResponse.json({ orderId: order.id, qrDataUrl })
+    return NextResponse.json({ orderId: order.id, qrDataUrl, remainingFreeUses: Math.max(0, remaining - 1) })
   } catch (err) {
     logger.error('create-order', 'Failed to create order', { error: String(err) })
     return NextResponse.json({ error: '创建订单失败，请重试' }, { status: 500 })

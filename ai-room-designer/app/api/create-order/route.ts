@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { parseSessionToken } from '@/lib/auth'
 import { createOrder, getOrder, updateOrder, type DesignMode, type QualityTier } from '@/lib/orders'
 import { createQROrder } from '@/lib/alipay'
 import { getRemainingFreeUses, consumeFreeUse } from '@/lib/free-uses'
@@ -95,6 +96,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Extract userId from session cookie (optional — guests have no userId)
+    const sessionToken = req.cookies.get('session')?.value
+    const session = sessionToken ? parseSessionToken(sessionToken) : null
+    const userId = session?.userId
+
     // Free tier check: if IP has quota, skip Alipay
     const remaining = await getRemainingFreeUses(ip)
     const isFree = remaining > 0
@@ -111,6 +117,7 @@ export async function POST(req: NextRequest) {
       roomType,
       customPrompt: trimmedPrompt,
       isFree,
+      userId,
     })
 
     logger.info('create-order', 'Order created', { orderId: order.id, style, quality, mode, roomType, amount })

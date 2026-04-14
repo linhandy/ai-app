@@ -73,7 +73,7 @@ export default function HomePage() {
       {/* Styles section */}
       <section id="examples" className="px-6 md:px-[120px] py-16 bg-[#050505] flex flex-col items-center gap-8">
         <div className="flex flex-col items-center gap-3">
-          <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>6种热门装修风格，一键切换</h2>
+          <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>40+ 装修风格，一键切换</h2>
           <p className="text-gray-500 text-sm text-center">覆盖当下最流行的室内设计风格 · 点击图片可放大预览</p>
         </div>
         <StyleGallery />
@@ -99,7 +99,7 @@ export default function HomePage() {
             </div>
             <ul className="space-y-2 flex-1">
               {[
-                '6种热门装修风格',
+                '40+ 装修风格任选',
                 '标准画质（1024×1024）',
                 '30秒快速出图',
                 '支付宝扫码付款',

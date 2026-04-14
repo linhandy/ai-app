@@ -17,6 +17,9 @@ const MODE_LABELS: Record<string, string> = {
   add_furniture: '添加家具',
   paint_walls: '墙面换色',
   change_lighting: '灯光优化',
+  sketch2render: '草图生成',
+  freestyle: '自由生成',
+  outdoor_redesign: '户外设计',
 }
 
 function modeLabel(m?: string) {

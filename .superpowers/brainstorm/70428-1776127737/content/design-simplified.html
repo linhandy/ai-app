@@ -1,0 +1,103 @@
+<h2>装AI 精简优化方案</h2>
+<p class="subtitle">保持现有架构，专注转化和运营</p>
+
+<div class="section">
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <span style="background:#fef2f2;color:#ef4444;border-radius:20px;padding:4px 12px;font-size:12px;">✅ 保留：本地图片存储</span>
+    <span style="background:#fef2f2;color:#ef4444;border-radius:20px;padding:4px 12px;font-size:12px;">✅ 保留：Alipay 按次付费 ¥1-5</span>
+    <span style="background:#fef2f2;color:#ef4444;border-radius:20px;padding:4px 12px;font-size:12px;">❌ 去掉：OSS迁移</span>
+    <span style="background:#fef2f2;color:#ef4444;border-radius:20px;padding:4px 12px;font-size:12px;">❌ 去掉：充值包/月卡</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+    <div class="card" data-choice="f1" onclick="toggleSelect(this)" style="border-left:4px solid #ef4444;">
+      <div class="card-body">
+        <div class="label" style="color:#ef4444;">功能 1 · 免费体验层</div>
+        <h3 style="margin:6px 0;">🎁 3次免费 + 水印</h3>
+        <ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.9;">
+          <li>每个 IP 每7天免费生成 3 次</li>
+          <li>免费结果叠加半透明水印</li>
+          <li>下载/分享时提示扫码付费去水印</li>
+          <li>用完3次 → 付费弹窗自动出现</li>
+          <li>付费后原始无水印图立即可下载</li>
+        </ul>
+        <div style="background:#fef2f2;border-radius:4px;padding:8px;font-size:11px;margin-top:8px;color:#888;">
+          实现：rate_limit 表加 ip_free_uses 字段，Sharp 服务端叠水印
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-choice="f2" onclick="toggleSelect(this)" style="border-left:4px solid #f97316;">
+      <div class="card-body">
+        <div class="label" style="color:#f97316;">功能 2 · 云端历史</div>
+        <h3 style="margin:6px 0;">☁️ 登录用户历史同步</h3>
+        <ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.9;">
+          <li>orders 表已有 user 关联字段</li>
+          <li>登录后历史从 DB 加载（非 localStorage）</li>
+          <li>换设备不丢失，最近 50 条</li>
+          <li>历史页显示：缩略图 + 风格 + 时间</li>
+          <li>未登录仍走 localStorage（向后兼容）</li>
+        </ul>
+        <div style="background:#fff7ed;border-radius:4px;padding:8px;font-size:11px;margin-top:8px;color:#888;">
+          实现：/api/history GET 接口，返回当前用户订单列表
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-choice="f3" onclick="toggleSelect(this)" style="border-left:4px solid #3b82f6;">
+      <div class="card-body">
+        <div class="label" style="color:#3b82f6;">功能 3 · 管理后台</div>
+        <h3 style="margin:6px 0;">📊 /admin 运营看板</h3>
+        <ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.9;">
+          <li>今日订单数 / 收入 GMV</li>
+          <li>订单列表（状态/金额/风格/时间）</li>
+          <li>生成成功率 / 平均耗时</li>
+          <li>注册用户数 / 今日新增</li>
+        </ul>
+        <div style="background:#eff6ff;border-radius:4px;padding:8px;font-size:11px;margin-top:8px;color:#888;">
+          鉴权：请求头带 ADMIN_TOKEN，无需独立账号系统
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-choice="f4" onclick="toggleSelect(this)" style="border-left:4px solid #8b5cf6;">
+      <div class="card-body">
+        <div class="label" style="color:#8b5cf6;">功能 4 · 分享裂变</div>
+        <h3 style="margin:6px 0;">🔗 分享得免费次数</h3>
+        <ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.9;">
+          <li>结果页生成带 ref 参数的分享链接</li>
+          <li>新访客通过链接进入 → 分享者 +1 免费次数</li>
+          <li>访客自己也获得 +1 次免费额度</li>
+          <li>无需登录即可触发（IP 绑定）</li>
+        </ul>
+        <div style="background:#f5f3ff;border-radius:4px;padding:8px;font-size:11px;margin-top:8px;color:#888;">
+          实现：referral_clicks 表，每次唯一访问触发奖励
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="background:#f8fafc;border-radius:10px;padding:16px;margin-top:4px;">
+  <div class="label">执行顺序建议</div>
+  <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;flex-wrap:wrap;">
+    <div style="background:#fef2f2;border:1px solid #ef4444;border-radius:6px;padding:6px 12px;color:#ef4444;">
+      <b>1.</b> 免费体验层 + 水印
+    </div>
+    <div style="color:#999;">→</div>
+    <div style="background:#fff7ed;border:1px solid #f97316;border-radius:6px;padding:6px 12px;color:#f97316;">
+      <b>2.</b> 云端历史
+    </div>
+    <div style="color:#999;">→</div>
+    <div style="background:#eff6ff;border:1px solid #3b82f6;border-radius:6px;padding:6px 12px;color:#3b82f6;">
+      <b>3.</b> 管理后台
+    </div>
+    <div style="color:#999;">→</div>
+    <div style="background:#f5f3ff;border:1px solid #8b5cf6;border-radius:6px;padding:6px 12px;color:#8b5cf6;">
+      <b>4.</b> 分享裂变
+    </div>
+  </div>
+  <p style="font-size:12px;color:#888;margin:10px 0 0;">总工作量：约 2-3 周，功能1完成即可上线</p>
+</div>

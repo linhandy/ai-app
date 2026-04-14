@@ -1,0 +1,5 @@
+{
+  "functions": {
+    "app/api/generate/route.ts": { "maxDuration": 60 }
+  }
+}

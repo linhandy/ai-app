@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation'
 interface Props {
   orderId: string
   qrDataUrl: string
+  amount: number
   onClose: () => void
 }
 
-export default function PaymentModal({ orderId, qrDataUrl, onClose }: Props) {
+export default function PaymentModal({ orderId, qrDataUrl, amount, onClose }: Props) {
   const [status, setStatus] = useState<'waiting' | 'generating' | 'failed'>('waiting')
   const router = useRouter()
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
@@ -58,7 +59,7 @@ export default function PaymentModal({ orderId, qrDataUrl, onClose }: Props) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={qrDataUrl} alt="支付二维码" className="w-48 h-48 rounded-lg" />
             <div className="text-center">
-              <p className="text-amber-500 text-2xl font-bold">¥1.00</p>
+              <p className="text-amber-500 text-2xl font-bold">¥{amount.toFixed(2)}</p>
               <p className="text-gray-400 text-sm mt-1">AI装修效果图生成费</p>
             </div>
             <p className="text-gray-500 text-xs text-center">付款后自动生成，约30秒</p>

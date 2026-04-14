@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { parseSessionToken, getUser } from '@/lib/auth'
 import Link from 'next/link'
+import MobileMenu from '@/components/MobileMenu'
 
 function maskPhone(phone: string): string {
   if (phone.length < 7) return phone
@@ -54,9 +55,14 @@ export default async function NavBar() {
         </Link>
       )}
 
+      <MobileMenu
+        isLoggedIn={!!user}
+        userName={user?.wechat_nickname?.slice(0, 8) ?? (user?.phone ? `${user.phone.slice(0, 3)}****${user.phone.slice(-4)}` : undefined)}
+      />
+
       <Link
         href="/generate"
-        className="bg-amber-500 text-black text-sm font-semibold px-5 h-9 rounded flex items-center hover:bg-amber-400 transition-colors"
+        className="bg-amber-500 text-black text-sm font-semibold px-5 h-9 rounded items-center hover:bg-amber-400 transition-colors hidden md:flex"
       >
         开始体验
       </Link>

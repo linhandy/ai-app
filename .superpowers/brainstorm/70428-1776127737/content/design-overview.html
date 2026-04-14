@@ -1,0 +1,159 @@
+<h2>装AI 完整优化设计方案</h2>
+<p class="subtitle">基于你的选择：IP限流 · Cloudflare R2 · 充值小包 · 水印转化</p>
+
+<!-- Phase 1 -->
+<div class="section">
+  <div class="label" style="color:#ef4444;">阶段 1 · 上线基础</div>
+  <h3 style="margin:4px 0 12px;">🚀 图片存储 + 免费体验层</h3>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="background:#fef2f2;border-radius:8px;padding:14px;">
+      <div class="label">1A · 图片存储迁移</div>
+      <p style="font-size:13px;margin:8px 0 4px;">当前：本地磁盘 <code>uploads/</code></p>
+      <p style="font-size:13px;margin:4px 0;">目标：<b>Cloudflare R2</b></p>
+      <ul style="font-size:12px;margin:6px 0;padding-left:16px;line-height:1.9;">
+        <li>上传图片 → R2，返回公开 URL</li>
+        <li>生成结果 → R2，持久可访问</li>
+        <li>删除 <code>/api/preview</code> 本地路由</li>
+        <li>接口不变，只换存储层</li>
+      </ul>
+      <div style="background:#fee2e2;border-radius:4px;padding:8px;font-size:12px;margin-top:8px;">
+        ⚠️ 这是部署阻塞项，必须最先做
+      </div>
+    </div>
+
+    <div style="background:#fff7ed;border-radius:8px;padding:14px;">
+      <div class="label">1B · 免费体验层</div>
+      <p style="font-size:13px;margin:8px 0 4px;"><b>规则：每个 IP 3次免费</b></p>
+      <ul style="font-size:12px;margin:6px 0;padding-left:16px;line-height:1.9;">
+        <li>Redis 或 SQLite 记录 IP 使用次数</li>
+        <li>免费生成结果加半透明水印</li>
+        <li>下载按钮 → 引导充值去水印</li>
+        <li>用完3次 → 显示充值弹窗</li>
+        <li>重置周期：7天（不是每天）</li>
+      </ul>
+      <div style="background:#ffedd5;border-radius:4px;padding:8px;font-size:12px;margin-top:8px;">
+        💡 7天重置防过于宽松，又不至于永久封锁
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;background:#f0fdf4;border-radius:8px;padding:14px;">
+    <div class="label">1C · 水印实现</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px;">
+      <div style="font-size:12px;text-align:center;background:white;border-radius:6px;padding:10px;">
+        <div style="height:60px;background:linear-gradient(135deg,#e0e7ff,#ddd6fe);border-radius:4px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+          <span style="color:rgba(0,0,0,0.18);font-size:18px;font-weight:bold;transform:rotate(-20deg);letter-spacing:2px;">装AI</span>
+        </div>
+        <p style="margin:6px 0 0;color:#666;">免费结果<br>带水印</p>
+      </div>
+      <div style="font-size:12px;text-align:center;background:white;border-radius:6px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div style="font-size:22px;">→ 充值 →</div>
+        <p style="margin:4px 0 0;color:#888;font-size:11px;">扫码付款 ¥9 起</p>
+      </div>
+      <div style="font-size:12px;text-align:center;background:white;border-radius:6px;padding:10px;">
+        <div style="height:60px;background:linear-gradient(135deg,#e0e7ff,#ddd6fe);border-radius:4px;display:flex;align-items:center;justify-content:center;">
+          <span style="color:#4f46e5;font-size:11px;">高清无水印</span>
+        </div>
+        <p style="margin:6px 0 0;color:#666;">付费结果<br>无水印</p>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#666;margin:8px 0 0;">水印在服务端生成（Sharp 库叠加），不影响原图，充值后原图直接返回</p>
+  </div>
+</div>
+
+<!-- Phase 2 -->
+<div class="section">
+  <div class="label" style="color:#f97316;">阶段 2 · 变现升级</div>
+  <h3 style="margin:4px 0 12px;">💰 充值包 + 余额钱包</h3>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="background:#fff7ed;border-radius:8px;padding:14px;">
+      <div class="label">充值包定价</div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+        <div style="background:white;border-radius:6px;padding:10px;display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+          <span>🥉 入门包</span><span><b>¥9</b> = 5次</span><span style="color:#888;font-size:11px;">¥1.8/次</span>
+        </div>
+        <div style="background:#fff3e0;border:2px solid #f97316;border-radius:6px;padding:10px;display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+          <span>🥈 热门包 ⭐</span><span><b>¥29</b> = 20次</span><span style="color:#f97316;font-size:11px;">¥1.45/次</span>
+        </div>
+        <div style="background:white;border-radius:6px;padding:10px;display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+          <span>🥇 大包</span><span><b>¥99</b> = 100次</span><span style="color:#888;font-size:11px;">¥0.99/次</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fff7ed;border-radius:8px;padding:14px;">
+      <div class="label">余额钱包系统</div>
+      <ul style="font-size:12px;margin:8px 0;padding-left:16px;line-height:1.9;">
+        <li>用户余额存 DB（<code>users.credits</code>）</li>
+        <li>每次生成扣减 1 积分（1次=1积分）</li>
+        <li>支持质量加权扣分（标准1分/高清2分/超清3分）</li>
+        <li>充值通过 Alipay 异步回调增加积分</li>
+        <li>NavBar 显示剩余次数</li>
+        <li>余额不足时弹充值引导</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;background:#fef9c3;border-radius:8px;padding:14px;">
+    <div class="label">云端历史</div>
+    <p style="font-size:12px;margin:6px 0;">登录用户的生成记录从 localStorage 迁移到 DB，换设备不丢失。历史页显示积分余额 + 生成记录（最近100条）。</p>
+  </div>
+</div>
+
+<!-- Phase 3 -->
+<div class="section">
+  <div class="label" style="color:#3b82f6;">阶段 3 · 运营工具</div>
+  <h3 style="margin:4px 0 12px;">📊 管理后台</h3>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+    <div style="background:#eff6ff;border-radius:8px;padding:12px;font-size:12px;text-align:center;">
+      <div style="font-size:20px;">📦</div>
+      <b>订单列表</b>
+      <p style="color:#666;margin:4px 0 0;">状态/金额/时间</p>
+    </div>
+    <div style="background:#eff6ff;border-radius:8px;padding:12px;font-size:12px;text-align:center;">
+      <div style="font-size:20px;">💵</div>
+      <b>收入统计</b>
+      <p style="color:#666;margin:4px 0 0;">日/周/月 GMV</p>
+    </div>
+    <div style="background:#eff6ff;border-radius:8px;padding:12px;font-size:12px;text-align:center;">
+      <div style="font-size:20px;">👥</div>
+      <b>用户数</b>
+      <p style="color:#666;margin:4px 0 0;">注册/活跃/付费</p>
+    </div>
+    <div style="background:#eff6ff;border-radius:8px;padding:12px;font-size:12px;text-align:center;">
+      <div style="font-size:20px;">⚙️</div>
+      <b>生成监控</b>
+      <p style="color:#666;margin:4px 0 0;">成功率/耗时</p>
+    </div>
+  </div>
+  <p style="font-size:12px;color:#888;margin:8px 0 0;">路由：<code>/admin</code>，用环境变量 <code>ADMIN_TOKEN</code> 简单鉴权，无需复杂权限系统</p>
+</div>
+
+<!-- Phase 4 -->
+<div class="section">
+  <div class="label" style="color:#8b5cf6;">阶段 4 · 增长飞轮</div>
+  <h3 style="margin:4px 0 12px;">📈 分享裂变 + 订阅</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="background:#f5f3ff;border-radius:8px;padding:14px;">
+      <div class="label">分享裂变</div>
+      <p style="font-size:12px;margin:6px 0;line-height:1.8;">分享结果图 → 生成专属链接<br>新用户访问该链接 → 分享者获 <b>+1次</b> 额度<br>被访问者获 <b>+1次</b> 免费体验</p>
+    </div>
+    <div style="background:#f5f3ff;border-radius:8px;padding:14px;">
+      <div class="label">月卡订阅</div>
+      <p style="font-size:12px;margin:6px 0;line-height:1.8;"><b>¥49/月</b> = 不限次标准质量<br>高清/超清仍按积分扣费<br>适合高频用户，稳定 MRR</p>
+    </div>
+  </div>
+</div>
+
+<div style="background:#f1f5f9;border-radius:8px;padding:14px;margin-top:8px;">
+  <div class="label">总工作量估算</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;font-size:12px;text-align:center;">
+    <div><span style="color:#ef4444;">阶段1</span><br><b>1-2周</b></div>
+    <div><span style="color:#f97316;">阶段2</span><br><b>2-3周</b></div>
+    <div><span style="color:#3b82f6;">阶段3</span><br><b>1-2周</b></div>
+    <div><span style="color:#8b5cf6;">阶段4</span><br><b>2-3周</b></div>
+  </div>
+  <p style="font-size:12px;color:#888;margin:8px 0 0;text-align:center;">合计约 6-10 周全部完成，阶段1结束即可上线</p>
+</div>

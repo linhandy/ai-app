@@ -41,7 +41,7 @@ function GeneratePageInner() {
   const [freeRemaining, setFreeRemaining] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [payModal, setPayModal] = useState<{ orderId: string; qrDataUrl: string } | null>(null)
+  const [payModal, setPayModal] = useState<{ orderId: string; qrDataUrl: string; amount: number } | null>(null)
   const [generating, setGenerating] = useState(false)
 
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
@@ -81,7 +81,7 @@ function GeneratePageInner() {
       } else if (typeof data.remainingFreeUses === 'number') {
         setFreeRemaining(data.remainingFreeUses)
       }
-      setPayModal({ orderId: data.orderId, qrDataUrl: data.qrDataUrl })
+      setPayModal({ orderId: data.orderId, qrDataUrl: data.qrDataUrl, amount: currentOption.price })
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '创建订单失败'
       setError(message)
@@ -267,6 +267,7 @@ function GeneratePageInner() {
         <PaymentModal
           orderId={payModal.orderId}
           qrDataUrl={payModal.qrDataUrl}
+          amount={payModal.amount}
           onClose={() => setPayModal(null)}
         />
       )}

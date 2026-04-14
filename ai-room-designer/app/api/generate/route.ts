@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOrder, updateOrder, setOrderResultData, getUploadData } from '@/lib/orders'
 import { generateRoomImage } from '@/lib/zenmux'
+import { getPublicUrl, resultStoragePath } from '@/lib/storage'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
 import path from 'path'
@@ -32,7 +33,17 @@ export async function POST(req: NextRequest) {
         await updateOrder(orderId, { status: 'failed' })
         return NextResponse.json({ error: '原订单不存在' }, { status: 404 })
       }
-      const cleanUrl = `/api/result-image/${linkedOrderId}`
+      // Use CDN URL if result is in Storage, else proxy endpoint (backward compat for old orders)
+      const { getClient } = await import('@/lib/orders')
+      const dbClient = await getClient()
+      const linkedRow = await dbClient.execute({
+        sql: `SELECT resultStoragePath FROM orders WHERE id = ?`,
+        args: [linkedOrderId],
+      })
+      const hasStoragePath = !!linkedRow.rows[0]?.resultStoragePath
+      const cleanUrl = hasStoragePath
+        ? getPublicUrl(resultStoragePath(linkedOrderId))
+        : `/api/result-image/${linkedOrderId}`
       await updateOrder(linkedOrderId, { isFree: false, resultUrl: cleanUrl })
       await updateOrder(orderId, { status: 'done', resultUrl: cleanUrl })
       return NextResponse.json({ resultUrl: cleanUrl })
@@ -66,10 +77,15 @@ export async function POST(req: NextRequest) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(1)
     logger.info('generate', 'AI generation complete', { orderId, duration: `${duration}s`, size: resultBuffer.length })
 
-    // Store clean result in DB — watermark applied at serve time for free orders
+    // Store result in Supabase Storage — watermark applied at serve time for free orders
     await setOrderResultData(orderId, resultBuffer)
 
-    const resultUrl = `/api/result-image/${orderId}`
+    // Paid orders: return CDN URL directly (no proxy needed, no watermark)
+    // Free orders: return proxy endpoint that applies watermark on the fly
+    const resultUrl = order.isFree
+      ? `/api/result-image/${orderId}`
+      : getPublicUrl(resultStoragePath(orderId))
+
     await updateOrder(orderId, { status: 'done', resultUrl })
 
     return NextResponse.json({ resultUrl })

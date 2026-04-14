@@ -141,21 +141,37 @@ export async function findOrCreateWechatUser(params: {
   }
 }
 
-// ---- Session tokens (base64-encoded JSON, no JWT lib) ----
+// ---- Session tokens (HMAC-signed base64 JSON) ----
 
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000 // 7 days
 
+function getSessionSecret(): string {
+  return process.env.SESSION_SECRET ?? 'dev-secret-change-in-production'
+}
+
+function signPayload(payload: string): string {
+  return crypto.createHmac('sha256', getSessionSecret()).update(payload).digest('base64url')
+}
+
 export function createSessionToken(userId: string): string {
-  const payload = { userId, exp: Date.now() + SESSION_MAX_AGE }
-  return Buffer.from(JSON.stringify(payload)).toString('base64url')
+  const payload = Buffer.from(JSON.stringify({ userId, exp: Date.now() + SESSION_MAX_AGE })).toString('base64url')
+  const sig = signPayload(payload)
+  return `${payload}.${sig}`
 }
 
 export function parseSessionToken(token: string): { userId: string } | null {
   try {
-    const payload = JSON.parse(Buffer.from(token, 'base64url').toString('utf-8'))
-    if (!payload.userId || !payload.exp) return null
-    if (Date.now() > payload.exp) return null
-    return { userId: payload.userId }
+    const dotIdx = token.lastIndexOf('.')
+    if (dotIdx === -1) return null
+    const payload = token.slice(0, dotIdx)
+    const sig = token.slice(dotIdx + 1)
+    // Constant-time comparison to prevent timing attacks
+    const expected = signPayload(payload)
+    if (!crypto.timingSafeEqual(Buffer.from(sig, 'base64url'), Buffer.from(expected, 'base64url'))) return null
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'))
+    if (!data.userId || !data.exp) return null
+    if (Date.now() > data.exp) return null
+    return { userId: data.userId }
   } catch {
     return null
   }

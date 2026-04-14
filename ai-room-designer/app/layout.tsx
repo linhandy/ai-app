@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
   title: '装AI - AI秒变理想装修',
+  icons: { icon: '/favicon.svg', apple: '/favicon.svg' },
   description: '上传一张房间照片，AI 秒出专业装修效果图。支持 48 种风格，1 元起。',
   keywords: 'AI装修效果图,室内设计AI,装修效果图免费,AI家居改造,智能装修设计',
   openGraph: {

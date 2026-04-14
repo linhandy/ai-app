@@ -1,0 +1,65 @@
+<h2>设计方案 · 第一节：产品核心流程</h2>
+<p class="subtitle">AI 智能出题器 — 用户旅程与核心交互</p>
+
+<div class="section">
+  <h3>产品定位</h3>
+  <p>一句话：<strong>教师输入知识点，30秒拿到可打印试卷。</strong><br>
+  目标用户：中小学教师、培训机构讲师、家教<br>
+  核心价值：把2小时的出题工作压缩到30秒</p>
+</div>
+
+<div class="section">
+  <h3>用户核心流程</h3>
+  <div style="display:flex; flex-direction:column; gap:12px; margin-top:12px;">
+    <div style="display:flex; align-items:center; gap:16px; padding:14px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+      <div style="width:32px;height:32px;border-radius:50%;background:#3b82f6;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">1</div>
+      <div><strong>填写参数</strong> — 科目、年级、章节/知识点、题型（选择/填空/解答）、难度、题量</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px; padding:14px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+      <div style="width:32px;height:32px;border-radius:50%;background:#3b82f6;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">2</div>
+      <div><strong>AI 生成</strong> — 调用 GPT-4o-mini，约10-20秒，流式输出，实时显示生成中的题目</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px; padding:14px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+      <div style="width:32px;height:32px;border-radius:50%;background:#3b82f6;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">3</div>
+      <div><strong>预览 &amp; 微调</strong> — 网页内展示格式化试卷，可删除/替换单题</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px; padding:14px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+      <div style="width:32px;height:32px;border-radius:50%;background:#3b82f6;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">4</div>
+      <div><strong>导出</strong> — 免费版：带水印的 PDF ｜ 付费版：无水印 Word/PDF，含答案页</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>付费门槛设计（关键）</h3>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px;">
+    <div style="padding:16px; background:#f0f9ff; border-radius:8px; border:2px solid #bae6fd;">
+      <p class="label">免费版</p>
+      <ul style="margin:8px 0; padding-left:20px; line-height:2;">
+        <li>每月3份试卷</li>
+        <li>仅限PDF下载</li>
+        <li>底部水印：「AI出题助手生成 · ai-exam.cn」</li>
+        <li>无答案页</li>
+      </ul>
+    </div>
+    <div style="padding:16px; background:#f0fdf4; border-radius:8px; border:2px solid #86efac;">
+      <p class="label">付费版 · 9.9元/月</p>
+      <ul style="margin:8px 0; padding-left:20px; line-height:2;">
+        <li>无限生成</li>
+        <li>Word + PDF 双格式</li>
+        <li>无水印</li>
+        <li>含标准答案与解析页</li>
+        <li>历史试卷保存</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>传播机制（无需主动营销）</h3>
+  <p>① 免费版水印 → 同事看到PDF → 扫码试用<br>
+  ② 生成成功后，显示「分享给教研组」微信分享卡片<br>
+  ③ 针对学科教研群：生成示例试卷截图，天然种草内容</p>
+</div>
+
+<p style="margin-top:24px; color:#6b7280; font-size:14px;">以上是第一节：产品定位与用户流程。这个方向是否符合你的预期？</p>

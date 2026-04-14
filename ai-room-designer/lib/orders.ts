@@ -96,6 +96,13 @@ export async function getClient(): Promise<Client> {
     // Column already exists — ignore
   }
 
+  // Migration: add resultStoragePath for Supabase Storage (replaces resultData for new orders)
+  try {
+    await _client.execute(`ALTER TABLE orders ADD COLUMN resultStoragePath TEXT`)
+  } catch {
+    // Column already exists — ignore
+  }
+
   // Uploads table — stores raw uploaded images so they persist across serverless invocations
   await _client.execute(`
     CREATE TABLE IF NOT EXISTS uploads (
@@ -104,6 +111,13 @@ export async function getClient(): Promise<Client> {
       createdAt INTEGER NOT NULL
     )
   `)
+
+  // Migration: add storagePath for Supabase Storage (replaces data blob for new uploads)
+  try {
+    await _client.execute(`ALTER TABLE uploads ADD COLUMN storagePath TEXT`)
+  } catch {
+    // Column already exists — ignore
+  }
 
   return _client
 }
@@ -204,44 +218,71 @@ export async function updateOrder(id: string, patch: Partial<Order>): Promise<Or
   return getOrder(id)
 }
 
-/** Save an uploaded image to the uploads table (serverless-safe). */
+/** Save an uploaded image — uploads to Supabase Storage, records path in DB. */
 export async function saveUploadData(uploadId: string, data: Buffer): Promise<void> {
+  const { uploadToStorage, uploadStoragePath } = await import('@/lib/storage')
+  const storagePath = uploadStoragePath(uploadId)
+  const mimeType = uploadId.endsWith('.png') ? 'image/png'
+    : uploadId.endsWith('.webp') ? 'image/webp'
+    : 'image/jpeg'
+  await uploadToStorage(storagePath, data, mimeType)
   const client = await getClient()
+  // data column kept as empty string to satisfy NOT NULL; storagePath is the canonical reference
   await client.execute({
-    sql: `INSERT OR REPLACE INTO uploads (id, data, createdAt) VALUES (?, ?, ?)`,
-    args: [uploadId, data.toString('base64'), Date.now()],
+    sql: `INSERT OR REPLACE INTO uploads (id, data, storagePath, createdAt) VALUES (?, ?, ?, ?)`,
+    args: [uploadId, '', storagePath, Date.now()],
   })
 }
 
-/** Read an uploaded image from the uploads table. Returns null if not found. */
+/** Read an uploaded image — tries Supabase Storage first, falls back to DB base64 for old rows. */
 export async function getUploadData(uploadId: string): Promise<Buffer | null> {
+  const { downloadFromStorage, uploadStoragePath } = await import('@/lib/storage')
+  // Try Storage first (new path)
+  const fromStorage = await downloadFromStorage(uploadStoragePath(uploadId))
+  if (fromStorage) return fromStorage
+  // Backward compat: fall back to DB base64 for pre-migration rows
   const client = await getClient()
   const result = await client.execute({
     sql: `SELECT data FROM uploads WHERE id = ?`,
     args: [uploadId],
   })
-  if (result.rows.length === 0 || !result.rows[0].data) return null
-  return Buffer.from(String(result.rows[0].data), 'base64')
+  if (result.rows.length === 0) return null
+  const raw = String(result.rows[0].data ?? '')
+  if (!raw) return null
+  return Buffer.from(raw, 'base64')
 }
 
-/** Store a generated image buffer in the DB (base64). Used on serverless where /tmp is ephemeral. */
+/** Store a generated result image — uploads to Supabase Storage, records path in DB. */
 export async function setOrderResultData(id: string, data: Buffer): Promise<void> {
+  const { uploadToStorage, resultStoragePath } = await import('@/lib/storage')
+  const storagePath = resultStoragePath(id)
+  await uploadToStorage(storagePath, data, 'image/png')
   const client = await getClient()
+  // Only update resultStoragePath; leave resultData untouched for backward compat reads
   await client.execute({
-    sql: `UPDATE orders SET resultData = ?, updatedAt = ? WHERE id = ?`,
-    args: [data.toString('base64'), Date.now(), id],
+    sql: `UPDATE orders SET resultStoragePath = ?, updatedAt = ? WHERE id = ?`,
+    args: [storagePath, Date.now(), id],
   })
 }
 
-/** Read a stored result image back as a Buffer. Returns null if not found. */
+/** Read a stored result image — tries Supabase Storage first, falls back to DB base64 for old rows. */
 export async function getOrderResultData(id: string): Promise<Buffer | null> {
+  const { downloadFromStorage } = await import('@/lib/storage')
   const client = await getClient()
   const result = await client.execute({
-    sql: `SELECT resultData FROM orders WHERE id = ?`,
+    sql: `SELECT resultData, resultStoragePath FROM orders WHERE id = ?`,
     args: [id],
   })
-  if (result.rows.length === 0 || !result.rows[0].resultData) return null
-  return Buffer.from(String(result.rows[0].resultData), 'base64')
+  if (result.rows.length === 0) return null
+  const row = result.rows[0]
+  // New path: fetch from Supabase Storage
+  if (row.resultStoragePath) {
+    const buf = await downloadFromStorage(String(row.resultStoragePath))
+    if (buf) return buf
+  }
+  // Backward compat: DB base64 for pre-migration rows
+  if (!row.resultData) return null
+  return Buffer.from(String(row.resultData), 'base64')
 }
 
 

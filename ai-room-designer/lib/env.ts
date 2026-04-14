@@ -15,6 +15,15 @@ export function validateEnv(): void {
   }
 }
 
+export function warnMissingSupabaseEnv(): void {
+  const missing = ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'].filter(
+    (k) => !process.env[k],
+  )
+  if (missing.length > 0) {
+    console.warn(`[warn] Supabase storage disabled — missing env vars: ${missing.join(', ')}`)
+  }
+}
+
 /**
  * Optional WeChat environment variables.
  * Required for WeChat login to work in production.

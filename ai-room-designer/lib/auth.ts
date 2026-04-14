@@ -17,11 +17,15 @@ async function getClient(): Promise<Client> {
 
   _client = createClient({ url: dbUrl() })
 
+  // phone allows NULL (WeChat users have no phone number)
   await _client.execute(`
     CREATE TABLE IF NOT EXISTS users (
-      id        TEXT PRIMARY KEY,
-      phone     TEXT UNIQUE NOT NULL,
-      createdAt INTEGER NOT NULL
+      id               TEXT PRIMARY KEY,
+      phone            TEXT UNIQUE,
+      wechat_openid    TEXT,
+      wechat_nickname  TEXT,
+      wechat_avatar    TEXT,
+      createdAt        INTEGER NOT NULL
     )
   `)
 
@@ -33,12 +37,17 @@ async function getClient(): Promise<Client> {
     )
   `)
 
+  // Migrations for existing DBs
+  try { await _client.execute(`ALTER TABLE users ADD COLUMN wechat_openid   TEXT`) } catch { /* already exists */ }
+  try { await _client.execute(`ALTER TABLE users ADD COLUMN wechat_nickname TEXT`) } catch { /* already exists */ }
+  try { await _client.execute(`ALTER TABLE users ADD COLUMN wechat_avatar   TEXT`) } catch { /* already exists */ }
+
   return _client
 }
 
 // ---- Code send / verify ----
 
-const DEV_MODE = process.env.DEV_SKIP_PAYMENT === 'true'
+const devMode = () => process.env.DEV_SKIP_PAYMENT === 'true'
 
 export async function sendCode(phone: string): Promise<{ success: true }> {
   const client = await getClient()
@@ -53,7 +62,7 @@ export async function sendCode(phone: string): Promise<{ success: true }> {
     args: [phone, code, expiresAt],
   })
 
-  if (DEV_MODE) {
+  if (devMode()) {
     console.log(`[DEV] Verification code for ${phone}: ${code}`)
   }
 
@@ -67,7 +76,7 @@ export async function verifyCode(
   const client = await getClient()
 
   // In dev mode, any 6-digit code passes
-  if (!DEV_MODE) {
+  if (!devMode()) {
     const result = await client.execute({
       sql: 'SELECT * FROM codes WHERE phone = ? AND code = ? AND expiresAt > ?',
       args: [phone, code, Date.now()],
@@ -96,6 +105,37 @@ export async function verifyCode(
   }
 
   return { userId, phone }
+}
+
+export async function findOrCreateWechatUser(params: {
+  openid: string
+  nickname: string
+  avatar: string
+}): Promise<{ userId: string; openid: string; nickname: string; avatar: string }> {
+  const client = await getClient()
+
+  const existing = await client.execute({
+    sql: 'SELECT id FROM users WHERE wechat_openid = ?',
+    args: [params.openid],
+  })
+
+  let userId: string
+  if (existing.rows.length > 0) {
+    userId = String(existing.rows[0].id)
+    await client.execute({
+      sql: 'UPDATE users SET wechat_nickname = ?, wechat_avatar = ? WHERE id = ?',
+      args: [params.nickname, params.avatar, userId],
+    })
+  } else {
+    userId = `usr_${crypto.randomBytes(8).toString('hex')}`
+    await client.execute({
+      sql: `INSERT INTO users (id, phone, wechat_openid, wechat_nickname, wechat_avatar, createdAt)
+            VALUES (?, NULL, ?, ?, ?, ?)`,
+      args: [userId, params.openid, params.nickname, params.avatar, Date.now()],
+    })
+  }
+
+  return { userId, openid: params.openid, nickname: params.nickname, avatar: params.avatar }
 }
 
 // ---- Session tokens (base64-encoded JSON, no JWT lib) ----
@@ -134,5 +174,13 @@ export async function getUser(
     id: String(row.id),
     phone: String(row.phone),
     createdAt: Number(row.createdAt),
+  }
+}
+
+/** Close and reset the auth DB client (used in tests). */
+export function closeAuthDb(): void {
+  if (_client) {
+    _client.close()
+    _client = null
   }
 }

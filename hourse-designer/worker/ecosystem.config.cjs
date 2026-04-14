@@ -18,7 +18,7 @@ module.exports = {
       name: 'yijianfang-worker',
       script: 'npx',
       args: 'tsx worker/worker.ts',
-      cwd: '/opt/yijianfang/hourse-designer',   // ← 修改为实际部署路径
+      cwd: 'D:\\code\\ai-app\\hourse-designer',
       interpreter: 'none',
       env: {
         NODE_ENV: 'production',

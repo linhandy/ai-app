@@ -3,8 +3,14 @@ import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
 import { UPLOAD_DIR } from '@/lib/paths'
+import { isRateLimited } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (isRateLimited(`upload:${ip}`, 20, 60_000)) {
+    return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 })
+  }
+
   try {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true })
 

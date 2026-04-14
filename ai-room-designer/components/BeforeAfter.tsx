@@ -4,9 +4,10 @@ import { useCallback, useRef, useState } from 'react'
 interface Props {
   beforeUrl: string
   afterUrl: string
+  height?: string
 }
 
-export default function BeforeAfter({ beforeUrl, afterUrl }: Props) {
+export default function BeforeAfter({ beforeUrl, afterUrl, height = '440px' }: Props) {
   const [pos, setPos] = useState(50) // percentage
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -20,7 +21,8 @@ export default function BeforeAfter({ beforeUrl, afterUrl }: Props) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full max-w-[1000px] h-[440px] rounded-xl overflow-hidden border border-gray-800 select-none cursor-col-resize"
+      className="relative w-full max-w-[1000px] rounded-xl overflow-hidden border border-gray-800 select-none cursor-col-resize"
+      style={{ height }}
       onMouseMove={(e) => handleMove(e.clientX)}
       onTouchMove={(e) => handleMove(e.touches[0].clientX)}
     >

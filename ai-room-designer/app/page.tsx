@@ -2,6 +2,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import StyleGallery from '@/components/StyleGallery'
 import NavBar from '@/components/NavBar'
+import { regionConfig } from '@/lib/region-config'
+
+const s = regionConfig.strings
 
 export default function HomePage() {
   return (
@@ -11,20 +14,20 @@ export default function HomePage() {
       {/* Hero */}
       <section className="flex flex-col items-center px-6 md:px-[120px] pt-16 pb-12 gap-6">
         <div className="flex items-center gap-2 px-3.5 h-7 rounded-full bg-amber-950 border border-amber-500 text-amber-500 text-sm font-semibold">
-          ✦ 免费生成 · 满意再付费
+          {s.heroBadge}
         </div>
         <h1 className="text-4xl md:text-6xl font-bold text-center leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
-          拍一张照片<br />AI秒变理想装修
+          {s.heroTitle}
         </h1>
         <p className="text-gray-400 text-lg text-center max-w-lg">
-          上传任意角度的房间照片，30秒内看到专业室内设计师级别的装修效果图
+          {s.heroSubtitle}
         </p>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-2 w-full max-w-sm sm:max-w-none">
           <Link href="/generate" className="bg-amber-500 text-black font-bold text-base px-8 rounded flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-[0_8px_24px_rgba(255,152,0,0.3)]" style={{height:'52px'}}>
-            免费生成效果图
+            {s.heroCta}
           </Link>
           <a href="#examples" className="text-gray-400 text-base px-7 rounded border border-gray-700 hover:border-gray-500 transition-colors flex items-center justify-center" style={{height:'52px'}}>
-            查看示例效果
+            {s.heroSecondaryCta}
           </a>
         </div>
 
@@ -75,8 +78,8 @@ export default function HomePage() {
       {/* Styles section */}
       <section id="examples" className="px-6 md:px-[120px] py-16 bg-[#050505] flex flex-col items-center gap-8">
         <div className="flex flex-col items-center gap-3">
-          <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>40+ 装修风格，一键切换</h2>
-          <p className="text-gray-500 text-sm text-center">覆盖当下最流行的室内设计风格 · 点击图片可放大预览</p>
+          <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>{s.stylesTitle}</h2>
+          <p className="text-gray-500 text-sm text-center">{s.stylesSubtitle}</p>
         </div>
         <StyleGallery />
       </section>

@@ -53,6 +53,9 @@ export const regionConfig = {
     // Style/room selectors
     styleSelectTitle:   isOverseas ? 'Choose a Style'                                 : '选择装修风格',
     roomTypeSelectTitle:isOverseas ? 'Room Type'                                      : '房间类型',
+    // Styles section
+    stylesTitle:        isOverseas ? '40+ Styles, One Click'                          : '40+ 装修风格，一键切换',
+    stylesSubtitle:     isOverseas ? 'The most popular interior design styles · Click to preview' : '覆盖当下最流行的室内设计风格 · 点击图片可放大预览',
   },
 
   // --- SEO ---

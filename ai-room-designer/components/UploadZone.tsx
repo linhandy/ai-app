@@ -1,5 +1,8 @@
 'use client'
 import { useCallback, useState } from 'react'
+import { regionConfig } from '@/lib/region-config'
+
+const s = regionConfig.strings
 
 interface Props {
   onUpload: (uploadId: string, previewUrl: string) => void
@@ -61,8 +64,8 @@ export default function UploadZone({ onUpload }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
           </div>
-          <p className="text-white font-semibold text-base">{uploading ? '上传中...' : '点击上传或拖拽图片到这里'}</p>
-          <p className="text-gray-500 text-sm">支持 JPG、PNG 格式，文件 ≤ 10MB</p>
+          <p className="text-white font-semibold text-base">{uploading ? '上传中...' : s.uploadPrompt}</p>
+          <p className="text-gray-500 text-sm">{s.uploadDragHint}</p>
           <button className="mt-1 px-6 h-9 bg-gray-800 text-gray-300 text-sm rounded hover:bg-gray-700 transition-colors">选择文件</button>
         </>
       )}

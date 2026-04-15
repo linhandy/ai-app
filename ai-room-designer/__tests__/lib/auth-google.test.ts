@@ -2,7 +2,7 @@ import { findOrCreateGoogleUser, closeAuthDb } from '@/lib/auth'
 
 // Use an in-memory SQLite DB for tests
 beforeEach(() => {
-  process.env.TURSO_DATABASE_URL = ':memory:'
+  process.env.ORDERS_DB = ':memory:'
   closeAuthDb()
 })
 

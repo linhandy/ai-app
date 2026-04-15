@@ -2,7 +2,7 @@ import { getSubscription, upsertSubscription, closeSubscriptionDb } from '@/lib/
 import { closeDb } from '@/lib/orders'
 
 beforeEach(() => {
-  process.env.TURSO_DATABASE_URL = ':memory:'
+  process.env.ORDERS_DB = ':memory:'
   process.env.REGION = 'overseas'
   closeDb()
   closeSubscriptionDb()

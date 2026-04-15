@@ -2,7 +2,7 @@ import { getSubscription, upsertSubscription, incrementGenerationsUsed, closeSub
 import { closeDb } from '@/lib/orders'
 
 beforeEach(() => {
-  process.env.TURSO_DATABASE_URL = ':memory:'
+  process.env.ORDERS_DB = ':memory:'
   closeDb()
   closeSubscriptionDb()
 })

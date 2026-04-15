@@ -1,5 +1,12 @@
+jest.mock('@/lib/storage', () => ({
+  downloadFromStorage: jest.fn().mockResolvedValue(null),
+  uploadStoragePath: jest.fn((id: string) => `uploads/${id}`),
+  uploadToStorage: jest.fn().mockResolvedValue(undefined),
+  resultStoragePath: jest.fn((id: string) => `results/${id}`),
+}))
+
 import { getSubscription, upsertSubscription, closeSubscriptionDb } from '@/lib/subscription'
-import { closeDb } from '@/lib/orders'
+import { getUploadData, closeDb } from '@/lib/orders'
 
 beforeEach(() => {
   process.env.ORDERS_DB = ':memory:'
@@ -48,5 +55,12 @@ describe('subscription gate for overseas order creation', () => {
     })
     const sub = await getSubscription('unlimited_user')
     expect(sub.generationsLeft).toBe(Infinity)
+  })
+})
+
+describe('getUploadData for non-existent upload', () => {
+  it('returns null when upload does not exist in DB or Storage', async () => {
+    const result = await getUploadData('nonexistent-upload-id')
+    expect(result).toBeNull()
   })
 })

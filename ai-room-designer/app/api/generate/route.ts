@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+export const maxDuration = 60
 import { getOrder, updateOrder, setOrderResultData, getUploadData } from '@/lib/orders'
 import { generateRoomImage } from '@/lib/zenmux'
 import { getPublicUrl, resultStoragePath } from '@/lib/storage'

@@ -43,6 +43,18 @@ const APPS = [
     external: true,
   },
   {
+    id: 'ai-room-designer-overseas',
+    name: 'AI Room Designer',
+    description: 'Redesign any room in 30 seconds with AI. 40+ styles, subscription plans from $9.99/mo.',
+    icon: '🌍',
+    tag: 'AI Interior',
+    meta: 'Free · Overseas',
+    gradient: 'from-blue-500 to-indigo-600',
+    shadow: 'shadow-blue-500/30',
+    href: process.env.NEXT_PUBLIC_AI_ROOM_DESIGNER_OVERSEAS_URL || 'https://ai-room-designer-overseas.vercel.app',
+    external: true,
+  },
+  {
     id: 'hourse-designer',
     name: '自建房设计大师',
     description: 'AI 自动生成专业 CAD 户型图，支持快捷设计、草图识别、AI 评分优化',

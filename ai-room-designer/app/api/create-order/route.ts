@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseSessionToken, getServerSession } from '@/lib/auth'
-import { createOrder, getOrder, updateOrder, type DesignMode, type QualityTier } from '@/lib/orders'
+import { createOrder, getOrder, updateOrder, getUploadData, type DesignMode, type QualityTier } from '@/lib/orders'
 import { createQROrder } from '@/lib/alipay'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
@@ -60,9 +60,8 @@ export async function POST(req: NextRequest) {
       if (modeConfig.needsUpload && !uploadId) return NextResponse.json({ error: ERR.uploadMissing }, { status: 400 })
 
       if (modeConfig.needsUpload && uploadId) {
-        const uploadPath = path.resolve(path.join(UPLOAD_DIR, uploadId))
-        if (!uploadPath.startsWith(path.resolve(UPLOAD_DIR))) return NextResponse.json({ error: 'Invalid upload ID' }, { status: 400 })
-        if (!fs.existsSync(uploadPath)) return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })
+        const uploadData = await getUploadData(uploadId)
+        if (!uploadData) return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })
       }
 
       const sub = await getSubscription(session.userId)

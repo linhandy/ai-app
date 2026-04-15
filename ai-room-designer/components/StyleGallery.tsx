@@ -2,13 +2,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 
+import { isOverseas } from '@/lib/region'
+
 const STYLES = [
-  { key: '北欧简约', desc: '原木 · 白墙 · 绿植' },
-  { key: '现代轻奢', desc: '大理石 · 金属 · 灰调' },
-  { key: '新中式',   desc: '禅意 · 木格 · 留白' },
-  { key: '侘寂风',   desc: '不完美 · 自然 · 素色' },
-  { key: '工业风',   desc: '裸砖 · 铁艺 · 水泥灰' },
-  { key: '奶油风',   desc: '米白 · 柔软 · 治愈系' },
+  { key: '北欧简约', labelEn: 'Nordic Minimal',  desc: '原木 · 白墙 · 绿植',        descEn: 'Oak wood · White walls · Greenery' },
+  { key: '现代轻奢', labelEn: 'Modern Luxury',    desc: '大理石 · 金属 · 灰调',       descEn: 'Marble · Metal accents · Grey tones' },
+  { key: '新中式',   labelEn: 'Neo-Chinese',      desc: '禅意 · 木格 · 留白',         descEn: 'Zen · Wood lattice · Negative space' },
+  { key: '侘寂风',   labelEn: 'Wabi-Sabi',        desc: '不完美 · 自然 · 素色',       descEn: 'Imperfect · Natural · Muted tones' },
+  { key: '工业风',   labelEn: 'Industrial',       desc: '裸砖 · 铁艺 · 水泥灰',       descEn: 'Exposed brick · Iron · Concrete' },
+  { key: '奶油风',   labelEn: 'Cream Style',      desc: '米白 · 柔软 · 治愈系',       descEn: 'Cream white · Soft textures · Cozy' },
 ]
 
 export default function StyleGallery() {
@@ -32,7 +34,7 @@ export default function StyleGallery() {
   return (
     <>
       <div className="grid grid-cols-3 gap-4 w-full">
-        {STYLES.map(({ key, desc }) => (
+        {STYLES.map(({ key, desc, labelEn, descEn }) => (
           <button
             key={key}
             onClick={() => setActive(key)}
@@ -55,8 +57,8 @@ export default function StyleGallery() {
               </div>
             </div>
             <div className="bg-[#0A0A0A] px-4 py-3">
-              <div className="text-white text-sm font-semibold">{key}</div>
-              <div className="text-gray-500 text-xs mt-0.5">{desc}</div>
+              <div className="text-white text-sm font-semibold">{isOverseas ? labelEn : key}</div>
+              <div className="text-gray-500 text-xs mt-0.5">{isOverseas ? descEn : desc}</div>
             </div>
           </button>
         ))}
@@ -82,9 +84,9 @@ export default function StyleGallery() {
             />
             {/* Caption */}
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black to-transparent px-6 py-4">
-              <div className="text-white font-bold text-lg">{active}</div>
+              <div className="text-white font-bold text-lg">{isOverseas ? STYLES.find(s => s.key === active)?.labelEn : active}</div>
               <div className="text-gray-400 text-sm mt-0.5">
-                {STYLES.find(s => s.key === active)?.desc}
+                {isOverseas ? STYLES.find(s => s.key === active)?.descEn : STYLES.find(s => s.key === active)?.desc}
               </div>
             </div>
             {/* Close button */}

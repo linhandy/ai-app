@@ -14,9 +14,9 @@ import { isOverseas } from '@/lib/region'
 import { regionConfig } from '@/lib/region-config'
 
 const QUALITY_OPTIONS = [
-  { key: 'standard', label: '标准', price: 1, resolution: '1024px', color: 'border-gray-700 text-gray-300' },
-  { key: 'premium',  label: '高清', price: 3, resolution: '2048px', color: 'border-amber-500 text-amber-500' },
-  { key: 'ultra',    label: '超清', price: 5, resolution: '4096px', color: 'border-purple-500 text-purple-400' },
+  { key: 'standard', label: '标准', labelEn: 'Standard', price: 1, resolution: '1024px', color: 'border-gray-700 text-gray-300' },
+  { key: 'premium',  label: '高清', labelEn: 'HD',       price: 3, resolution: '2048px', color: 'border-amber-500 text-amber-500' },
+  { key: 'ultra',    label: '超清', labelEn: '4K',       price: 5, resolution: '4096px', color: 'border-purple-500 text-purple-400' },
 ] as const
 
 export default function GeneratePage() {
@@ -170,12 +170,14 @@ function GeneratePageInner() {
       {/* Nav */}
       <nav className="flex items-center px-4 md:px-[120px] h-14 border-b border-gray-900">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-sm">装</div>
-          <span className="font-bold text-lg">装AI</span>
+          <div className="w-7 h-7 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-sm">
+            {isOverseas ? 'R' : '装'}
+          </div>
+          <span className="font-bold text-lg">{isOverseas ? 'RoomAI' : '装AI'}</span>
         </Link>
         <div className="flex-1" />
         <span className="text-gray-600 text-xs hidden sm:block">
-          {currentMode.needsUpload ? '上传照片 → 选择风格 → 生成' : '选择风格 → 描述需求 → 生成'}
+          {currentMode.needsUpload ? s.generateNavHint : s.generateNavHintFree}
         </span>
       </nav>
 
@@ -185,12 +187,12 @@ function GeneratePageInner() {
         <div className="w-full md:w-[520px] flex flex-col gap-4">
           <div>
             <h2 className="text-white text-base md:text-xl font-bold">
-              {currentMode.needsUpload ? '上传房间照片' : '自由生成模式'}
+              {currentMode.needsUpload ? s.uploadTitle : s.freeGenTitle}
             </h2>
             <p className="text-gray-500 text-xs md:text-sm mt-1">
               {currentMode.needsUpload
-                ? (currentMode.key === 'sketch2render' ? '上传手绘草图，AI转换为写实效果图' : '支持 JPG / PNG，建议正面拍摄')
-                : '无需照片，AI根据风格从零生成效果图'}
+                ? (currentMode.key === 'sketch2render' ? s.uploadSubtitleSketch : s.uploadSubtitle)
+                : s.freeGenSubtitle}
             </p>
           </div>
           {currentMode.needsUpload ? (
@@ -198,7 +200,7 @@ function GeneratePageInner() {
           ) : (
             <div className="w-full h-[160px] md:h-[200px] border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center bg-gray-900/30">
               <p className="text-gray-500 text-sm text-center leading-relaxed">
-                ✨ 自由生成<br />AI 从零生成效果图
+                {isOverseas ? <>✨ Freestyle<br />AI generates from scratch</> : <>✨ 自由生成<br />AI 从零生成效果图</>}
               </p>
             </div>
           )}
@@ -209,7 +211,7 @@ function GeneratePageInner() {
 
           {/* Mode selector */}
           <div>
-            <h2 className="text-white text-base md:text-xl font-bold mb-2">设计模式</h2>
+            <h2 className="text-white text-base md:text-xl font-bold mb-2">{s.designModeTitle}</h2>
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {DESIGN_MODES.map((m) => (
                 <button
@@ -223,7 +225,7 @@ function GeneratePageInner() {
                   }`}
                 >
                   <span className="text-lg leading-none">{m.icon}</span>
-                  <span className="text-xs font-semibold whitespace-nowrap">{m.label}</span>
+                  <span className="text-xs font-semibold whitespace-nowrap">{isOverseas ? m.labelEn : m.label}</span>
                 </button>
               ))}
             </div>
@@ -231,19 +233,19 @@ function GeneratePageInner() {
 
           {/* Room type */}
           <div>
-            <h2 className="text-white text-base md:text-xl font-bold mb-2">房间类型</h2>
+            <h2 className="text-white text-base md:text-xl font-bold mb-2">{s.roomTypeTitle}</h2>
             <RoomTypeSelector selected={roomType} onChange={setRoomType} />
           </div>
 
           {/* Style selector */}
           {currentMode.needsStyle ? (
             <div>
-              <h2 className="text-white text-base md:text-xl font-bold mb-2">装修风格</h2>
+              <h2 className="text-white text-base md:text-xl font-bold mb-2">{s.styleTitle}</h2>
               <StyleSelector selected={style} onChange={setStyle} />
             </div>
           ) : (
             <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-gray-800 bg-gray-900/50">
-              <span className="text-gray-500 text-sm">此模式无需选择风格</span>
+              <span className="text-gray-500 text-sm">{s.noStyleNeeded}</span>
             </div>
           )}
 
@@ -255,7 +257,7 @@ function GeneratePageInner() {
               className="flex items-center gap-1.5 text-gray-400 text-sm hover:text-gray-200 transition-colors"
             >
               <span>{customPromptOpen ? '▾' : '▸'}</span>
-              <span>+ 补充描述（可选）</span>
+              <span>{s.customPromptLabel}</span>
             </button>
             {customPromptOpen && (
               <div className="mt-2">
@@ -263,7 +265,7 @@ function GeneratePageInner() {
                   value={customPrompt}
                   onChange={(e) => setCustomPrompt(e.target.value.slice(0, 200))}
                   rows={3}
-                  placeholder="例如：窗帘用亚麻材质，整体偏暖色调..."
+                  placeholder={s.customPromptPlaceholder}
                   className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 resize-none focus:outline-none focus:border-amber-500"
                 />
                 <p className="text-right text-xs text-gray-600 mt-1">{customPrompt.length}/200</p>
@@ -273,7 +275,7 @@ function GeneratePageInner() {
 
           {/* Quality selector */}
           <div>
-            <h3 className="text-white text-sm font-semibold mb-2">画质选择</h3>
+            <h3 className="text-white text-sm font-semibold mb-2">{s.qualityTitle}</h3>
             <div className="grid grid-cols-3 gap-2">
               {QUALITY_OPTIONS.map((opt) => (
                 <button
@@ -284,9 +286,9 @@ function GeneratePageInner() {
                     quality === opt.key ? opt.color + ' bg-white/5' : 'border-gray-800 text-gray-500 hover:border-gray-600'
                   }`}
                 >
-                  <div className="text-sm font-semibold">{opt.label}</div>
+                  <div className="text-sm font-semibold">{isOverseas ? opt.labelEn : opt.label}</div>
                   <div className="text-[10px] mt-0.5 opacity-70">{opt.resolution}</div>
-                  <div className="text-xs mt-0.5 font-bold">¥{opt.price}</div>
+                  {!isOverseas && <div className="text-xs mt-0.5 font-bold">¥{opt.price}</div>}
                 </button>
               ))}
             </div>
@@ -299,7 +301,7 @@ function GeneratePageInner() {
               <svg className="w-4 h-4 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
-              AI生成消耗计算资源，付款后不支持退款
+              {s.ctaDisclaimer}
             </div>
             <button
               type="button"
@@ -307,15 +309,17 @@ function GeneratePageInner() {
               disabled={loading || generating || !canGenerate}
               className="flex items-center justify-center gap-2 w-full h-14 bg-amber-500 text-black font-bold text-base rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.3)]"
             >
-              {generating ? 'AI生成中，请稍候...' : loading ? '处理中...' : `⚡ 支付 ¥${currentOption.price} · 立即生成${currentOption.label}效果图`}
+              {generating ? s.ctaGenerating : loading ? s.ctaProcessing
+                : isOverseas ? s.ctaButton
+                : `⚡ 支付 ¥${currentOption.price} · 立即生成${currentOption.label}效果图`}
             </button>
-            <p className="text-gray-600 text-xs text-center">扫码支付宝付款 · 30秒内自动生成</p>
+            {!isOverseas && <p className="text-gray-600 text-xs text-center">扫码支付宝付款 · 30秒内自动生成</p>}
             {freeRemaining !== null && freeRemaining > 0 && (
-              <p className="text-amber-500 text-xs text-center">还剩 {freeRemaining} 次免费体验</p>
+              <p className="text-amber-500 text-xs text-center">{freeRemaining} {s.creditsRemaining}</p>
             )}
             {creditBalance > 0 && (
               <div className="text-amber-400 text-sm font-medium text-center">
-                剩余额度: {creditBalance}次
+                {s.creditsBalance} {creditBalance}
               </div>
             )}
           </div>
@@ -326,11 +330,11 @@ function GeneratePageInner() {
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-black/95 backdrop-blur border-t border-gray-800 px-4 py-3 z-40">
         {error && <p className="text-red-400 text-xs mb-2 text-center">{error}</p>}
         {freeRemaining !== null && freeRemaining > 0 && (
-          <p className="text-amber-500 text-xs text-center mb-1">还剩 {freeRemaining} 次免费体验</p>
+          <p className="text-amber-500 text-xs text-center mb-1">{freeRemaining} {s.creditsRemaining}</p>
         )}
         {creditBalance > 0 && (
           <div className="text-amber-400 text-sm font-medium text-center mb-1">
-            剩余额度: {creditBalance}次
+            {s.creditsBalance} {creditBalance}
           </div>
         )}
         <button
@@ -340,10 +344,12 @@ function GeneratePageInner() {
           className="flex items-center justify-center gap-2 w-full h-13 bg-amber-500 text-black font-bold text-base rounded-xl disabled:opacity-50 disabled:cursor-not-allowed active:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.4)]"
           style={{ height: '52px' }}
         >
-          {generating ? '⏳ AI生成中...' : loading ? '处理中...' : `⚡ 支付 ¥${currentOption.price} · 立即生成`}
+          {generating ? s.ctaGeneratingMobile : loading ? s.ctaProcessing
+            : isOverseas ? s.ctaButton
+            : `⚡ 支付 ¥${currentOption.price} · 立即生成`}
         </button>
         {!canGenerate && (
-          <p className="text-gray-500 text-xs text-center mt-1">请先上传房间照片</p>
+          <p className="text-gray-500 text-xs text-center mt-1">{s.errorUploadFirst}</p>
         )}
       </div>
 

@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { createHash } from 'crypto'
 import type { Metadata } from 'next'
 import { getOrder } from '@/lib/orders'
+import { regionConfig } from '@/lib/region-config'
 import { getReferralCount } from '@/lib/referral'
 import ComparePanel from '@/components/ComparePanel'
 import SaveToHistory from '@/components/SaveToHistory'
@@ -17,7 +18,7 @@ export async function generateMetadata(
   { params }: { params: { orderId: string } }
 ): Promise<Metadata> {
   const order = await getOrder(params.orderId)
-  if (!order || order.status !== 'done') return { title: '装AI' }
+  if (!order || order.status !== 'done') return { title: regionConfig.seoMeta.siteName }
 
   const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
   const imageUrl = order.resultUrl?.startsWith('http')
@@ -25,12 +26,12 @@ export async function generateMetadata(
     : `${base}${order.resultUrl}`
 
   return {
-    title: `${order.style}风格装修效果图 | 装AI`,
-    description: `用AI生成的${order.style}风格装修效果图，效果超乎想象。`,
+    title: `${order.style} | ${regionConfig.seoMeta.siteName}`,
+    description: regionConfig.seoMeta.description,
     openGraph: {
-      title: `${order.style}风格装修效果图`,
-      description: `AI生成的${order.style}风格装修，30秒出图，1元起`,
-      images: [{ url: imageUrl, width: 1024, height: 1024, alt: `${order.style}装修效果图` }],
+      title: `${order.style} | ${regionConfig.seoMeta.siteName}`,
+      description: regionConfig.seoMeta.description,
+      images: [{ url: imageUrl, width: 1024, height: 1024, alt: `${order.style} – ${regionConfig.seoMeta.siteName}` }],
     },
   }
 }

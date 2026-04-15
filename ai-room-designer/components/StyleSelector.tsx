@@ -2,6 +2,7 @@
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { STYLE_CATEGORIES } from '@/lib/design-config'
+import { isOverseas } from '@/lib/region'
 
 // Gradient fallback colors per category key (shown while thumbnail loads or on error)
 const CATEGORY_GRADIENT: Record<string, string> = {
@@ -49,7 +50,7 @@ export default function StyleSelector({ selected, onChange }: Props) {
             }`}
           >
             <span>{cat.icon}</span>
-            <span>{cat.label}</span>
+            <span>{isOverseas ? cat.labelEn : cat.label}</span>
           </button>
         ))}
       </div>
@@ -76,7 +77,7 @@ export default function StyleSelector({ selected, onChange }: Props) {
                 {!imgFailed && (
                   <Image
                     src={style.thumbnail}
-                    alt={style.label}
+                    alt={isOverseas ? style.labelEn : style.label}
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 50vw, 200px"
@@ -94,7 +95,7 @@ export default function StyleSelector({ selected, onChange }: Props) {
               </div>
               <div className={`px-2.5 py-2 ${isSelected ? 'bg-amber-950/60' : 'bg-[#0D0D0D]'}`}>
                 <div className={`text-xs font-semibold ${isSelected ? 'text-amber-400' : 'text-white'}`}>
-                  {style.label}
+                  {isOverseas ? style.labelEn : style.label}
                 </div>
               </div>
             </button>

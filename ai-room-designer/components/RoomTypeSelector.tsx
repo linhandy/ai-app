@@ -1,5 +1,6 @@
 'use client'
 import { ROOM_TYPES } from '@/lib/design-config'
+import { isOverseas } from '@/lib/region'
 
 interface Props {
   selected: string
@@ -9,7 +10,7 @@ interface Props {
 export default function RoomTypeSelector({ selected, onChange }: Props) {
   return (
     <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
-      {ROOM_TYPES.map(({ key, label, icon }) => {
+      {ROOM_TYPES.map(({ key, label, labelEn, icon }) => {
         const isSelected = selected === key
         return (
           <button
@@ -23,7 +24,7 @@ export default function RoomTypeSelector({ selected, onChange }: Props) {
             }`}
           >
             <span className="text-lg leading-none">{icon}</span>
-            <span className="text-[10px] font-medium whitespace-nowrap leading-tight">{label}</span>
+            <span className="text-[10px] font-medium whitespace-nowrap leading-tight">{isOverseas ? labelEn : label}</span>
           </button>
         )
       })}

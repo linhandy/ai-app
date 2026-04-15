@@ -1,6 +1,8 @@
 import type { Client } from '@libsql/client'
 import { makeClient } from '@/lib/db-client'
 import crypto from 'crypto'
+import { isOverseas } from './region'
+import type { NextRequest } from 'next/server'
 
 // ---- DB connection (same DB as orders) ----
 
@@ -210,10 +212,58 @@ export async function getUser(id: string): Promise<{
   }
 }
 
+export async function findOrCreateGoogleUser(params: {
+  googleId: string
+  email: string
+  name: string
+  avatar: string
+}): Promise<{ userId: string; googleId: string; email: string }> {
+  const client = await getClient()
+
+  const existing = await client.execute({
+    sql: 'SELECT id FROM users WHERE google_id = ?',
+    args: [params.googleId],
+  })
+
+  let userId: string
+  if (existing.rows.length > 0) {
+    userId = String(existing.rows[0].id)
+    await client.execute({
+      sql: `UPDATE users SET google_email = ?, google_avatar = ? WHERE id = ?`,
+      args: [params.email, params.avatar, userId],
+    })
+  } else {
+    userId = `usr_${crypto.randomBytes(8).toString('hex')}`
+    await client.execute({
+      sql: `INSERT INTO users (id, phone, google_id, google_email, google_avatar, createdAt)
+            VALUES (?, NULL, ?, ?, ?, ?)`,
+      args: [userId, params.googleId, params.email, params.avatar, Date.now()],
+    })
+  }
+
+  return { userId, googleId: params.googleId, email: params.email }
+}
+
 /** Close and reset the auth DB client (used in tests). */
 export function closeAuthDb(): void {
   if (_client) {
     _client.close()
     _client = null
   }
+}
+
+/**
+ * Unified session reader. Works for both CN (HMAC cookie) and overseas (NextAuth JWT).
+ * All API routes should use this instead of reading cookies directly.
+ */
+export async function getServerSession(req?: NextRequest): Promise<{ userId: string } | null> {
+  if (isOverseas) {
+    const { auth } = await import('./next-auth')
+    const session = await auth()
+    const userId = session?.user?.id
+    return userId ? { userId } : null
+  }
+  // CN: read existing HMAC-signed session cookie
+  const token = req?.cookies.get('session')?.value ?? req?.cookies.get('auth_token')?.value
+  return token ? parseSessionToken(token) : null
 }

@@ -37,6 +37,12 @@ async function getClient(): Promise<Client> {
   try { await _client.execute(`ALTER TABLE users ADD COLUMN wechat_avatar   TEXT`) } catch { /* already exists */ }
   try { await _client.execute(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_wechat_openid ON users (wechat_openid) WHERE wechat_openid IS NOT NULL`) } catch { /* already exists */ }
 
+  // Overseas: Google auth columns
+  try { await _client.execute(`ALTER TABLE users ADD COLUMN google_id     TEXT`) } catch { /* already exists */ }
+  try { await _client.execute(`ALTER TABLE users ADD COLUMN google_email  TEXT`) } catch { /* already exists */ }
+  try { await _client.execute(`ALTER TABLE users ADD COLUMN google_avatar TEXT`) } catch { /* already exists */ }
+  try { await _client.execute(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id ON users (google_id) WHERE google_id IS NOT NULL`) } catch { /* already exists */ }
+
   return _client
 }
 

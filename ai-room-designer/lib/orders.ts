@@ -129,6 +129,22 @@ export async function getClient(): Promise<Client> {
     )
   `)
 
+  // Subscriptions table for overseas Stripe plans
+  await _client.execute(`
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id                   TEXT PRIMARY KEY,
+      userId               TEXT NOT NULL,
+      stripeCustomerId     TEXT,
+      stripeSubscriptionId TEXT,
+      plan                 TEXT NOT NULL DEFAULT 'free',
+      status               TEXT NOT NULL DEFAULT 'active',
+      currentPeriodEnd     INTEGER,
+      generationsUsed      INTEGER NOT NULL DEFAULT 0,
+      createdAt            INTEGER NOT NULL
+    )
+  `)
+  try { await _client.execute(`ALTER TABLE subscriptions ADD COLUMN generationsUsed INTEGER NOT NULL DEFAULT 0`) } catch { /* already exists */ }
+
   return _client
 }
 

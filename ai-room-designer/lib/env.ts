@@ -1,4 +1,6 @@
-const REQUIRED_VARS = [
+import { isOverseas } from './region'
+
+const REQUIRED_CN_VARS = [
   'ZENMUX_API_KEY',
   'ALIPAY_APP_ID',
   'ALIPAY_PRIVATE_KEY',
@@ -6,8 +8,18 @@ const REQUIRED_VARS = [
   'ALIPAY_NOTIFY_URL',
 ] as const
 
+const REQUIRED_OVERSEAS_VARS = [
+  'ZENMUX_API_KEY',
+  'STRIPE_SECRET_KEY',
+  'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+  'STRIPE_WEBHOOK_SECRET',
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+] as const
+
 export function validateEnv(): void {
-  const missing = REQUIRED_VARS.filter((k) => !process.env[k])
+  const vars = isOverseas ? REQUIRED_OVERSEAS_VARS : REQUIRED_CN_VARS
+  const missing = (vars as readonly string[]).filter((k) => !process.env[k])
   if (missing.length > 0) {
     console.warn(
       `[warn] Missing environment variables (some features may be disabled):\n  ${missing.join('\n  ')}`,
@@ -37,6 +49,7 @@ export function warnMissingSupabaseEnv(): void {
  * as the "网页授权域名": your-domain.com (without https://)
  */
 export function warnMissingWechatEnv(): void {
+  if (isOverseas) return  // WeChat not used overseas
   const missing = ['WECHAT_APPID', 'WECHAT_SECRET'].filter((k) => !process.env[k])
   if (missing.length > 0) {
     console.warn(`[warn] WeChat login disabled — missing env vars: ${missing.join(', ')}`)

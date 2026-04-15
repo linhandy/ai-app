@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Toaster } from 'sonner'
 import { regionConfig } from '@/lib/region-config'
+import { isOverseas } from '@/lib/region'
 
 export const metadata: Metadata = {
   title: regionConfig.seoMeta.siteName,
@@ -30,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN">
+    <html lang={isOverseas ? 'en' : 'zh-CN'}>
       <body>
         {children}
         <Toaster position="top-center" richColors duration={5000} />

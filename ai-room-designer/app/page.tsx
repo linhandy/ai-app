@@ -279,6 +279,13 @@ export default function HomePage() {
 
       <footer className="px-6 md:px-[120px] py-8 border-t border-gray-900 text-center text-gray-600 text-sm">
         {s.footer}
+        {isOverseas && (
+          <div className="flex items-center justify-center gap-4 mt-2 text-xs">
+            <Link href="/privacy" className="hover:text-gray-400 transition-colors">Privacy Policy</Link>
+            <span>·</span>
+            <Link href="/terms" className="hover:text-gray-400 transition-colors">Terms of Service</Link>
+          </div>
+        )}
       </footer>
     </main>
   )

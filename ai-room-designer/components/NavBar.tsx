@@ -89,6 +89,7 @@ export default async function NavBar() {
 
       <MobileMenu
         isLoggedIn={!!user}
+        isOverseas={isOverseas}
         userName={
           isOverseas
             ? (user?.name?.split(' ')[0] ?? undefined)

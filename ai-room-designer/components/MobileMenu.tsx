@@ -5,9 +5,10 @@ import Link from 'next/link'
 interface Props {
   isLoggedIn: boolean
   userName?: string
+  isOverseas: boolean
 }
 
-export default function MobileMenu({ isLoggedIn, userName }: Props) {
+export default function MobileMenu({ isLoggedIn, userName, isOverseas }: Props) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -17,7 +18,7 @@ export default function MobileMenu({ isLoggedIn, userName }: Props) {
         type="button"
         onClick={() => setOpen(true)}
         className="md:hidden flex flex-col justify-center items-center w-9 h-9 gap-1.5"
-        aria-label="打开菜单"
+        aria-label={isOverseas ? 'Open menu' : '打开菜单'}
       >
         <span className="w-5 h-0.5 bg-gray-400 rounded" />
         <span className="w-5 h-0.5 bg-gray-400 rounded" />
@@ -35,7 +36,7 @@ export default function MobileMenu({ isLoggedIn, userName }: Props) {
       {/* Drawer */}
       <div className={`fixed top-0 right-0 h-full w-64 bg-[#0D0D0D] border-l border-gray-800 z-50 flex flex-col transform transition-transform duration-200 ${open ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex items-center justify-between px-5 h-16 border-b border-gray-800">
-          <span className="text-white font-bold">菜单</span>
+          <span className="text-white font-bold">{isOverseas ? 'Menu' : '菜单'}</span>
           <button onClick={() => setOpen(false)} className="text-gray-500 hover:text-gray-300">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -44,19 +45,39 @@ export default function MobileMenu({ isLoggedIn, userName }: Props) {
         </div>
 
         <nav className="flex flex-col px-5 py-6 gap-1">
-          <a href="/#examples" onClick={() => setOpen(false)} className="py-3 text-gray-400 hover:text-white transition-colors border-b border-gray-800/50">风格展示</a>
-          <a href="/#pricing" onClick={() => setOpen(false)} className="py-3 text-gray-400 hover:text-white transition-colors border-b border-gray-800/50">价格</a>
-          <a href="/#faq" onClick={() => setOpen(false)} className="py-3 text-gray-400 hover:text-white transition-colors border-b border-gray-800/50">常见问题</a>
-          <Link href="/history" onClick={() => setOpen(false)} className="py-3 text-gray-400 hover:text-white transition-colors border-b border-gray-800/50">历史记录</Link>
+          <a href="/#examples" onClick={() => setOpen(false)} className="py-3 text-gray-400 hover:text-white transition-colors border-b border-gray-800/50">
+            {isOverseas ? 'Styles' : '风格展示'}
+          </a>
+          <a
+            href={isOverseas ? '/pricing' : '/#pricing'}
+            onClick={() => setOpen(false)}
+            className="py-3 text-gray-400 hover:text-white transition-colors border-b border-gray-800/50"
+          >
+            {isOverseas ? 'Pricing' : '价格'}
+          </a>
+          <a href="/#faq" onClick={() => setOpen(false)} className="py-3 text-gray-400 hover:text-white transition-colors border-b border-gray-800/50">
+            {isOverseas ? 'FAQ' : '常见问题'}
+          </a>
+          <Link href="/history" onClick={() => setOpen(false)} className="py-3 text-gray-400 hover:text-white transition-colors border-b border-gray-800/50">
+            {isOverseas ? 'History' : '历史记录'}
+          </Link>
           {isLoggedIn ? (
             <div className="py-3 flex items-center justify-between border-b border-gray-800/50">
               <span className="text-gray-400 text-sm">{userName}</span>
-              <form action="/api/auth/logout" method="POST">
-                <button type="submit" className="text-gray-500 text-sm hover:text-gray-300">退出</button>
+              <form action={isOverseas ? '/api/auth/signout' : '/api/auth/logout'} method="POST">
+                <button type="submit" className="text-gray-500 text-sm hover:text-gray-300">
+                  {isOverseas ? 'Sign out' : '退出'}
+                </button>
               </form>
             </div>
           ) : (
-            <Link href="/login" onClick={() => setOpen(false)} className="py-3 text-gray-400 hover:text-white transition-colors border-b border-gray-800/50">登录/注册</Link>
+            <Link
+              href={isOverseas ? '/api/auth/signin' : '/login'}
+              onClick={() => setOpen(false)}
+              className="py-3 text-gray-400 hover:text-white transition-colors border-b border-gray-800/50"
+            >
+              {isOverseas ? 'Sign in' : '登录/注册'}
+            </Link>
           )}
         </nav>
 
@@ -66,7 +87,7 @@ export default function MobileMenu({ isLoggedIn, userName }: Props) {
             onClick={() => setOpen(false)}
             className="flex items-center justify-center w-full h-12 bg-amber-500 text-black font-bold rounded hover:bg-amber-400 transition-colors"
           >
-            开始体验
+            {isOverseas ? 'Get Started' : '开始体验'}
           </Link>
         </div>
       </div>

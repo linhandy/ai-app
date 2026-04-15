@@ -13,7 +13,7 @@ interface Props {
   onClose: () => void
 }
 
-export default function ShareModal({ orderId, style, pageUrl, resultUrl, onClose }: Props) {
+export default function ShareModal({ style, pageUrl, resultUrl, onClose }: Props) {
   const [qrDataUrl, setQrDataUrl] = useState('')
   const [copied, setCopied] = useState(false)
 
@@ -21,7 +21,7 @@ export default function ShareModal({ orderId, style, pageUrl, resultUrl, onClose
     QRCode.toDataURL(pageUrl, { width: 160, margin: 2 }).then(setQrDataUrl)
   }, [pageUrl])
 
-  const shareTargets = regionConfig.shareTargets as ShareTarget[]
+  const shareTargets = regionConfig.shareTargets as readonly ShareTarget[]
   const shareTitle = regionConfig.strings.shareText
   const shareModalTitle = regionConfig.strings.shareModalTitle
   const shareSkip = regionConfig.strings.shareSkip

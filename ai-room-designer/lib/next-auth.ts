@@ -10,11 +10,11 @@ declare module 'next-auth' {
   }
 }
 
-declare module 'next-auth/jwt' {
+declare module '@auth/core/jwt' {
   interface JWT { userId?: string }
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers: { GET, POST }, handlers, auth, signIn, signOut } = NextAuth({
   providers: isOverseas
     ? [
         Google({

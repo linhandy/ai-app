@@ -4,7 +4,7 @@ import { getServerSession } from '@/lib/auth'
 import { ERR } from '@/lib/errors'
 import { getClient } from '@/lib/orders'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' as const })
+function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY!) }
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(req)
@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
   const stripeCustomerId = result.rows[0]?.stripeCustomerId as string | undefined
   if (!stripeCustomerId) return NextResponse.redirect(new URL('/pricing', req.url))
 
+  const stripe = getStripe()
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,

@@ -67,8 +67,8 @@ export const regionConfig = {
     description: isOverseas
       ? 'Redesign any room with AI. Upload a photo, choose a style, get a professional interior design in 30 seconds.'
       : '上传房间照片，AI 30秒生成专业装修效果图。40+种装修风格，免费生成，满意再付款。',
-    verificationTag: isOverseas
+    verificationTag: (isOverseas
       ? { 'google-site-verification': process.env.GOOGLE_SITE_VERIFICATION ?? '' }
-      : { 'baidu-site-verification': process.env.BAIDU_SITE_VERIFICATION ?? '' },
+      : { 'baidu-site-verification': process.env.BAIDU_SITE_VERIFICATION ?? '' }) as Record<string, string>,
   },
 } as const

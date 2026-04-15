@@ -31,7 +31,7 @@ export default function TermsPage() {
         <p>You may not upload images depicting illegal content, violence, or other content that violates applicable law. We reserve the right to suspend accounts that violate this policy.</p>
 
         <h2>Limitation of Liability</h2>
-        <p>RoomAI is provided "as is." We are not liable for indirect, incidental, or consequential damages arising from use of the service.</p>
+        <p>RoomAI is provided &ldquo;as is.&rdquo; We are not liable for indirect, incidental, or consequential damages arising from use of the service.</p>
 
         <h2>Changes to Terms</h2>
         <p>We may update these terms with 30 days notice via email. Continued use constitutes acceptance.</p>

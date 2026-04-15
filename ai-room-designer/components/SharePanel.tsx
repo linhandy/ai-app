@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
 import { regionConfig } from '@/lib/region-config'
-import { getShareUrl, copyToClipboard, SHARE_TARGET_LABELS } from '@/lib/share'
+import { getShareUrl, SHARE_TARGET_LABELS } from '@/lib/share'
 import type { ShareTarget } from '@/lib/share'
 
 interface Props {
@@ -58,7 +58,7 @@ export default function SharePanel({ style, pageUrl, referralCount = 0 }: Props)
   }
 
   // Config-driven targets
-  const shareTargets = regionConfig.shareTargets as ShareTarget[]
+  const shareTargets = regionConfig.shareTargets as readonly ShareTarget[]
 
   // Build button config per target
   const getButtonConfig = (target: ShareTarget) => {

@@ -3,7 +3,7 @@ import Stripe from 'stripe'
 import { getServerSession } from '@/lib/auth'
 import { ERR } from '@/lib/errors'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' as const })
+function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY!) }
 
 // Stripe Price IDs — set these in your Stripe dashboard, then add to env
 const PRICE_IDS: Record<string, Record<string, string>> = {
@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
   const priceId = PRICE_IDS[plan]?.[interval]
   if (!priceId) return NextResponse.json({ error: 'Invalid plan or interval' }, { status: 400 })
 
+  const stripe = getStripe()
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
 
   const checkoutSession = await stripe.checkout.sessions.create({

@@ -3,9 +3,7 @@ import Stripe from 'stripe'
 import { upsertSubscription, type SubscriptionPlan } from '@/lib/subscription'
 import { logger } from '@/lib/logger'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' as const })
-
-export const config = { api: { bodyParser: false } }
+function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY!) }
 
 function planFromPriceId(priceId: string): SubscriptionPlan {
   if (priceId === process.env.STRIPE_PRO_MONTHLY_PRICE_ID ||
@@ -21,6 +19,7 @@ export async function POST(req: NextRequest) {
 
   if (!sig) return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
 
+  const stripe = getStripe()
   let event: Stripe.Event
   try {
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
@@ -46,8 +45,10 @@ export async function POST(req: NextRequest) {
     const plan = planFromPriceId(priceId)
 
     // Detect billing cycle renewal: stripe sends 'updated' when period advances
+    const subItem = sub.items.data[0]
+    const currentPeriodEnd = subItem?.current_period_end ?? 0
     const prevPeriodEnd = (event.data.previous_attributes as Record<string, unknown>)?.current_period_end
-    const periodRenewed = typeof prevPeriodEnd === 'number' && prevPeriodEnd < sub.current_period_end
+    const periodRenewed = typeof prevPeriodEnd === 'number' && prevPeriodEnd < currentPeriodEnd
 
     await upsertSubscription({
       userId,
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
       stripeSubscriptionId: sub.id,
       plan,
       status: sub.status,
-      currentPeriodEnd: sub.current_period_end * 1000,  // Stripe uses seconds, we use ms
+      currentPeriodEnd: currentPeriodEnd * 1000,  // Stripe uses seconds, we use ms
       resetGenerations: periodRenewed,
     })
 

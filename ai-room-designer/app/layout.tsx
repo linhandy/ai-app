@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Toaster } from 'sonner'
 import { regionConfig } from '@/lib/region-config'
 import { isOverseas } from '@/lib/region'
+import CookieBanner from '@/components/CookieBanner'
 
 export const metadata: Metadata = {
   title: regionConfig.seoMeta.siteName,
@@ -35,6 +36,9 @@ export default function RootLayout({
       <body>
         {children}
         <Toaster position="top-center" richColors duration={5000} />
+        {isOverseas && process.env.GA_MEASUREMENT_ID && (
+          <CookieBanner gaId={process.env.GA_MEASUREMENT_ID} />
+        )}
       </body>
     </html>
   )

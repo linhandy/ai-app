@@ -10,6 +10,8 @@ import PackagePurchaseModal from '@/components/PackagePurchaseModal'
 import { DESIGN_MODES } from '@/lib/design-config'
 import type { DesignMode } from '@/lib/orders'
 import { saveToHistory } from '@/lib/history'
+import { isOverseas } from '@/lib/region'
+import { regionConfig } from '@/lib/region-config'
 
 const QUALITY_OPTIONS = [
   { key: 'standard', label: '标准', price: 1, resolution: '1024px', color: 'border-gray-700 text-gray-300' },
@@ -26,6 +28,7 @@ export default function GeneratePage() {
 }
 
 function GeneratePageInner() {
+  const s = regionConfig.strings
   const searchParams = useSearchParams()
   const router = useRouter()
   const initialQuality = searchParams.get('quality') ?? 'standard'
@@ -92,7 +95,7 @@ function GeneratePageInner() {
   }, [initialPackageId])
 
   const handlePay = async () => {
-    if (currentMode.needsUpload && !uploadId) { setError('请先上传房间照片'); return }
+    if (currentMode.needsUpload && !uploadId) { setError(s.errorUploadFirst); return }
     setError(null)
     setLoading(true)
     try {
@@ -115,7 +118,7 @@ function GeneratePageInner() {
           body: JSON.stringify({ orderId: data.orderId }),
         })
         const genData = await genRes.json()
-        if (!genRes.ok) throw new Error(genData.error || 'AI 生成失败，请稍后重试')
+        if (!genRes.ok) throw new Error(genData.error || s.errorGenFailed)
         router.push(`/result/${data.orderId}`)
         return
       }
@@ -128,8 +131,21 @@ function GeneratePageInner() {
           body: JSON.stringify({ orderId: data.orderId }),
         })
         const genData = await genRes.json()
-        if (!genRes.ok) throw new Error(genData.error || 'AI 生成失败，请稍后重试')
+        if (!genRes.ok) throw new Error(genData.error || s.errorGenFailed)
         setCreditBalance(prev => Math.max(0, prev - 1))
+        router.push(`/result/${data.orderId}`)
+        return
+      }
+
+      if (isOverseas) {
+        setGenerating(true)
+        const genRes = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: data.orderId }),
+        })
+        const genData = await genRes.json()
+        if (!genRes.ok) throw new Error(genData.error || s.errorGenFailed)
         router.push(`/result/${data.orderId}`)
         return
       }
@@ -141,7 +157,7 @@ function GeneratePageInner() {
       }
       setPayModal({ orderId: data.orderId, qrDataUrl: data.qrDataUrl, amount: currentOption.price })
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : '创建订单失败'
+      const message = err instanceof Error ? err.message : s.errorOrderFailed
       setError(message)
       setGenerating(false)
     } finally {

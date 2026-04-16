@@ -65,14 +65,14 @@ export default async function ResultPage({ params }: { params: { orderId: string
             </div>
             <div className="flex items-center gap-3">
               <div className="w-6 h-6 rounded-full bg-gray-700 shrink-0" />
-              <span className="text-gray-500 text-sm">{isOverseas ? 'Done' : '生成完成'}</span>
+              <span className="text-gray-500 text-sm">{isOverseas ? 'Design complete' : '生成完成'}</span>
             </div>
           </div>
 
           <ProgressBar isComplete={false} />
 
           <p className="text-gray-600 text-xs text-center">
-            {isOverseas ? 'About 30 seconds' : '大约需要 20–30 秒'}&nbsp;·&nbsp;
+            {isOverseas ? 'About 20–30 seconds' : '大约需要 20–30 秒'}&nbsp;·&nbsp;
             <a href="/history" className="text-gray-400 underline underline-offset-2 hover:text-gray-200">
               {isOverseas ? 'You can leave this page and check History when ready →' : '你也可以去其他页面，完成后在历史记录查看 →'}
             </a>

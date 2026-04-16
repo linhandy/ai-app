@@ -4,6 +4,7 @@ import { isOverseas } from '@/lib/region'
 import { regionConfig } from '@/lib/region-config'
 import Link from 'next/link'
 import MobileMenu from '@/components/MobileMenu'
+import CreditWidget from '@/components/CreditWidget'
 
 function maskPhone(phone: string): string {
   if (phone.length < 7) return phone
@@ -68,6 +69,7 @@ export default async function NavBar() {
           <a href="#pricing" className="text-gray-500 text-sm mr-4 hover:text-gray-300 transition-colors hidden md:block">价格</a>
           <a href="#faq" className="text-gray-500 text-sm mr-4 hover:text-gray-300 transition-colors hidden md:block">常见问题</a>
           <Link href="/history" className="text-gray-500 text-sm mr-8 hover:text-gray-300 transition-colors hidden md:block">历史记录</Link>
+          <div className="mr-4 hidden md:flex"><CreditWidget /></div>
           {user ? (
             <div className="items-center gap-3 mr-6 hidden md:flex">
               {user.wechat_avatar ? (

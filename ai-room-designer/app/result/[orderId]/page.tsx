@@ -14,6 +14,7 @@ import ProgressBar from '@/components/ProgressBar'
 import ShareModalTrigger from '@/components/ShareModalTrigger'
 import Link from 'next/link'
 import { isOverseas } from '@/lib/region'
+import { getSubscription } from '@/lib/subscription'
 
 export async function generateMetadata(
   { params }: { params: { orderId: string } }
@@ -106,6 +107,20 @@ export default async function ResultPage({ params }: { params: { orderId: string
 
   if (order.status !== 'done' || !order.resultUrl) notFound()
 
+  // Overseas free-tier upsell: read subscription server-side
+  let overseasFreeGenerationsLeft: number | null = null
+  if (isOverseas) {
+    const { auth } = await import('@/lib/next-auth')
+    const session = await auth()
+    if (session?.user?.id) {
+      const sub = await getSubscription(session.user.id)
+      if (sub.plan === 'free') {
+        const left = sub.generationsLeft
+        overseasFreeGenerationsLeft = left === Infinity ? null : left
+      }
+    }
+  }
+
   const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
   const fullResultUrl = order.resultUrl?.startsWith('http')
     ? order.resultUrl
@@ -179,8 +194,8 @@ export default async function ResultPage({ params }: { params: { orderId: string
         <SaveToHistory orderId={order.id} style={order.style} quality={order.quality} mode={order.mode} createdAt={order.createdAt} />
         <ComparePanel beforeUrl={beforeUrl} afterUrl={order.resultUrl} style={order.style} />
 
-        {/* De-watermark CTA — shown for all watermarked orders */}
-        {order.isFree && (
+        {/* De-watermark CTA — shown for all watermarked orders (CN only) */}
+        {!isOverseas && order.isFree && (
           <div className="w-full max-w-[1100px] mt-2 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <p className="text-amber-400 font-semibold text-sm">当前为预览版（含水印）</p>
@@ -215,6 +230,16 @@ export default async function ResultPage({ params }: { params: { orderId: string
             {isOverseas ? 'New Design' : '再试一次'}
           </Link>
         </div>
+
+        {isOverseas && overseasFreeGenerationsLeft !== null && (
+          <p className="text-gray-500 text-xs text-center">
+            {overseasFreeGenerationsLeft} free generation{overseasFreeGenerationsLeft !== 1 ? 's' : ''} left this month
+            {' · '}
+            <Link href="/pricing" className="text-amber-500 hover:text-amber-400 transition-colors">
+              Upgrade to Pro →
+            </Link>
+          </p>
+        )}
 
         <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={shareUrl} referralCount={referralCount} />
 

@@ -13,6 +13,7 @@ import PollingRefresh from '@/components/PollingRefresh'
 import ProgressBar from '@/components/ProgressBar'
 import ShareModalTrigger from '@/components/ShareModalTrigger'
 import Link from 'next/link'
+import { isOverseas } from '@/lib/region'
 
 export async function generateMetadata(
   { params }: { params: { orderId: string } }
@@ -54,26 +55,26 @@ export default async function ResultPage({ params }: { params: { orderId: string
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span className="text-green-400 text-sm">订单已创建</span>
+              <span className="text-green-400 text-sm">{isOverseas ? 'Order created' : '订单已创建'}</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center animate-pulse shrink-0">
                 <div className="w-2 h-2 bg-black rounded-full" />
               </div>
-              <span className="text-amber-400 text-sm font-semibold">AI 生成中...</span>
+              <span className="text-amber-400 text-sm font-semibold">{isOverseas ? 'AI designing...' : 'AI 生成中...'}</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-6 h-6 rounded-full bg-gray-700 shrink-0" />
-              <span className="text-gray-500 text-sm">生成完成</span>
+              <span className="text-gray-500 text-sm">{isOverseas ? 'Done' : '生成完成'}</span>
             </div>
           </div>
 
           <ProgressBar isComplete={false} />
 
           <p className="text-gray-600 text-xs text-center">
-            大约需要 20–30 秒&nbsp;·&nbsp;
+            {isOverseas ? 'About 30 seconds' : '大约需要 20–30 秒'}&nbsp;·&nbsp;
             <a href="/history" className="text-gray-400 underline underline-offset-2 hover:text-gray-200">
-              你也可以去其他页面，完成后在历史记录查看 →
+              {isOverseas ? 'You can leave this page and check History when ready →' : '你也可以去其他页面，完成后在历史记录查看 →'}
             </a>
           </p>
 
@@ -93,10 +94,10 @@ export default async function ResultPage({ params }: { params: { orderId: string
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <p className="text-red-400 font-semibold text-lg">生成失败</p>
-          <p className="text-gray-400 text-sm">AI 生成遇到问题，请重新尝试</p>
+          <p className="text-red-400 font-semibold text-lg">{isOverseas ? 'Generation failed' : '生成失败'}</p>
+          <p className="text-gray-400 text-sm">{isOverseas ? 'Something went wrong. Please try again.' : 'AI 生成遇到问题，请重新尝试'}</p>
           <Link href="/generate" className="flex items-center justify-center gap-2 px-8 h-12 bg-amber-500 text-black font-bold text-sm rounded hover:bg-amber-400 transition-colors">
-            重新生成
+            {isOverseas ? 'Try Again' : '重新生成'}
           </Link>
         </div>
       </main>

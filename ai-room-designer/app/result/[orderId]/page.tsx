@@ -113,10 +113,14 @@ export default async function ResultPage({ params }: { params: { orderId: string
     const { auth } = await import('@/lib/next-auth')
     const session = await auth()
     if (session?.user?.id) {
-      const sub = await getSubscription(session.user.id)
-      if (sub.plan === 'free') {
-        const left = sub.generationsLeft
-        overseasFreeGenerationsLeft = left === Infinity ? null : left
+      try {
+        const sub = await getSubscription(session.user.id)
+        if (sub.plan === 'free') {
+          const left = sub.generationsLeft
+          overseasFreeGenerationsLeft = left === Infinity ? null : left
+        }
+      } catch {
+        // non-fatal — upsell strip simply won't render
       }
     }
   }
@@ -233,7 +237,9 @@ export default async function ResultPage({ params }: { params: { orderId: string
 
         {isOverseas && overseasFreeGenerationsLeft !== null && (
           <p className="text-gray-500 text-xs text-center">
-            {overseasFreeGenerationsLeft} free generation{overseasFreeGenerationsLeft !== 1 ? 's' : ''} left this month
+            {overseasFreeGenerationsLeft === 0
+              ? 'No free generations left this month'
+              : `${overseasFreeGenerationsLeft} free generation${overseasFreeGenerationsLeft !== 1 ? 's' : ''} left this month`}
             {' · '}
             <Link href="/pricing" className="text-amber-500 hover:text-amber-400 transition-colors">
               Upgrade to Pro →

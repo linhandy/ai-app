@@ -13,18 +13,6 @@ interface OrderData {
   quality?: string
 }
 
-const MODE_LABELS: Record<string, string> = {
-  redesign: '风格改造',
-  virtual_staging: '虚拟家装',
-  add_furniture: '添加家具',
-  paint_walls: '墙面换色',
-  change_lighting: '灯光优化',
-  sketch2render: '草图生成',
-  freestyle: '自由生成',
-  outdoor_redesign: '户外设计',
-}
-
-
 function modeLabel(m?: string) {
   const key = m ?? 'redesign'
   const mode = DESIGN_MODES.find((d) => d.key === key)

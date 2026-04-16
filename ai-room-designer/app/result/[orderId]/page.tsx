@@ -15,6 +15,7 @@ import ShareModalTrigger from '@/components/ShareModalTrigger'
 import Link from 'next/link'
 import { isOverseas } from '@/lib/region'
 import { getSubscription } from '@/lib/subscription'
+import { findStyleByKey } from '@/lib/design-config'
 
 export async function generateMetadata(
   { params }: { params: { orderId: string } }
@@ -28,7 +29,9 @@ export async function generateMetadata(
     : `${base}${order.resultUrl}`
 
   if (isOverseas) {
-    const styleLabel = order.style ?? 'AI Interior'
+    const styleEntry = findStyleByKey(order.style ?? '')
+    const styleLabel = styleEntry?.labelEn
+      ?? (order.style ? order.style.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'AI Interior')
     const roomLabel = order.roomType
       ? order.roomType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
       : 'Room'

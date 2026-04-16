@@ -23,7 +23,7 @@ const FREE_DEFAULTS: SubscriptionInfo = {
   generationsUsed: 0,
   generationsLimit: 3,
   generationsLeft: 3,
-  hasWatermark: true,
+  hasWatermark: false,  // Overseas: limit enforcement is the paywall, not watermarking
   status: 'active',
 }
 
@@ -56,7 +56,7 @@ export async function getSubscription(userId: string): Promise<SubscriptionInfo>
     generationsUsed: used,
     generationsLimit: limit,
     generationsLeft: left,
-    hasWatermark: plan === 'free',
+    hasWatermark: false, // Overseas only: no watermark at any plan level
     status,
   }
 }

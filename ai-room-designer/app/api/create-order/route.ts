@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       }
 
       const trimmedPrompt = customPrompt?.trim().slice(0, 200) || undefined
-      const isFree = sub.plan === 'free'
+      const isFree = false  // Overseas: generation limit is the paywall; no watermarks
 
       const order = await createOrder({
         style,

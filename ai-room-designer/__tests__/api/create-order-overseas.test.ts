@@ -64,3 +64,24 @@ describe('getUploadData for non-existent upload', () => {
     expect(result).toBeNull()
   })
 })
+
+describe('overseas free plan isFree flag', () => {
+  it('free plan subscription has hasWatermark: false', async () => {
+    // No subscription record → falls back to FREE_DEFAULTS
+    const sub = await getSubscription('new_overseas_user')
+    expect(sub.hasWatermark).toBe(false)
+  })
+
+  it('active free plan subscription has hasWatermark: false', async () => {
+    await upsertSubscription({
+      userId: 'free_active',
+      stripeCustomerId: 'cus_test',
+      stripeSubscriptionId: 'sub_test',
+      plan: 'free',
+      status: 'active',
+      currentPeriodEnd: Date.now() + 86400_000,
+    })
+    const sub = await getSubscription('free_active')
+    expect(sub.hasWatermark).toBe(false)
+  })
+})

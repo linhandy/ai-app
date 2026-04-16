@@ -19,7 +19,7 @@ describe('getSubscription', () => {
     expect(sub.generationsLimit).toBe(3)
     expect(sub.generationsUsed).toBe(0)
     expect(sub.generationsLeft).toBe(3)
-    expect(sub.hasWatermark).toBe(true)
+    expect(sub.hasWatermark).toBe(false)
   })
 
   it('returns unlimited for active unlimited plan', async () => {
@@ -68,6 +68,6 @@ describe('getSubscription', () => {
     })
     const sub = await getSubscription('user_3')
     expect(sub.plan).toBe('free')
-    expect(sub.hasWatermark).toBe(true)
+    expect(sub.hasWatermark).toBe(false)
   })
 })

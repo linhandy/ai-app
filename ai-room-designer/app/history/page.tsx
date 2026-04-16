@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { getHistory, clearHistory, type HistoryItem } from '@/lib/history'
 import { isOverseas } from '@/lib/region'
+import { DESIGN_MODES } from '@/lib/design-config'
 
 interface OrderData {
   status: string
@@ -23,21 +24,12 @@ const MODE_LABELS: Record<string, string> = {
   outdoor_redesign: '户外设计',
 }
 
-const MODE_LABELS_EN: Record<string, string> = {
-  redesign: 'Redesign',
-  virtual_staging: 'Virtual Staging',
-  add_furniture: 'Add Furniture',
-  paint_walls: 'Paint Walls',
-  change_lighting: 'Lighting',
-  sketch2render: 'Sketch to Render',
-  freestyle: 'Freestyle',
-  outdoor_redesign: 'Outdoor',
-}
 
 function modeLabel(m?: string) {
   const key = m ?? 'redesign'
-  if (isOverseas) return MODE_LABELS_EN[key] ?? 'Redesign'
-  return MODE_LABELS[key] ?? '风格改造'
+  const mode = DESIGN_MODES.find((d) => d.key === key)
+  if (!mode) return isOverseas ? 'Redesign' : '风格改造'
+  return isOverseas ? mode.labelEn : mode.label
 }
 
 function qualityLabel(q: string) {

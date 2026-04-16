@@ -17,7 +17,7 @@ describe('room landing pages', () => {
 })
 
 describe('sitemap coverage', () => {
-  it('has 40 styles and room types for sitemap', () => {
+  it('covers all styles and room types', () => {
     const styleCount = STYLE_CATEGORIES.flatMap(c => c.styles).length
     expect(styleCount).toBe(40)
     expect(ROOM_TYPES.length).toBeGreaterThanOrEqual(24)

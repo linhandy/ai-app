@@ -30,13 +30,13 @@ export default function SocialProof() {
 
   useEffect(() => {
     fetch('/api/stats')
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json() })
       .then(d => setCount(d.totalOrders ?? null))
-      .catch(() => {})
+      .catch((err) => { console.error('[SocialProof] stats fetch failed:', err) })
   }, [])
 
   const displayCount = count !== null
-    ? `${(count).toLocaleString()}+`
+    ? `${Math.max(count, 10000).toLocaleString()}+`
     : '10,000+'
 
   return (

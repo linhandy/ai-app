@@ -17,7 +17,7 @@ export async function GET() {
   } catch (err) {
     console.error('[api/stats] DB query failed:', err)
     return NextResponse.json(
-      { totalOrders: 12000 },
+      { totalOrders: Math.floor(12000 / 100) * 100 },
       { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60' } }
     )
   }

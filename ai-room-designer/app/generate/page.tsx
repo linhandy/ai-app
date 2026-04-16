@@ -13,6 +13,8 @@ import { saveToHistory } from '@/lib/history'
 import { isOverseas } from '@/lib/region'
 import { regionConfig } from '@/lib/region-config'
 
+const OVERSEAS_CREDIT_COST = '1 credit'
+
 const QUALITY_OPTIONS = [
   { key: 'standard', label: '标准', labelEn: 'Standard', price: 1, resolution: '1024px', color: 'border-gray-700 text-gray-300' },
   { key: 'premium',  label: '高清', labelEn: 'HD',       price: 3, resolution: '2048px', color: 'border-amber-500 text-amber-500' },
@@ -54,12 +56,12 @@ function GeneratePageInner() {
 
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
   const canGenerate = !currentMode.needsUpload || !!uploadId
-  const OVERSEAS_CREDIT_COST = '1 credit'
 
   const initialPackageId = searchParams.get('package')
   const packagePurchaseTriggeredRef = useRef(false)
 
   useEffect(() => {
+    if (isOverseas) return
     fetch('/api/credits/balance')
       .then(r => r.json())
       .then(d => setCreditBalance(d.balance ?? 0))
@@ -318,7 +320,7 @@ function GeneratePageInner() {
             {freeRemaining !== null && freeRemaining > 0 && (
               <p className="text-amber-500 text-xs text-center">{freeRemaining} {s.creditsRemaining}</p>
             )}
-            {creditBalance > 0 && (
+            {!isOverseas && creditBalance > 0 && (
               <div className="text-amber-400 text-sm font-medium text-center">
                 {s.creditsBalance} {creditBalance}
               </div>
@@ -333,7 +335,7 @@ function GeneratePageInner() {
         {freeRemaining !== null && freeRemaining > 0 && (
           <p className="text-amber-500 text-xs text-center mb-1">{freeRemaining} {s.creditsRemaining}</p>
         )}
-        {creditBalance > 0 && (
+        {!isOverseas && creditBalance > 0 && (
           <div className="text-amber-400 text-sm font-medium text-center mb-1">
             {s.creditsBalance} {creditBalance}
           </div>

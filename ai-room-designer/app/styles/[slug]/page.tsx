@@ -47,7 +47,7 @@ export default function StylePage({ params }: { params: { slug: string } }) {
   const category = STYLE_CATEGORIES.find(c => c.styles.some(s => s.key === params.slug))
   const relatedStyles = category?.styles.filter(s => s.key !== params.slug).slice(0, 4) ?? []
 
-  const name = isOverseas ? style!.labelEn : style!.label
+  const name = isOverseas ? style.labelEn : style.label
   const siteName = isOverseas ? 'RoomAI' : '装AI'
   const logoLetter = isOverseas ? 'R' : '装'
 
@@ -73,7 +73,7 @@ export default function StylePage({ params }: { params: { slug: string } }) {
         <div className="relative w-full max-w-[600px] rounded-xl overflow-hidden border border-gray-700">
           <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
             <Image
-              src={style!.thumbnail}
+              src={style.thumbnail}
               alt={isOverseas ? `${name} interior design example` : `${name}装修效果图示例`}
               fill
               priority
@@ -84,7 +84,7 @@ export default function StylePage({ params }: { params: { slug: string } }) {
         </div>
 
         <Link
-          href={`/generate?style=${style!.key}`}
+          href={`/generate?style=${style.key}`}
           className="bg-amber-500 text-black font-bold text-lg px-10 rounded flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-[0_8px_24px_rgba(255,152,0,0.3)]"
           style={{ height: '56px' }}
         >

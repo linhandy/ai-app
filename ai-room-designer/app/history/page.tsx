@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { getHistory, clearHistory, type HistoryItem } from '@/lib/history'
+import { isOverseas } from '@/lib/region'
 
 interface OrderData {
   status: string
@@ -22,11 +23,29 @@ const MODE_LABELS: Record<string, string> = {
   outdoor_redesign: '户外设计',
 }
 
+const MODE_LABELS_EN: Record<string, string> = {
+  redesign: 'Redesign',
+  virtual_staging: 'Virtual Staging',
+  add_furniture: 'Add Furniture',
+  paint_walls: 'Paint Walls',
+  change_lighting: 'Lighting',
+  sketch2render: 'Sketch to Render',
+  freestyle: 'Freestyle',
+  outdoor_redesign: 'Outdoor',
+}
+
 function modeLabel(m?: string) {
-  return MODE_LABELS[m ?? 'redesign'] ?? '风格改造'
+  const key = m ?? 'redesign'
+  if (isOverseas) return MODE_LABELS_EN[key] ?? 'Redesign'
+  return MODE_LABELS[key] ?? '风格改造'
 }
 
 function qualityLabel(q: string) {
+  if (isOverseas) {
+    if (q === 'premium') return 'HD'
+    if (q === 'ultra') return '4K'
+    return 'Standard'
+  }
   if (q === 'premium') return '高清版'
   if (q === 'ultra') return '超清版'
   return '标准版'
@@ -37,6 +56,12 @@ function timeAgo(ts: number): string {
   const min = Math.floor(diff / 60000)
   const hour = Math.floor(diff / 3600000)
   const day = Math.floor(diff / 86400000)
+  if (isOverseas) {
+    if (day > 0) return `${day}d ago`
+    if (hour > 0) return `${hour}h ago`
+    if (min > 0) return `${min}m ago`
+    return 'just now'
+  }
   if (day > 0) return `${day}天前`
   if (hour > 0) return `${hour}小时前`
   if (min > 0) return `${min}分钟前`
@@ -133,8 +158,8 @@ export default function HistoryPage() {
             if (!res.ok) return [id, orders[id]] as const
             const data = await res.json()
             if (data.status === 'done' && orders[id]?.status !== 'done') {
-              toast.success('效果图已生成！', {
-                action: { label: '查看', onClick: () => { window.location.href = `/result/${id}` } },
+              toast.success(isOverseas ? 'Design ready!' : '效果图已生成！', {
+                action: { label: isOverseas ? 'View' : '查看', onClick: () => { window.location.href = `/result/${id}` } },
                 duration: 8000,
               })
             }
@@ -151,7 +176,7 @@ export default function HistoryPage() {
   }, [items, orders])
 
   const handleClear = () => {
-    if (confirm('确定清除所有历史记录？')) {
+    if (confirm(isOverseas ? 'Clear all design history? This cannot be undone.' : '确定清除所有历史记录？')) {
       clearHistory()
       setItems([])
       setOrders({})
@@ -162,24 +187,28 @@ export default function HistoryPage() {
     <main className="min-h-screen bg-black">
       <nav className="flex items-center px-6 md:px-[120px] h-16 border-b border-gray-900">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">装</div>
-          <span className="font-bold text-xl">装AI</span>
+          <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">{isOverseas ? 'R' : '装'}</div>
+          <span className="font-bold text-xl">{isOverseas ? 'RoomAI' : '装AI'}</span>
         </Link>
         <div className="flex-1" />
         <Link href="/generate" className="bg-amber-500 text-black text-sm font-semibold px-5 h-9 rounded flex items-center hover:bg-amber-400 transition-colors">
-          生成新图
+          {isOverseas ? 'New Design' : '生成新图'}
         </Link>
       </nav>
 
       <div className="px-6 md:px-[120px] pt-12 pb-16">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>生成历史</h1>
-            <p className="text-gray-500 text-sm mt-1">{isCloud ? '已登录，历史同步至云端' : '保存在本设备，图片7天后自动清理'}</p>
+            <h1 className="text-3xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>{isOverseas ? 'My Designs' : '生成历史'}</h1>
+            <p className="text-gray-500 text-sm mt-1">
+              {isOverseas
+                ? (isCloud ? 'Signed in — designs synced to cloud' : 'Saved locally — images expire after 7 days')
+                : (isCloud ? '已登录，历史同步至云端' : '保存在本设备，图片7天后自动清理')}
+            </p>
           </div>
           {items.length > 0 && (
             <button onClick={handleClear} className="text-gray-600 text-sm hover:text-gray-400 transition-colors">
-              清除全部
+              {isOverseas ? 'Clear all' : '清除全部'}
             </button>
           )}
         </div>
@@ -195,9 +224,9 @@ export default function HistoryPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <p className="text-gray-500">还没有生成记录</p>
+            <p className="text-gray-500">{isOverseas ? 'No designs yet' : '还没有生成记录'}</p>
             <Link href="/generate" className="mt-2 bg-amber-500 text-black font-semibold text-sm px-6 h-10 rounded flex items-center hover:bg-amber-400 transition-colors">
-              立即生成第一张
+              {isOverseas ? 'Generate your first design' : '立即生成第一张'}
             </Link>
           </div>
         ) : (
@@ -216,7 +245,7 @@ export default function HistoryPage() {
                       <img src={order.resultUrl} alt={item.style} className="w-full h-full object-cover" />
                     ) : isExpired ? (
                       <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-gray-700 text-xs">已过期</span>
+                        <span className="text-gray-700 text-xs">{isOverseas ? 'Expired' : '已过期'}</span>
                       </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -242,13 +271,13 @@ export default function HistoryPage() {
                     <span className="text-gray-600 text-xs">{timeAgo(item.createdAt)}</span>
                     {isDone ? (
                       <Link href={`/result/${item.orderId}`} className="text-amber-500 text-xs font-semibold hover:text-amber-400 transition-colors">
-                        查看 →
+                        {isOverseas ? 'View →' : '查看 →'}
                       </Link>
                     ) : isExpired ? (
-                      <span className="text-gray-700 text-xs">已清理</span>
+                      <span className="text-gray-700 text-xs">{isOverseas ? 'Cleared' : '已清理'}</span>
                     ) : (
                       <Link href={`/result/${item.orderId}`} className="text-gray-500 text-xs hover:text-gray-300 transition-colors">
-                        查看进度 →
+                        {isOverseas ? 'View progress →' : '查看进度 →'}
                       </Link>
                     )}
                   </div>

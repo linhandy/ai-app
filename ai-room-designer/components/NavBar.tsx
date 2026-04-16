@@ -14,12 +14,22 @@ function maskPhone(phone: string): string {
 export default async function NavBar() {
   let user: { name?: string | null; image?: string | null; wechat_nickname?: string | null; wechat_avatar?: string | null; phone?: string | null } | null = null
 
+  let overseasFreeLeft: number | null = null
   if (isOverseas) {
     // NextAuth session — read via server-side auth()
     const { auth } = await import('@/lib/next-auth')
     const session = await auth()
     if (session?.user) {
       user = { name: session.user.name, image: session.user.image }
+      try {
+        const { getSubscription } = await import('@/lib/subscription')
+        const sub = await getSubscription(session.user.id)
+        if (sub.plan === 'free' && sub.generationsLeft > 0 && sub.generationsLeft !== Infinity) {
+          overseasFreeLeft = sub.generationsLeft
+        }
+      } catch {
+        // non-fatal — badge simply won't render
+      }
     }
   } else {
     const cookieStore = await cookies()
@@ -99,12 +109,28 @@ export default async function NavBar() {
         }
       />
 
-      <Link
-        href="/generate"
-        className="bg-amber-500 text-black text-sm font-semibold px-5 h-9 rounded items-center hover:bg-amber-400 transition-colors hidden md:flex"
-      >
-        {s.navGenerate}
-      </Link>
+      {isOverseas ? (
+        <div className="hidden md:flex items-center gap-2">
+          {overseasFreeLeft !== null && (
+            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              {overseasFreeLeft} free left
+            </span>
+          )}
+          <Link
+            href="/generate"
+            className="bg-amber-500 text-black text-sm font-semibold px-5 h-9 rounded items-center hover:bg-amber-400 transition-colors flex"
+          >
+            {s.navGenerate}
+          </Link>
+        </div>
+      ) : (
+        <Link
+          href="/generate"
+          className="bg-amber-500 text-black text-sm font-semibold px-5 h-9 rounded items-center hover:bg-amber-400 transition-colors hidden md:flex"
+        >
+          {s.navGenerate}
+        </Link>
+      )}
     </nav>
   )
 }

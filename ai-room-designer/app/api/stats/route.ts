@@ -2,8 +2,6 @@
 import { NextResponse } from 'next/server'
 import { getClient } from '@/lib/orders'
 
-export const revalidate = 300 // cache for 5 minutes
-
 export async function GET() {
   try {
     const db = await getClient()
@@ -11,10 +9,16 @@ export async function GET() {
       `SELECT COUNT(*) as total FROM orders WHERE status = 'done'`
     )
     const raw = Number(result.rows[0]?.total ?? 0)
-    // Round down to nearest 100 for credible-looking numbers
     const total = Math.floor(raw / 100) * 100
-    return NextResponse.json({ totalOrders: total })
-  } catch {
-    return NextResponse.json({ totalOrders: 12000 }) // fallback
+    return NextResponse.json(
+      { totalOrders: total },
+      { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60' } }
+    )
+  } catch (err) {
+    console.error('[api/stats] DB query failed:', err)
+    return NextResponse.json(
+      { totalOrders: 12000 },
+      { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60' } }
+    )
   }
 }

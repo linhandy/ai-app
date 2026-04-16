@@ -22,7 +22,7 @@ export default function CreditWidget() {
         </svg>
         {balance} 次
       </div>
-      {balance === 0 && (
+      {balance <= 1 && (
         <Link
           href="/#pricing"
           className="px-3 h-8 rounded-full bg-amber-500 text-black text-xs font-bold flex items-center hover:bg-amber-400 transition-colors"

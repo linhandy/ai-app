@@ -23,7 +23,7 @@ export default async function NavBar() {
     }
   } else {
     const cookieStore = await cookies()
-    const token = cookieStore.get('auth_token')?.value
+    const token = cookieStore.get('session')?.value
     const session = token ? parseSessionToken(token) : null
     const dbUser = session ? await getUser(session.userId).catch(() => null) : null
     if (dbUser) user = dbUser

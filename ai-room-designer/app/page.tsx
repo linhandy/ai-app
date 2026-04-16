@@ -5,6 +5,7 @@ import NavBar from '@/components/NavBar'
 import { regionConfig } from '@/lib/region-config'
 import PricingCards from '@/components/PricingCards'
 import { isOverseas } from '@/lib/region'
+import SocialProof from '@/components/SocialProof'
 
 const s = regionConfig.strings
 
@@ -76,6 +77,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Social proof — counter + testimonials (overseas only) */}
+      {isOverseas && <SocialProof />}
 
       {/* Styles section */}
       <section id="examples" className="px-6 md:px-[120px] py-16 bg-[#050505] flex flex-col items-center gap-8">

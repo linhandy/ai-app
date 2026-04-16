@@ -51,9 +51,9 @@ describe('getSubscription', () => {
     await incrementGenerationsUsed('user_2')
     const sub = await getSubscription('user_2')
     expect(sub.plan).toBe('pro')
-    expect(sub.generationsLimit).toBe(30)
+    expect(sub.generationsLimit).toBe(150)
     expect(sub.generationsUsed).toBe(2)
-    expect(sub.generationsLeft).toBe(28)
+    expect(sub.generationsLeft).toBe(148)
     expect(sub.hasWatermark).toBe(false)
   })
 

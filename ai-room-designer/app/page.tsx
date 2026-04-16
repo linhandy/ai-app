@@ -221,7 +221,7 @@ export default function HomePage() {
               },
               {
                 q: "What's the difference between Free, Pro, and Unlimited?",
-                a: 'Free gives you 3 watermarked generations per month. Pro ($9.99/mo) gives 30 HD watermark-free designs with commercial use rights. Unlimited ($19.99/mo) removes all limits and adds priority processing.',
+                a: 'Free gives you 3 watermarked generations per month. Pro ($9.99/mo) gives 150 HD watermark-free designs with commercial use rights. Unlimited ($19.99/mo) removes all limits and adds priority processing.',
               },
               {
                 q: 'How does billing work?',

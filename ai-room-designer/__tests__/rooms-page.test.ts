@@ -2,9 +2,10 @@ import { ROOM_TYPES, STYLE_CATEGORIES } from '@/lib/design-config'
 
 describe('room landing pages', () => {
   it('generates static params for all room types', () => {
-    const params = ROOM_TYPES.map(r => ({ slug: r.key }))
-    expect(params).toHaveLength(ROOM_TYPES.length)
+    const { generateStaticParams } = require('@/app/rooms/[slug]/page')
+    const params = generateStaticParams()
     expect(params.length).toBeGreaterThanOrEqual(24)
+    expect(params.every((p: { slug: string }) => typeof p.slug === 'string')).toBe(true)
   })
 
   it('all room types have English labels', () => {

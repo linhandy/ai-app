@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { ROOM_TYPES } from '@/lib/design-config'
+import { ROOM_TYPES, findStyleByKey } from '@/lib/design-config'
 import { isOverseas } from '@/lib/region'
 
 export function generateStaticParams() {
@@ -14,7 +14,7 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
 
   if (isOverseas) {
     const title = `AI ${room.labelEn} Design — Redesign in 30 Seconds | RoomAI`
-    const description = `Upload a photo of your ${room.labelEn.toLowerCase()} and AI instantly redesigns it. Get 3 free HD designs on signup — no credit card needed.`
+    const description = `Upload a photo of your ${room.labelEn.toLowerCase()} and AI redesigns it in 30 seconds. Get 3 free HD designs on signup — no credit card needed.`
     return {
       title,
       description,
@@ -79,17 +79,23 @@ export default function RoomPage({ params }: { params: { slug: string } }) {
             {isOverseas ? `Popular styles for ${name}` : `${name}热门风格`}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {popularStyles.map(styleKey => (
-              <Link
-                key={styleKey}
-                href={`/generate?roomType=${room.key}&style=${styleKey}`}
-                className="group border border-gray-800 rounded-lg p-4 hover:border-amber-500/50 transition-colors text-center"
-              >
-                <div className="text-sm text-gray-300 group-hover:text-amber-400 transition-colors capitalize">
-                  {styleKey.replace(/_/g, ' ')}
-                </div>
-              </Link>
-            ))}
+            {popularStyles.map(styleKey => {
+              const styleEntry = findStyleByKey(styleKey)
+              const styleLabel = isOverseas
+                ? (styleEntry?.labelEn ?? styleKey.replace(/_/g, ' '))
+                : (styleEntry?.label ?? styleKey.replace(/_/g, ' '))
+              return (
+                <Link
+                  key={styleKey}
+                  href={`/generate?roomType=${room.key}&style=${styleKey}`}
+                  className="group border border-gray-800 rounded-lg p-4 hover:border-amber-500/50 transition-colors text-center"
+                >
+                  <div className="text-sm text-gray-300 group-hover:text-amber-400 transition-colors">
+                    {styleLabel}
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         </div>
 

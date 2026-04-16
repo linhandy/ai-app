@@ -27,6 +27,27 @@ export async function generateMetadata(
     ? order.resultUrl
     : `${base}${order.resultUrl}`
 
+  if (isOverseas) {
+    const styleLabel = order.style ?? 'AI Interior'
+    const roomLabel = order.roomType
+      ? order.roomType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      : 'Room'
+    const title = `${styleLabel} ${roomLabel} Design | RoomAI`
+    const description = `AI-generated ${styleLabel} ${roomLabel} design — redesign your space in 30 seconds with RoomAI.`
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: 'article',
+        images: [{ url: imageUrl, width: 1024, height: 1024, alt: title }],
+      },
+      twitter: { card: 'summary_large_image', title, description, images: [imageUrl] },
+    }
+  }
+
+  // CN (unchanged)
   return {
     title: `${order.style} | ${regionConfig.seoMeta.siteName}`,
     description: regionConfig.seoMeta.description,
@@ -109,9 +130,11 @@ export default async function ResultPage({ params }: { params: { orderId: string
 
   // Overseas free-tier upsell: read subscription server-side
   let overseasFreeGenerationsLeft: number | null = null
+  let isOverseasGuest = false
   if (isOverseas) {
     const { auth } = await import('@/lib/next-auth')
     const session = await auth()
+    isOverseasGuest = !session?.user?.id
     if (session?.user?.id) {
       try {
         const sub = await getSubscription(session.user.id)
@@ -164,6 +187,19 @@ export default async function ResultPage({ params }: { params: { orderId: string
 
   return (
     <main className="min-h-screen bg-black">
+      {isOverseas && isOverseasGuest && (
+        <div className="w-full bg-gradient-to-r from-amber-500/10 to-amber-600/10 border-b border-amber-500/20 px-6 py-3 flex items-center justify-between gap-4">
+          <p className="text-sm text-amber-200">
+            Like this design? Get <strong>3 free HD designs</strong> — no credit card needed.
+          </p>
+          <Link
+            href="/api/auth/signin"
+            className="shrink-0 bg-amber-500 text-black text-sm font-bold px-4 h-8 rounded flex items-center hover:bg-amber-400 transition-colors"
+          >
+            Design your room →
+          </Link>
+        </div>
+      )}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav className="flex items-center px-4 md:px-[120px] h-16 border-b border-gray-900">
         <Link href="/" className="flex items-center gap-2.5">

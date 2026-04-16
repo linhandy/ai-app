@@ -5,7 +5,7 @@ export type SubscriptionPlan = 'free' | 'pro' | 'unlimited'
 
 const PLAN_LIMITS: Record<SubscriptionPlan, number> = {
   free:      3,
-  pro:       30,
+  pro:       150,
   unlimited: -1,   // -1 = unlimited
 }
 

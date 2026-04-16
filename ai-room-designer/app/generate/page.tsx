@@ -54,6 +54,7 @@ function GeneratePageInner() {
 
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
   const canGenerate = !currentMode.needsUpload || !!uploadId
+  const OVERSEAS_CREDIT_COST = '1 credit'
 
   const initialPackageId = searchParams.get('package')
   const packagePurchaseTriggeredRef = useRef(false)
@@ -310,7 +311,7 @@ function GeneratePageInner() {
               className="flex items-center justify-center gap-2 w-full h-14 bg-amber-500 text-black font-bold text-base rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.3)]"
             >
               {generating ? s.ctaGenerating : loading ? s.ctaProcessing
-                : isOverseas ? `✨ ${s.ctaButton} · 1 credit`
+                : isOverseas ? `${s.ctaButton} · ${OVERSEAS_CREDIT_COST}`
                 : `⚡ 支付 ¥${currentOption.price} · 立即生成${currentOption.label}效果图`}
             </button>
             {!isOverseas && <p className="text-gray-600 text-xs text-center">扫码支付宝付款 · 30秒内自动生成</p>}
@@ -345,7 +346,7 @@ function GeneratePageInner() {
           style={{ height: '52px' }}
         >
           {generating ? s.ctaGeneratingMobile : loading ? s.ctaProcessing
-            : isOverseas ? `✨ ${s.ctaButton} · 1 credit`
+            : isOverseas ? `${s.ctaButton} · ${OVERSEAS_CREDIT_COST}`
             : `⚡ 支付 ¥${currentOption.price} · 立即生成`}
         </button>
         {!canGenerate && (

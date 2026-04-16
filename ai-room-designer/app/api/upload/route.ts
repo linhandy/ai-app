@@ -5,11 +5,13 @@ import crypto from 'crypto'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { isRateLimited } from '@/lib/rate-limit'
 import { saveUploadData } from '@/lib/orders'
+import { isOverseas } from '@/lib/region'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   if (isRateLimited(`upload:${ip}`, 20, 60_000)) {
-    return NextResponse.json({ error: '请求过于频繁，请稍后再试' }, { status: 429 })
+    const msg = isOverseas ? 'Too many requests, please try again later' : '请求过于频繁，请稍后再试'
+    return NextResponse.json({ error: msg }, { status: 429 })
   }
 
   try {
@@ -17,16 +19,19 @@ export async function POST(req: NextRequest) {
     const file = formData.get('image') as File | null
 
     if (!file) {
-      return NextResponse.json({ error: '请上传图片文件' }, { status: 400 })
+      const msg = isOverseas ? 'Please upload an image file' : '请上传图片文件'
+      return NextResponse.json({ error: msg }, { status: 400 })
     }
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: '仅支持 JPG、PNG、WEBP 格式' }, { status: 400 })
+      const msg = isOverseas ? 'Only JPG, PNG, WEBP formats are supported' : '仅支持 JPG、PNG、WEBP 格式'
+      return NextResponse.json({ error: msg }, { status: 400 })
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: '图片大小不能超过 10MB' }, { status: 400 })
+      const msg = isOverseas ? 'Image size cannot exceed 10MB' : '图片大小不能超过 10MB'
+      return NextResponse.json({ error: msg }, { status: 400 })
     }
 
     const ext = file.type === 'image/png' ? '.png' : '.jpg'
@@ -47,6 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ uploadId })
   } catch (err) {
     console.error('[upload]', err)
-    return NextResponse.json({ error: '上传失败，请重试' }, { status: 500 })
+    const msg = isOverseas ? 'Upload failed, please try again' : '上传失败，请重试'
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

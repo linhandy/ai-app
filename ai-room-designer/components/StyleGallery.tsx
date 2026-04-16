@@ -43,7 +43,7 @@ export default function StyleGallery() {
             <div className="relative h-[200px] w-full overflow-hidden">
               <Image
                 src={`/styles/${key}.jpg`}
-                alt={key}
+                alt={isOverseas ? labelEn : key}
                 fill
                 className="object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
               />

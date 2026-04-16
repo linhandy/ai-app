@@ -111,7 +111,15 @@ export default async function ResultPage({ params }: { params: { orderId: string
     ? order.resultUrl
     : `${base}${order.resultUrl}`
 
-  const jsonLd = {
+  const jsonLd = isOverseas ? {
+    '@context': 'https://schema.org',
+    '@type': 'ImageObject',
+    name: `${order.style} AI Interior Design`,
+    description: `AI-generated ${order.style} interior design by RoomAI`,
+    contentUrl: fullResultUrl,
+    creator: { '@type': 'Organization', name: 'RoomAI', url: base },
+    dateCreated: order.createdAt,
+  } : {
     '@context': 'https://schema.org',
     '@type': 'ImageObject',
     name: `${order.style}风格装修效果图`,
@@ -140,26 +148,32 @@ export default async function ResultPage({ params }: { params: { orderId: string
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav className="flex items-center px-4 md:px-[120px] h-16 border-b border-gray-900">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">装</div>
-          <span className="font-bold text-xl">装AI</span>
+          <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">{isOverseas ? 'R' : '装'}</div>
+          <span className="font-bold text-xl">{isOverseas ? 'RoomAI' : '装AI'}</span>
         </Link>
         <div className="flex-1" />
-        <Link href="/history" className="text-gray-500 text-sm mr-4 hover:text-gray-300 transition-colors hidden md:block">历史记录</Link>
+        <Link href="/history" className="text-gray-500 text-sm mr-4 hover:text-gray-300 transition-colors hidden md:block">{isOverseas ? 'History' : '历史记录'}</Link>
         <div className="flex items-center gap-1.5 px-3 h-8 rounded-full bg-green-950 text-green-400 text-sm font-semibold">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
-          生成成功
+          {isOverseas ? 'Ready' : '生成成功'}
         </div>
       </nav>
 
       <div className="flex flex-col items-center px-4 md:px-[120px] pt-8 md:pt-12 pb-16 gap-6 md:gap-8">
         <h1 className="text-xl md:text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>
-          {order.mode === 'paint_walls' ? '墙面换色效果图已生成'
-            : order.mode === 'change_lighting' ? '灯光优化效果图已生成'
-            : order.mode === 'virtual_staging' ? `您的${order.style}虚拟家装效果图已生成`
-            : order.mode === 'add_furniture' ? `您的${order.style}家具效果图已生成`
-            : `您的${order.style}装修效果图已生成`}
+          {isOverseas
+            ? (order.mode === 'paint_walls' ? 'Your wall repaint is ready'
+              : order.mode === 'change_lighting' ? 'Your lighting redesign is ready'
+              : order.mode === 'virtual_staging' ? `Your ${order.style} virtual staging is ready`
+              : order.mode === 'add_furniture' ? `Your ${order.style} furnished design is ready`
+              : `Your ${order.style} redesign is ready`)
+            : (order.mode === 'paint_walls' ? '墙面换色效果图已生成'
+              : order.mode === 'change_lighting' ? '灯光优化效果图已生成'
+              : order.mode === 'virtual_staging' ? `您的${order.style}虚拟家装效果图已生成`
+              : order.mode === 'add_furniture' ? `您的${order.style}家具效果图已生成`
+              : `您的${order.style}装修效果图已生成`)}
         </h1>
 
         <SaveToHistory orderId={order.id} style={order.style} quality={order.quality} mode={order.mode} createdAt={order.createdAt} />
@@ -181,7 +195,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full max-w-[600px]">
           <a
             href={order.resultUrl}
-            download="AI装修效果图.png"
+            download={isOverseas ? 'RoomAI-Design.png' : 'AI装修效果图.png'}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2.5 px-8 h-14 bg-amber-500 text-black font-bold text-base rounded hover:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.3)] flex-1"
@@ -189,7 +203,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            下载高清效果图
+            {isOverseas ? 'Download HD Design' : '下载高清效果图'}
           </a>
           <Link
             href="/generate"
@@ -198,7 +212,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            再试一次
+            {isOverseas ? 'New Design' : '再试一次'}
           </Link>
         </div>
 
@@ -207,11 +221,15 @@ export default async function ResultPage({ params }: { params: { orderId: string
         {/* Info strip */}
 
         <div className="w-full max-w-[600px] grid grid-cols-3 divide-x divide-gray-800 rounded-lg bg-[#0A0A0A] border border-gray-800 overflow-hidden">
-          {[
+          {(isOverseas ? [
+            { label: 'Style', value: order.style, color: 'text-amber-500' },
+            { label: 'Resolution', value: order.quality === 'ultra' ? '4096×4096' : order.quality === 'premium' ? '2048×2048' : '1024×1024', color: 'text-white' },
+            { label: 'Quality', value: order.quality === 'ultra' ? '4K' : order.quality === 'premium' ? 'HD' : 'Standard', color: 'text-green-400' },
+          ] : [
             { label: '装修风格', value: order.style, color: 'text-amber-500' },
             { label: '分辨率', value: order.quality === 'ultra' ? '4096×4096' : order.quality === 'premium' ? '2048×2048' : '1024×1024', color: 'text-white' },
             { label: order.isFree ? '解锁价格' : '已付费', value: order.quality === 'ultra' ? '¥5' : order.quality === 'premium' ? '¥3' : '¥1', color: order.isFree ? 'text-amber-500' : 'text-green-400' },
-          ].map(({ label, value, color }) => (
+          ]).map(({ label, value, color }) => (
             <div key={label} className="flex flex-col items-center gap-1 py-4 px-2">
               <span className={`${color} text-sm font-bold truncate max-w-full text-center`}>{value}</span>
               <span className="text-gray-500 text-xs">{label}</span>

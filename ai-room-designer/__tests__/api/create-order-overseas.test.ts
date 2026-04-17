@@ -85,3 +85,26 @@ describe('overseas free plan isFree flag', () => {
     expect(sub.hasWatermark).toBe(false)
   })
 })
+
+describe('style-match referenceUploadId validation (unit tests for logic used by route)', () => {
+  it('getUploadData returns null for a non-existent referenceUploadId', async () => {
+    // This is the behavior the route relies on to return 400 fileNotFound
+    const result = await getUploadData('nonexistent-reference-id')
+    expect(result).toBeNull()
+  })
+
+  it('createOrder stores referenceUploadId for style-match mode', async () => {
+    const { createOrder, getOrder } = await import('@/lib/orders')
+    const order = await createOrder({
+      style: 'nordic_minimal',
+      uploadId: 'room_upload_1',
+      referenceUploadId: 'ref_upload_1',
+      mode: 'style-match',
+      roomType: 'living_room',
+      userId: 'test_user',
+    })
+    const found = await getOrder(order.id)
+    expect(found?.referenceUploadId).toBe('ref_upload_1')
+    expect(found?.mode).toBe('style-match')
+  })
+})

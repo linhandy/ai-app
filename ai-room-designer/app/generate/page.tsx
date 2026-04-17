@@ -116,7 +116,13 @@ function GeneratePageInner() {
         body: JSON.stringify({ uploadId, referenceUploadId: mode === 'style-match' ? referenceUploadId : undefined, style, quality, mode, roomType, customPrompt: customPrompt.trim() || undefined }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      if (!res.ok) {
+        if (res.status === 401 && isOverseas) {
+          router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent('/generate')}`)
+          return
+        }
+        throw new Error(data.error)
+      }
 
       // Save to history immediately so user can navigate away during generation
       saveToHistory({ orderId: data.orderId, style, quality, mode, createdAt: Date.now() })
@@ -190,6 +196,11 @@ function GeneratePageInner() {
         <span className="text-gray-600 text-xs hidden sm:block">
           {currentMode.needsUpload ? s.generateNavHint : s.generateNavHintFree}
         </span>
+        {isOverseas && (
+          <Link href="/api/auth/signin" className="ml-4 text-gray-500 text-xs hover:text-gray-300 transition-colors hidden sm:block">
+            Sign in
+          </Link>
+        )}
       </nav>
 
       <div className="flex flex-col md:flex-row px-4 md:px-[120px] pt-6 md:pt-12 pb-4 md:pb-16 gap-6 md:gap-10 items-start">

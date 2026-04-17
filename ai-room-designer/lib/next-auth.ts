@@ -37,7 +37,8 @@ export const { handlers: { GET, POST }, handlers, auth, signIn, signOut } = Next
         })
         user.id = dbUser.userId
         return true
-      } catch {
+      } catch (err) {
+        console.error('[NextAuth signIn] Failed to create/find Google user:', err)
         return false
       }
     },

@@ -81,6 +81,8 @@ export default function StyleSelector({ selected, onChange }: Props) {
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 50vw, 200px"
+                    loading="eager"
+                    unoptimized
                     onError={() => setFailedImages((prev) => new Set(prev).add(style.key))}
                   />
                 )}

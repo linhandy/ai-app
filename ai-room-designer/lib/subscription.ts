@@ -127,10 +127,24 @@ export async function upsertSubscription(params: {
 
 export async function incrementGenerationsUsed(userId: string): Promise<void> {
   const client = await getClient()
-  await client.execute({
-    sql: `UPDATE subscriptions SET generationsUsed = generationsUsed + 1 WHERE userId = ?`,
+  // Ensure a free subscription record exists so the counter can increment
+  const existing = await client.execute({
+    sql: 'SELECT id FROM subscriptions WHERE userId = ?',
     args: [userId],
   })
+  if (existing.rows.length === 0) {
+    await client.execute({
+      sql: `INSERT INTO subscriptions
+            (id, userId, stripeCustomerId, stripeSubscriptionId, plan, status, currentPeriodEnd, generationsUsed, createdAt)
+            VALUES (?, ?, '', '', 'free', 'active', ?, 1, ?)`,
+      args: [`sub_${crypto.randomBytes(8).toString('hex')}`, userId, Date.now() + 365 * 86400_000, Date.now()],
+    })
+  } else {
+    await client.execute({
+      sql: `UPDATE subscriptions SET generationsUsed = generationsUsed + 1 WHERE userId = ?`,
+      args: [userId],
+    })
+  }
 }
 
 const MAX_BONUS_GENERATIONS = 5

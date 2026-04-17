@@ -50,8 +50,8 @@ export function buildStylePrompt(
       : '重新设计这个户外空间，打造专业景观效果。添加丰富的植物、五彩的花卉、树木、石板或木质小径和精致的户外家具。保留原有空间结构和建筑外形。生成真实感强的户外景观效果图。'
   } else if (mode === 'style-match') {
     base = useEn
-      ? `Apply the interior design style from the reference photo to the room in the main photo. Preserve the room's architectural structure and dimensions. Match the style: colors, materials, furniture style, lighting mood, and decorative aesthetic.`
-      : `将参考图片的室内设计风格应用到主照片中的房间。保留房间的建筑结构和尺寸。匹配风格：色彩、材质、家具风格、灯光氛围和装饰美感。`
+      ? `The first image is the room to redesign. The second image is the style reference. Apply the interior design style from the second image to the room in the first image. Preserve the room's architectural structure and dimensions. Match the style: colors, materials, furniture style, lighting mood, and decorative aesthetic.`
+      : `第一张图片是需要改造的房间，第二张图片是风格参考图。将第二张图片的室内设计风格应用到第一张图片的房间中。保留房间的建筑结构和尺寸。匹配风格：色彩、材质、家具风格、灯光氛围和装饰美感。`
   } else {
     const entry = findStyleByKey(style)
     if (!entry) throw new Error(`Unknown style: ${style}`)

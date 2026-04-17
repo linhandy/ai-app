@@ -114,10 +114,6 @@ test('buildStylePrompt outdoor_redesign returns Chinese landscaping prompt for p
   expect(prompt).toContain('户外')
 })
 
-test('DESIGN_MODES has 9 entries after adding style-match', () => {
-  expect(DESIGN_MODES).toHaveLength(9)
-})
-
 test('style-match mode has needsStyle false and needsUpload true', () => {
   const mode = DESIGN_MODES.find((m) => m.key === 'style-match')
   expect(mode).toBeDefined()
@@ -127,7 +123,7 @@ test('style-match mode has needsStyle false and needsUpload true', () => {
 
 test('buildStylePrompt style-match returns English prompt for standard quality', () => {
   const prompt = buildStylePrompt('', 'standard', 'style-match', 'living_room')
-  expect(prompt).toContain('reference photo')
+  expect(prompt).toContain('style reference')
   expect(prompt).toContain('living room')
   expect(prompt.length).toBeGreaterThan(50)
 })

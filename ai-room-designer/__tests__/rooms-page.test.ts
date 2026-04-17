@@ -17,12 +17,13 @@ describe('room landing pages', () => {
 })
 
 describe('sitemap coverage', () => {
-  it('covers all styles and room types', () => {
+  it('covers all styles, rooms, and blog', () => {
     const styleCount = STYLE_CATEGORIES.flatMap(c => c.styles).length
     expect(styleCount).toBe(40)
     expect(ROOM_TYPES.length).toBeGreaterThanOrEqual(24)
-    // Total sitemap entries: 2 static + 40 styles + N rooms
-    const total = 2 + styleCount + ROOM_TYPES.length
-    expect(total).toBeGreaterThanOrEqual(66)
+    // 4 static (home, generate, blog index, gallery) + styles + rooms + blog articles
+    const staticPages = 4
+    const total = staticPages + styleCount + ROOM_TYPES.length
+    expect(total).toBeGreaterThanOrEqual(69)
   })
 })

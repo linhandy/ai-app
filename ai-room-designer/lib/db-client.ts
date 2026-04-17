@@ -13,10 +13,10 @@ import { createClient as createClientWeb } from '@libsql/client/web'
 import { createClient as createClientNode } from '@libsql/client'
 
 export function dbUrl(): string {
-  const raw = process.env.ORDERS_DB ?? path.join(
+  const raw = (process.env.ORDERS_DB ?? path.join(
     process.env.VERCEL ? '/tmp' : process.cwd(),
     'orders.db',
-  )
+  )).trim()
   if (raw === ':memory:') return ':memory:'
   if (raw.startsWith('libsql://') || raw.startsWith('https://')) return raw
   return `file:${raw}`

@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Image from 'next/image'
+import { isOverseas } from '@/lib/region'
 
 interface Props {
   before: string
@@ -34,7 +35,7 @@ export default function CompareSlider({ before, after }: Props) {
       {/* Before (full background) */}
       <Image
         src={before}
-        alt="改造前"
+        alt={isOverseas ? 'Before' : '改造前'}
         fill
         className="object-cover"
         priority
@@ -47,7 +48,7 @@ export default function CompareSlider({ before, after }: Props) {
       >
         <Image
           src={after}
-          alt="AI效果图"
+          alt={isOverseas ? 'AI Design' : 'AI效果图'}
           fill
           className="object-cover"
           priority
@@ -73,13 +74,13 @@ export default function CompareSlider({ before, after }: Props) {
       {/* Labels */}
       <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-black/75 backdrop-blur-sm text-white text-xs font-semibold px-3 h-7 rounded-full">
         <span className="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block" />
-        改造前
+        {isOverseas ? 'Before' : '改造前'}
       </div>
       <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-amber-500 text-black text-xs font-bold px-3 h-7 rounded-full">
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
-        AI效果图
+        {isOverseas ? 'AI Design' : 'AI效果图'}
       </div>
     </div>
   )

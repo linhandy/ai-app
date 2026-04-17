@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 })
     }
 
-    const ext = file.type === 'image/png' ? '.png' : '.jpg'
+    const ext = file.type === 'image/png' ? '.png' : file.type === 'image/webp' ? '.webp' : '.jpg'
     const uploadId = `${crypto.randomBytes(12).toString('hex')}${ext}`
     const buffer = Buffer.from(await file.arrayBuffer())
 

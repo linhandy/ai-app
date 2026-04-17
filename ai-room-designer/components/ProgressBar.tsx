@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { isOverseas } from '@/lib/region'
 
 /**
  * Fake progress bar for AI generation waiting screen.
@@ -25,12 +26,17 @@ export default function ProgressBar({ isComplete }: { isComplete: boolean }) {
     return () => clearInterval(id)
   }, [isComplete])
 
-  const label =
-    pct < 30 ? '分析房间结构...'
-    : pct < 65 ? 'AI 重新设计中...'
-    : pct < 90 ? '渲染效果图...'
-    : isComplete ? '完成！'
-    : '即将完成...'
+  const label = isOverseas
+    ? (pct < 30 ? 'Analyzing room...'
+      : pct < 65 ? 'AI redesigning...'
+      : pct < 90 ? 'Rendering...'
+      : isComplete ? 'Done!'
+      : 'Almost there...')
+    : (pct < 30 ? '分析房间结构...'
+      : pct < 65 ? 'AI 重新设计中...'
+      : pct < 90 ? '渲染效果图...'
+      : isComplete ? '完成！'
+      : '即将完成...')
 
   return (
     <div className="w-full max-w-xs space-y-2">

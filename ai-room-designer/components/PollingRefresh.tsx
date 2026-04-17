@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { isOverseas } from '@/lib/region'
 export default function PollingRefresh({
   orderId,
   intervalMs = 3000,
@@ -26,12 +27,12 @@ export default function PollingRefresh({
             clearInterval(id)
             // Notify user if they've switched tabs
             if (document.visibilityState === 'hidden') {
-              toast.success('效果图已生成！点击查看', {
-                action: { label: '查看', onClick: () => router.push(`/result/${orderId}`) },
+              toast.success(isOverseas ? 'Design ready!' : '效果图已生成！点击查看', {
+                action: { label: isOverseas ? 'View' : '查看', onClick: () => router.push(`/result/${orderId}`) },
                 duration: 10000,
               })
             }
-            document.title = '✅ 效果图已生成 - 装AI'
+            document.title = isOverseas ? '✅ Design Ready - RoomAI' : '✅ 效果图已生成 - 装AI'
             router.refresh()
             return
           }

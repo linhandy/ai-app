@@ -6,6 +6,7 @@ import { generateRoomImage } from '@/lib/zenmux'
 import { getPublicUrl, resultStoragePath } from '@/lib/storage'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
+import { isOverseas } from '@/lib/region'
 import path from 'path'
 import fs from 'fs'
 
@@ -19,9 +20,9 @@ export async function POST(req: NextRequest) {
     if (!orderId) return NextResponse.json({ error: 'orderId required' }, { status: 400 })
 
     const order = await getOrder(orderId)
-    if (!order) return NextResponse.json({ error: '订单不存在' }, { status: 404 })
+    if (!order) return NextResponse.json({ error: isOverseas ? 'Order not found' : '订单不存在' }, { status: 404 })
     if (order.status !== 'paid') {
-      return NextResponse.json({ error: '订单未完成支付' }, { status: 402 })
+      return NextResponse.json({ error: isOverseas ? 'Payment not completed' : '订单未完成支付' }, { status: 402 })
     }
 
     await updateOrder(orderId, { status: 'generating' })
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
       const linked = await getOrder(linkedOrderId)
       if (!linked) {
         await updateOrder(orderId, { status: 'failed' })
-        return NextResponse.json({ error: '原订单不存在' }, { status: 404 })
+        return NextResponse.json({ error: isOverseas ? 'Original order not found' : '原订单不存在' }, { status: 404 })
       }
       // Use CDN URL if result is in Storage, else proxy endpoint (backward compat for old orders)
       const { getClient } = await import('@/lib/orders')
@@ -94,6 +95,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     logger.error('generate', 'AI generation failed', { orderId, error: String(err) })
     if (orderId) await updateOrder(orderId, { status: 'failed' })
-    return NextResponse.json({ error: 'AI生成失败，请稍后重试' }, { status: 500 })
+    return NextResponse.json({ error: isOverseas ? 'Generation failed, please try again.' : 'AI生成失败，请稍后重试' }, { status: 500 })
   }
 }

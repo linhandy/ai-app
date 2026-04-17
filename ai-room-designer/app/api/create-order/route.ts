@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { parseSessionToken, getServerSession } from '@/lib/auth'
 import { createOrder, getOrder, updateOrder, getUploadData, type DesignMode, type QualityTier } from '@/lib/orders'
 import { createQROrder } from '@/lib/alipay'
-import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
 import { isRateLimited } from '@/lib/rate-limit'
 import { getBalance, consumeCredit } from '@/lib/credits'
@@ -11,8 +10,6 @@ import { isOverseas } from '@/lib/region'
 import { ERR } from '@/lib/errors'
 import { getSubscription, incrementGenerationsUsed } from '@/lib/subscription'
 import QRCode from 'qrcode'
-import path from 'path'
-import fs from 'fs'
 
 const QUALITY_PRICE: Record<string, number> = {
   standard: 1,
@@ -130,13 +127,8 @@ export async function POST(req: NextRequest) {
     const trimmedPrompt = customPrompt?.trim().slice(0, 200) || undefined
 
     if (modeConfig.needsUpload && uploadId) {
-      const uploadPath = path.resolve(path.join(UPLOAD_DIR, uploadId))
-      if (!uploadPath.startsWith(path.resolve(UPLOAD_DIR))) {
-        return NextResponse.json({ error: 'Invalid upload ID' }, { status: 400 })
-      }
-      if (!fs.existsSync(uploadPath)) {
-        return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })
-      }
+      const uploadData = await getUploadData(uploadId)
+      if (!uploadData) return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })
     }
 
     const sessionToken = req.cookies.get('session')?.value

@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useRef, useState } from 'react'
+import { isOverseas } from '@/lib/region'
 
 interface Props {
   beforeUrl: string
@@ -28,12 +29,12 @@ export default function BeforeAfter({ beforeUrl, afterUrl, height = '440px' }: P
     >
       {/* After (full width background) */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={afterUrl} alt="AI效果图" className="absolute inset-0 w-full h-full object-cover" />
+      <img src={afterUrl} alt={isOverseas ? 'AI Design' : 'AI效果图'} className="absolute inset-0 w-full h-full object-cover" />
 
       {/* Before (clipped to left portion) */}
       <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={beforeUrl} alt="改造前" className="absolute inset-0 w-full h-full object-cover" />
+        <img src={beforeUrl} alt={isOverseas ? 'Before' : '改造前'} className="absolute inset-0 w-full h-full object-cover" />
       </div>
 
       {/* Divider line */}
@@ -50,8 +51,8 @@ export default function BeforeAfter({ beforeUrl, afterUrl, height = '440px' }: P
       </div>
 
       {/* Labels */}
-      <div className="absolute top-4 left-4 bg-black/80 text-white text-xs font-semibold px-3 h-7 flex items-center rounded">改造前</div>
-      <div className="absolute top-4 right-4 bg-amber-500 text-black text-xs font-bold px-3 h-7 flex items-center rounded">✦ AI效果图</div>
+      <div className="absolute top-4 left-4 bg-black/80 text-white text-xs font-semibold px-3 h-7 flex items-center rounded">{isOverseas ? 'Before' : '改造前'}</div>
+      <div className="absolute top-4 right-4 bg-amber-500 text-black text-xs font-bold px-3 h-7 flex items-center rounded">{isOverseas ? '✦ AI Design' : '✦ AI效果图'}</div>
     </div>
   )
 }

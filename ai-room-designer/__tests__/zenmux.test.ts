@@ -55,8 +55,8 @@ test('change_lighting mode ignores style, appends room type (Chinese)', () => {
   expect(prompt).toContain('卧室')
 })
 
-test('DESIGN_MODES has 8 entries', () => {
-  expect(DESIGN_MODES).toHaveLength(8)
+test('DESIGN_MODES has 9 entries', () => {
+  expect(DESIGN_MODES).toHaveLength(9)
 })
 
 test('ALL_ROOM_TYPE_KEYS has 25 entries', () => {
@@ -112,4 +112,29 @@ test('buildStylePrompt outdoor_redesign returns English landscaping prompt for s
 test('buildStylePrompt outdoor_redesign returns Chinese landscaping prompt for premium', () => {
   const prompt = buildStylePrompt('nordic_minimal', 'premium', 'outdoor_redesign', 'patio')
   expect(prompt).toContain('户外')
+})
+
+test('DESIGN_MODES has 9 entries after adding style-match', () => {
+  expect(DESIGN_MODES).toHaveLength(9)
+})
+
+test('style-match mode has needsStyle false and needsUpload true', () => {
+  const mode = DESIGN_MODES.find((m) => m.key === 'style-match')
+  expect(mode).toBeDefined()
+  expect(mode?.needsStyle).toBe(false)
+  expect(mode?.needsUpload).toBe(true)
+})
+
+test('buildStylePrompt style-match returns English prompt for standard quality', () => {
+  const prompt = buildStylePrompt('', 'standard', 'style-match', 'living_room')
+  expect(prompt).toContain('reference photo')
+  expect(prompt).toContain('living room')
+  expect(prompt.length).toBeGreaterThan(50)
+})
+
+test('buildStylePrompt style-match returns Chinese prompt for premium quality', () => {
+  const prompt = buildStylePrompt('', 'premium', 'style-match', 'bedroom')
+  expect(prompt).toContain('参考图')
+  expect(prompt).toContain('卧室')
+  expect(prompt.length).toBeGreaterThan(50)
 })

@@ -455,6 +455,7 @@ export const DESIGN_MODES: { key: DesignMode; label: string; labelEn: string; ic
   { key: 'sketch2render',    label: '草图生成', labelEn: 'Sketch to Render', icon: '✏️', desc: '草图变效果图',       descEn: 'Turn a sketch into a render',        needsStyle: true,  needsUpload: true  },
   { key: 'freestyle',        label: '自由生成', labelEn: 'AI Generate',      icon: '✨', desc: '无需上传照片',       descEn: 'Generate without a photo',           needsStyle: true,  needsUpload: false },
   { key: 'outdoor_redesign', label: '户外设计', labelEn: 'Outdoor Design',   icon: '🌿', desc: '庭院景观改造',       descEn: 'Redesign outdoor / garden space',    needsStyle: false, needsUpload: true  }, // fixed landscaping prompt — interior styles don't apply
+  { key: 'style-match',      label: '风格参考', labelEn: 'Match a Style',   icon: '🖼️', desc: '参考图片的风格',    descEn: 'Copy style from a reference photo',  needsStyle: false, needsUpload: true  },
 ]
 
 /** Look up a Style by its English key across all categories. Returns undefined if not found. */

@@ -106,6 +106,7 @@ function GeneratePageInner() {
 
   const handlePay = async () => {
     if (currentMode.needsUpload && !uploadId) { setError(s.errorUploadFirst); return }
+    if (mode === 'style-match' && !referenceUploadId) { setError(s.errorUploadFirst); return }
     setError(null)
     setLoading(true)
     try {
@@ -201,14 +202,14 @@ function GeneratePageInner() {
                 <h2 className="text-white text-base md:text-xl font-bold">Your Room</h2>
                 <p className="text-gray-500 text-xs md:text-sm mt-1">Upload a photo of the room you want to redesign</p>
               </div>
-              <UploadZone onUpload={(id) => setUploadId(id)} />
+              <UploadZone key="room" onUpload={(id) => setUploadId(id)} />
               <div>
                 <h2 className="text-white text-base md:text-xl font-bold mt-2">Style Reference</h2>
                 <p className="text-gray-500 text-xs md:text-sm mt-1">
                   Upload a photo whose style you want to copy — works great with Pinterest, Houzz, or magazine photos
                 </p>
               </div>
-              <UploadZone onUpload={(id) => setReferenceUploadId(id)} />
+              <UploadZone key="reference" onUpload={(id) => setReferenceUploadId(id)} />
             </>
           ) : (
             <>
@@ -223,7 +224,7 @@ function GeneratePageInner() {
                 </p>
               </div>
               {currentMode.needsUpload ? (
-                <UploadZone onUpload={(id) => setUploadId(id)} />
+                <UploadZone key="room" onUpload={(id) => setUploadId(id)} />
               ) : (
                 <div className="w-full h-[160px] md:h-[200px] border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center bg-gray-900/30">
                   <p className="text-gray-500 text-sm text-center leading-relaxed">

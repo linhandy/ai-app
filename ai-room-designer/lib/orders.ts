@@ -4,7 +4,7 @@ import crypto from 'crypto'
 
 export type OrderStatus = 'pending' | 'paid' | 'generating' | 'done' | 'failed'
 export type QualityTier = 'standard' | 'premium' | 'ultra'
-export type DesignMode = 'redesign' | 'virtual_staging' | 'add_furniture' | 'paint_walls' | 'change_lighting' | 'sketch2render' | 'freestyle' | 'outdoor_redesign'
+export type DesignMode = 'redesign' | 'virtual_staging' | 'add_furniture' | 'paint_walls' | 'change_lighting' | 'sketch2render' | 'freestyle' | 'outdoor_redesign' | 'style-match'
 
 export interface Order {
   id: string
@@ -13,6 +13,7 @@ export interface Order {
   quality: QualityTier
   mode: DesignMode
   uploadId: string | null
+  referenceUploadId?: string
   roomType: string
   customPrompt?: string
   resultUrl?: string
@@ -111,6 +112,13 @@ export async function getClient(): Promise<Client> {
     // Column already exists — ignore
   }
 
+  // Migration: add referenceUploadId for style-match mode
+  try {
+    await _client.execute(`ALTER TABLE orders ADD COLUMN referenceUploadId TEXT`)
+  } catch {
+    // Column already exists — ignore
+  }
+
   // Uploads table — stores raw uploaded images so they persist across serverless invocations
   await _client.execute(`
     CREATE TABLE IF NOT EXISTS uploads (
@@ -165,6 +173,7 @@ function rowToOrder(row: Record<string, any>): Order {
     quality: (row.quality ?? 'standard') as QualityTier,
     mode: (row.mode ?? 'redesign') as DesignMode,
     uploadId: row.uploadId === '' || row.uploadId == null ? null : String(row.uploadId),
+    referenceUploadId: row.referenceUploadId ? String(row.referenceUploadId) : undefined,
     roomType: String(row.roomType ?? 'living_room'),
     customPrompt: row.customPrompt ?? undefined,
     resultUrl: row.resultUrl ?? undefined,
@@ -180,6 +189,7 @@ function rowToOrder(row: Record<string, any>): Order {
 export async function createOrder(params: {
   style: string
   uploadId?: string | null
+  referenceUploadId?: string
   quality?: QualityTier
   mode?: DesignMode
   roomType?: string
@@ -195,6 +205,7 @@ export async function createOrder(params: {
     quality: params.quality ?? 'standard',
     mode: params.mode ?? 'redesign',
     uploadId: params.uploadId ?? null,
+    referenceUploadId: params.referenceUploadId,
     roomType: params.roomType ?? 'living_room',
     customPrompt: params.customPrompt,
     isFree: params.isFree ?? false,
@@ -205,10 +216,11 @@ export async function createOrder(params: {
   }
 
   await client.execute({
-    sql: `INSERT INTO orders (id, status, style, quality, mode, uploadId, roomType, customPrompt, is_free, userId, createdAt, updatedAt)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    sql: `INSERT INTO orders (id, status, style, quality, mode, uploadId, referenceUploadId, roomType, customPrompt, is_free, userId, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [order.id, order.status, order.style, order.quality, order.mode,
            order.uploadId ?? '',
+           order.referenceUploadId ?? null,
            order.roomType, order.customPrompt ?? null,
            order.isFree ? 1 : 0,
            order.userId ?? null,

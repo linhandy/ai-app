@@ -117,3 +117,31 @@ test('getOrdersByUserId returns max 50 items', async () => {
   const results = await getOrdersByUserId('usr_many')
   expect(results.length).toBe(50)
 })
+
+test('createOrder stores referenceUploadId when provided', async () => {
+  const order = await createOrder({
+    style: 'nordic_minimal',
+    uploadId: 'room_img_1',
+    referenceUploadId: 'ref_img_1',
+    mode: 'style-match',
+    roomType: 'living_room',
+  })
+  expect(order.referenceUploadId).toBe('ref_img_1')
+})
+
+test('getOrder round-trips referenceUploadId', async () => {
+  const created = await createOrder({
+    style: 'nordic_minimal',
+    uploadId: 'room_img_2',
+    referenceUploadId: 'ref_img_2',
+    mode: 'style-match',
+    roomType: 'living_room',
+  })
+  const found = await getOrder(created.id)
+  expect(found?.referenceUploadId).toBe('ref_img_2')
+})
+
+test('createOrder has undefined referenceUploadId when not provided', async () => {
+  const order = await createOrder({ style: 'nordic_minimal', uploadId: 'abc' })
+  expect(order.referenceUploadId).toBeUndefined()
+})

@@ -227,6 +227,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
               : order.mode === 'change_lighting' ? 'Your lighting redesign is ready'
               : order.mode === 'virtual_staging' ? `Your ${order.style} virtual staging is ready`
               : order.mode === 'add_furniture' ? `Your ${order.style} furnished design is ready`
+              : order.mode === 'style-match' ? 'Your style-matched redesign is ready'
               : `Your ${order.style} redesign is ready`)
             : (order.mode === 'paint_walls' ? '墙面换色效果图已生成'
               : order.mode === 'change_lighting' ? '灯光优化效果图已生成'

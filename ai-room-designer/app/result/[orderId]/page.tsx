@@ -12,6 +12,7 @@ import UnwatermarkButton from '@/components/UnwatermarkButton'
 import PollingRefresh from '@/components/PollingRefresh'
 import ProgressBar from '@/components/ProgressBar'
 import ShareModalTrigger from '@/components/ShareModalTrigger'
+import GalleryOptIn from '@/components/GalleryOptIn'
 import Link from 'next/link'
 import { isOverseas } from '@/lib/region'
 import { getSubscription } from '@/lib/subscription'
@@ -287,6 +288,10 @@ export default async function ResultPage({ params }: { params: { orderId: string
         )}
 
         <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={shareUrl} referralCount={referralCount} />
+
+        {isOverseas && !isOverseasGuest && (
+          <GalleryOptIn orderId={order.id} initialOptIn={order.isPublicGallery ?? false} />
+        )}
 
         {/* Info strip */}
 

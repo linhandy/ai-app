@@ -18,6 +18,7 @@ export interface Order {
   resultUrl?: string
   alipayTradeNo?: string
   isFree?: boolean
+  isPublicGallery?: boolean
   userId?: string
   createdAt: number
   updatedAt: number
@@ -103,6 +104,13 @@ export async function getClient(): Promise<Client> {
     // Column already exists — ignore
   }
 
+  // Migration: add isPublicGallery for public gallery opt-in
+  try {
+    await _client.execute(`ALTER TABLE orders ADD COLUMN isPublicGallery INTEGER NOT NULL DEFAULT 0`)
+  } catch {
+    // Column already exists — ignore
+  }
+
   // Uploads table — stores raw uploaded images so they persist across serverless invocations
   await _client.execute(`
     CREATE TABLE IF NOT EXISTS uploads (
@@ -162,6 +170,7 @@ function rowToOrder(row: Record<string, any>): Order {
     resultUrl: row.resultUrl ?? undefined,
     alipayTradeNo: row.alipayTradeNo ?? undefined,
     isFree: Boolean(row.is_free),
+    isPublicGallery: Boolean(row.isPublicGallery),
     userId: row.userId ? String(row.userId) : undefined,
     createdAt: Number(row.createdAt),
     updatedAt: Number(row.updatedAt),
@@ -189,6 +198,7 @@ export async function createOrder(params: {
     roomType: params.roomType ?? 'living_room',
     customPrompt: params.customPrompt,
     isFree: params.isFree ?? false,
+    isPublicGallery: false,
     userId: params.userId,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -229,6 +239,7 @@ export async function updateOrder(id: string, patch: Partial<Order>): Promise<Or
   if (patch.resultUrl !== undefined) { fields.push('resultUrl = ?'); values.push(patch.resultUrl ?? null) }
   if (patch.alipayTradeNo !== undefined) { fields.push('alipayTradeNo = ?'); values.push(patch.alipayTradeNo ?? null) }
   if (patch.isFree !== undefined) { fields.push('is_free = ?'); values.push(patch.isFree ? 1 : 0) }
+  if (patch.isPublicGallery !== undefined) { fields.push('isPublicGallery = ?'); values.push(patch.isPublicGallery ? 1 : 0) }
 
   if (fields.length === 0) return getOrder(id)
 

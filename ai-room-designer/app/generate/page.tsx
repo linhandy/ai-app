@@ -121,6 +121,10 @@ function GeneratePageInner() {
           router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent('/generate')}`)
           return
         }
+        if (res.status === 402 && isOverseas) {
+          router.push(data.upgradeUrl || '/pricing')
+          return
+        }
         throw new Error(data.error)
       }
 

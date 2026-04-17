@@ -49,34 +49,58 @@ export async function POST(req: NextRequest) {
     // ── OVERSEAS PATH ──────────────────────────────────────────────────────────
     if (isOverseas) {
       const session = await getServerSession(req)
-      if (!session) return NextResponse.json({ error: ERR.authRequired }, { status: 401 })
 
+      // Shared validation
       const validModes: string[] = DESIGN_MODES.map((m) => m.key)
       if (!validModes.includes(mode as string)) return NextResponse.json({ error: ERR.invalidMode }, { status: 400 })
       const modeConfig = DESIGN_MODES.find((m) => m.key === mode)!
       if (modeConfig.needsStyle && !ALL_STYLE_KEYS.includes(style)) return NextResponse.json({ error: ERR.invalidStyle }, { status: 400 })
       if (!ALL_ROOM_TYPE_KEYS.includes(roomType)) return NextResponse.json({ error: ERR.invalidRoomType }, { status: 400 })
       if (modeConfig.needsUpload && !uploadId) return NextResponse.json({ error: ERR.uploadMissing }, { status: 400 })
-
       if (modeConfig.needsUpload && uploadId) {
         const uploadData = await getUploadData(uploadId)
         if (!uploadData) return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })
       }
-
-      // style-match requires a reference upload
       if (mode === 'style-match') {
         if (!referenceUploadId) return NextResponse.json({ error: ERR.uploadMissing }, { status: 400 })
         const refData = await getUploadData(referenceUploadId)
         if (!refData) return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })
       }
 
+      const trimmedPrompt = customPrompt?.trim().slice(0, 200) || undefined
+
+      // ── Anonymous: allow 1 free generation per IP, then require sign-in ──
+      if (!session) {
+        const { getClient: getDb } = await import('@/lib/orders')
+        const db = await getDb()
+        const anonKey = `anon_ov:${ip}`
+        const anonRow = await db.execute({ sql: 'SELECT balance FROM credits WHERE owner = ?', args: [anonKey] })
+        const anonUsed = Number(anonRow.rows[0]?.balance ?? 0)
+        if (anonUsed >= 1) {
+          return NextResponse.json({ error: ERR.authRequired, signInUrl: '/api/auth/signin' }, { status: 401 })
+        }
+        await db.execute({
+          sql: `INSERT INTO credits (owner, balance, total_purchased, updated_at)
+                VALUES (?, 1, 0, ?)
+                ON CONFLICT(owner) DO UPDATE SET balance = balance + 1, updated_at = ?`,
+          args: [anonKey, Date.now(), Date.now()],
+        })
+        const anonOrder = await createOrder({
+          style, uploadId: uploadId ?? null,
+          referenceUploadId: referenceUploadId ?? undefined,
+          quality, mode, roomType, customPrompt: trimmedPrompt,
+          isFree: false,
+        })
+        await updateOrder(anonOrder.id, { status: 'paid' })
+        logger.info('create-order', 'Overseas anonymous order created', { orderId: anonOrder.id })
+        return NextResponse.json({ orderId: anonOrder.id })
+      }
+
+      // ── Logged-in: subscription quota ──
       const sub = await getSubscription(session.userId)
       if (sub.generationsLeft === 0) {
         return NextResponse.json({ error: ERR.upgradeRequired, upgradeUrl: '/pricing' }, { status: 402 })
       }
-
-      const trimmedPrompt = customPrompt?.trim().slice(0, 200) || undefined
-      const isFree = false  // Overseas: generation limit is the paywall; no watermarks
 
       const order = await createOrder({
         style,
@@ -86,7 +110,7 @@ export async function POST(req: NextRequest) {
         mode,
         roomType,
         customPrompt: trimmedPrompt,
-        isFree,
+        isFree: false,
         userId: session.userId,
       })
       await updateOrder(order.id, { status: 'paid' })

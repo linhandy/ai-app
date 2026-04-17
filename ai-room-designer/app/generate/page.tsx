@@ -36,9 +36,14 @@ function GeneratePageInner() {
   const initialQuality = searchParams.get('quality') ?? 'standard'
 
   const [uploadId, setUploadId] = useState<string | null>(null)
+  const [referenceUploadId, setReferenceUploadId] = useState<string | null>(null)
   const [style, setStyle] = useState('nordic_minimal')
   const [quality, setQuality] = useState(initialQuality)
   const [mode, setMode] = useState<DesignMode>('redesign')
+  const handleModeChange = (newMode: DesignMode) => {
+    setMode(newMode)
+    if (newMode !== 'style-match') setReferenceUploadId(null)
+  }
   const [roomType, setRoomType] = useState('living_room')
   const [customPrompt, setCustomPrompt] = useState('')
   const [customPromptOpen, setCustomPromptOpen] = useState(false)
@@ -55,7 +60,9 @@ function GeneratePageInner() {
   const [generating, setGenerating] = useState(false)
 
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
-  const canGenerate = !currentMode.needsUpload || !!uploadId
+  const canGenerate = !currentMode.needsUpload || (
+    !!uploadId && (mode !== 'style-match' || !!referenceUploadId)
+  )
 
   const initialPackageId = searchParams.get('package')
   const packagePurchaseTriggeredRef = useRef(false)
@@ -105,7 +112,7 @@ function GeneratePageInner() {
       const res = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uploadId, style, quality, mode, roomType, customPrompt: customPrompt.trim() || undefined }),
+        body: JSON.stringify({ uploadId, referenceUploadId: mode === 'style-match' ? referenceUploadId : undefined, style, quality, mode, roomType, customPrompt: customPrompt.trim() || undefined }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -188,24 +195,43 @@ function GeneratePageInner() {
 
         {/* ── Left column: Upload ── */}
         <div className="w-full md:w-[520px] flex flex-col gap-4">
-          <div>
-            <h2 className="text-white text-base md:text-xl font-bold">
-              {currentMode.needsUpload ? s.uploadTitle : s.freeGenTitle}
-            </h2>
-            <p className="text-gray-500 text-xs md:text-sm mt-1">
-              {currentMode.needsUpload
-                ? (currentMode.key === 'sketch2render' ? s.uploadSubtitleSketch : s.uploadSubtitle)
-                : s.freeGenSubtitle}
-            </p>
-          </div>
-          {currentMode.needsUpload ? (
-            <UploadZone onUpload={(id) => setUploadId(id)} />
+          {mode === 'style-match' ? (
+            <>
+              <div>
+                <h2 className="text-white text-base md:text-xl font-bold">Your Room</h2>
+                <p className="text-gray-500 text-xs md:text-sm mt-1">Upload a photo of the room you want to redesign</p>
+              </div>
+              <UploadZone onUpload={(id) => setUploadId(id)} />
+              <div>
+                <h2 className="text-white text-base md:text-xl font-bold mt-2">Style Reference</h2>
+                <p className="text-gray-500 text-xs md:text-sm mt-1">
+                  Upload a photo whose style you want to copy — works great with Pinterest, Houzz, or magazine photos
+                </p>
+              </div>
+              <UploadZone onUpload={(id) => setReferenceUploadId(id)} />
+            </>
           ) : (
-            <div className="w-full h-[160px] md:h-[200px] border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center bg-gray-900/30">
-              <p className="text-gray-500 text-sm text-center leading-relaxed">
-                {isOverseas ? <>✨ Freestyle<br />AI generates from scratch</> : <>✨ 自由生成<br />AI 从零生成效果图</>}
-              </p>
-            </div>
+            <>
+              <div>
+                <h2 className="text-white text-base md:text-xl font-bold">
+                  {currentMode.needsUpload ? s.uploadTitle : s.freeGenTitle}
+                </h2>
+                <p className="text-gray-500 text-xs md:text-sm mt-1">
+                  {currentMode.needsUpload
+                    ? (currentMode.key === 'sketch2render' ? s.uploadSubtitleSketch : s.uploadSubtitle)
+                    : s.freeGenSubtitle}
+                </p>
+              </div>
+              {currentMode.needsUpload ? (
+                <UploadZone onUpload={(id) => setUploadId(id)} />
+              ) : (
+                <div className="w-full h-[160px] md:h-[200px] border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center bg-gray-900/30">
+                  <p className="text-gray-500 text-sm text-center leading-relaxed">
+                    {isOverseas ? <>✨ Freestyle<br />AI generates from scratch</> : <>✨ 自由生成<br />AI 从零生成效果图</>}
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -220,7 +246,7 @@ function GeneratePageInner() {
                 <button
                   type="button"
                   key={m.key}
-                  onClick={() => setMode(m.key)}
+                  onClick={() => handleModeChange(m.key)}
                   className={`flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-lg border text-center transition-all min-w-[84px] ${
                     mode === m.key
                       ? 'border-amber-500 bg-amber-500/10 text-white'

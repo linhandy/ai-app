@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     // Read body once — used by both CN and overseas paths
     const body = await req.json() as {
       uploadId?: string
+      referenceUploadId?: string
       style?: string
       quality?: QualityTier
       mode?: DesignMode
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
     }
     const {
       uploadId,
+      referenceUploadId,
       style = '',
       quality = 'standard',
       mode = 'redesign',
@@ -61,6 +63,13 @@ export async function POST(req: NextRequest) {
         if (!uploadData) return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })
       }
 
+      // style-match requires a reference upload
+      if (mode === 'style-match') {
+        if (!referenceUploadId) return NextResponse.json({ error: ERR.uploadMissing }, { status: 400 })
+        const refData = await getUploadData(referenceUploadId)
+        if (!refData) return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })
+      }
+
       const sub = await getSubscription(session.userId)
       if (sub.generationsLeft === 0) {
         return NextResponse.json({ error: ERR.upgradeRequired, upgradeUrl: '/pricing' }, { status: 402 })
@@ -72,6 +81,7 @@ export async function POST(req: NextRequest) {
       const order = await createOrder({
         style,
         uploadId: uploadId ?? null,
+        referenceUploadId: referenceUploadId ?? undefined,
         quality,
         mode,
         roomType,

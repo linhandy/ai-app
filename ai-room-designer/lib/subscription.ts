@@ -9,6 +9,18 @@ const PLAN_LIMITS: Record<SubscriptionPlan, number> = {
   unlimited: -1,   // -1 = unlimited
 }
 
+let _bonusMigrated = false
+async function ensureBonusColumn(): Promise<void> {
+  if (_bonusMigrated) return
+  const client = await getClient()
+  try {
+    await client.execute(`ALTER TABLE subscriptions ADD COLUMN bonusGenerations INTEGER NOT NULL DEFAULT 0`)
+  } catch {
+    // Column already exists — ignore
+  }
+  _bonusMigrated = true
+}
+
 export interface SubscriptionInfo {
   plan: SubscriptionPlan
   generationsUsed: number
@@ -28,9 +40,10 @@ const FREE_DEFAULTS: SubscriptionInfo = {
 }
 
 export async function getSubscription(userId: string): Promise<SubscriptionInfo> {
+  await ensureBonusColumn()
   const client = await getClient()
   const result = await client.execute({
-    sql: `SELECT plan, status, generationsUsed, currentPeriodEnd
+    sql: `SELECT plan, status, generationsUsed, currentPeriodEnd, bonusGenerations
           FROM subscriptions WHERE userId = ?
           ORDER BY createdAt DESC LIMIT 1`,
     args: [userId],
@@ -49,7 +62,8 @@ export async function getSubscription(userId: string): Promise<SubscriptionInfo>
   const plan = String(row.plan) as SubscriptionPlan
   const limit = PLAN_LIMITS[plan] ?? 3
   const used = Number(row.generationsUsed ?? 0)
-  const left = limit === -1 ? Infinity : Math.max(0, limit - used)
+  const bonus = Number(row.bonusGenerations ?? 0)
+  const left = limit === -1 ? Infinity : Math.max(0, (limit + bonus) - used)
 
   return {
     plan,
@@ -119,7 +133,41 @@ export async function incrementGenerationsUsed(userId: string): Promise<void> {
   })
 }
 
+const MAX_BONUS_GENERATIONS = 5
+
+export async function addBonusGeneration(userId: string): Promise<boolean> {
+  await ensureBonusColumn()
+  const client = await getClient()
+
+  const existing = await client.execute({
+    sql: 'SELECT id, bonusGenerations FROM subscriptions WHERE userId = ?',
+    args: [userId],
+  })
+
+  if (existing.rows.length === 0) {
+    // Create a free subscription record to store bonus
+    const id = `sub_${crypto.randomBytes(8).toString('hex')}`
+    await client.execute({
+      sql: `INSERT INTO subscriptions
+            (id, userId, stripeCustomerId, stripeSubscriptionId, plan, status, currentPeriodEnd, generationsUsed, bonusGenerations, createdAt)
+            VALUES (?, ?, '', '', 'free', 'active', ?, 0, 1, ?)`,
+      args: [id, userId, Date.now() + 30 * 86400_000, Date.now()],
+    })
+    return true
+  }
+
+  const currentBonus = Number(existing.rows[0].bonusGenerations ?? 0)
+  if (currentBonus >= MAX_BONUS_GENERATIONS) return false
+
+  await client.execute({
+    sql: 'UPDATE subscriptions SET bonusGenerations = bonusGenerations + 1 WHERE userId = ?',
+    args: [userId],
+  })
+  return true
+}
+
 /** Expose for test cleanup */
 export function closeSubscriptionDb(): void {
+  _bonusMigrated = false
   // Subscriptions use the orders DB client — closing orders DB closes this too
 }

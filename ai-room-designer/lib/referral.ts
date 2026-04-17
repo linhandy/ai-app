@@ -1,7 +1,9 @@
 import { getClient } from '@/lib/orders'
 import { rewardFreeUse } from '@/lib/free-uses'
+import { addBonusGeneration } from '@/lib/subscription'
 
 const MAX_REFERRAL_REWARDS = 10 // max bonus uses per IP via sharing
+const MAX_OVERSEAS_REFERRAL_REWARDS = 5
 
 // closeDb is a no-op here since we share the orders client
 // but exported for test teardown compatibility
@@ -85,6 +87,59 @@ export async function recordReferralClick({
     sql: `INSERT INTO referral_rewards (ip, reward_count) VALUES (?, 1)
           ON CONFLICT(ip) DO UPDATE SET reward_count = reward_count + 1`,
     args: [sharerIp],
+  })
+
+  return true
+}
+
+/**
+ * Records an overseas referral and rewards both parties with bonus generations.
+ * Returns true if rewards were granted, false otherwise.
+ */
+export async function recordOverseasReferral({
+  referrerUserId,
+  refereeUserId,
+}: {
+  referrerUserId: string
+  refereeUserId: string
+}): Promise<boolean> {
+  if (referrerUserId === refereeUserId) return false
+
+  await ensureTables()
+  const db = await getClient()
+
+  // Check duplicate (reuse referral_clicks: ref_code=referrer, visitor_ip=referee)
+  const existing = await db.execute({
+    sql: 'SELECT 1 FROM referral_clicks WHERE ref_code = ? AND visitor_ip = ?',
+    args: [referrerUserId, refereeUserId],
+  })
+  if (existing.rows.length > 0) return false
+
+  // Check referrer cap
+  const rewards = await db.execute({
+    sql: 'SELECT reward_count FROM referral_rewards WHERE ip = ?',
+    args: [referrerUserId],
+  })
+  const count = rewards.rows.length > 0 ? Number(rewards.rows[0].reward_count) : 0
+  if (count >= MAX_OVERSEAS_REFERRAL_REWARDS) return false
+
+  // Record
+  await db.execute({
+    sql: 'INSERT INTO referral_clicks (ref_code, visitor_ip, created_at) VALUES (?, ?, ?)',
+    args: [referrerUserId, refereeUserId, Date.now()],
+  })
+
+  // Reward both
+  await Promise.all([
+    addBonusGeneration(referrerUserId),
+    addBonusGeneration(refereeUserId),
+  ])
+
+  // Increment referrer counter
+  await db.execute({
+    sql: `INSERT INTO referral_rewards (ip, reward_count) VALUES (?, 1)
+          ON CONFLICT(ip) DO UPDATE SET reward_count = reward_count + 1`,
+    args: [referrerUserId],
   })
 
   return true

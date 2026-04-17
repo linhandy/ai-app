@@ -123,14 +123,22 @@ export async function generateRoomImage(params: {
 
   let contentParts: { inlineData?: { mimeType: string; data: string }; text?: string }[]
 
+  if (mode === 'style-match' && !params.referenceImagePath) {
+    throw new Error('style-match mode requires a referenceImagePath')
+  }
+
   if (mode === 'style-match' && params.imagePath && params.referenceImagePath) {
     // style-match: two images — room photo + reference photo
     const roomBuffer = fs.readFileSync(params.imagePath)
     const roomBase64 = roomBuffer.toString('base64')
-    const roomMime = params.imagePath.endsWith('.png') ? 'image/png' : 'image/jpeg'
+    const roomMime = params.imagePath.endsWith('.png') ? 'image/png'
+      : params.imagePath.endsWith('.webp') ? 'image/webp'
+      : 'image/jpeg'
     const refBuffer = fs.readFileSync(params.referenceImagePath)
     const refBase64 = refBuffer.toString('base64')
-    const refMime = params.referenceImagePath.endsWith('.png') ? 'image/png' : 'image/jpeg'
+    const refMime = params.referenceImagePath.endsWith('.png') ? 'image/png'
+      : params.referenceImagePath.endsWith('.webp') ? 'image/webp'
+      : 'image/jpeg'
     contentParts = [
       { inlineData: { mimeType: roomMime, data: roomBase64 } },
       { inlineData: { mimeType: refMime, data: refBase64 } },
@@ -139,7 +147,9 @@ export async function generateRoomImage(params: {
   } else if (params.imagePath) {
     const imageBuffer = fs.readFileSync(params.imagePath)
     const base64Image = imageBuffer.toString('base64')
-    const mimeType = params.imagePath.endsWith('.png') ? 'image/png' : 'image/jpeg'
+    const mimeType = params.imagePath.endsWith('.png') ? 'image/png'
+      : params.imagePath.endsWith('.webp') ? 'image/webp'
+      : 'image/jpeg'
     contentParts = [
       { inlineData: { mimeType, data: base64Image } },
       { text: prompt },

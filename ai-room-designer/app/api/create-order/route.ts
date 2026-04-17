@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
         const anonKey = `anon_ov:${ip}`
         const anonRow = await db.execute({ sql: 'SELECT balance FROM credits WHERE owner = ?', args: [anonKey] })
         const anonUsed = Number(anonRow.rows[0]?.balance ?? 0)
-        if (anonUsed >= 1) {
+        if (anonUsed >= 3) {
           return NextResponse.json({ error: ERR.authRequired, signInUrl: '/api/auth/signin' }, { status: 401 })
         }
         await db.execute({

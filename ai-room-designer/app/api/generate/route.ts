@@ -68,8 +68,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Load reference image for style-match mode
+    let referenceImagePath: string | null = null
+    if (order.referenceUploadId) {
+      const refData = await getUploadData(order.referenceUploadId)
+      if (refData) {
+        fs.mkdirSync(UPLOAD_DIR, { recursive: true })
+        referenceImagePath = path.join(UPLOAD_DIR, order.referenceUploadId)
+        fs.writeFileSync(referenceImagePath, refData)
+      }
+    }
+
     const resultBuffer = await generateRoomImage({
       imagePath,
+      referenceImagePath: referenceImagePath ?? undefined,
       style: order.style,
       quality: order.quality,
       mode: order.mode,

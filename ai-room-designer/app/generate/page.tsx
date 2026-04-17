@@ -69,7 +69,7 @@ function GeneratePageInner() {
   }, [])
 
   useEffect(() => {
-    if (!initialPackageId || packagePurchaseTriggeredRef.current) return
+    if (isOverseas || !initialPackageId || packagePurchaseTriggeredRef.current) return
     packagePurchaseTriggeredRef.current = true
     // Auto-call buy-package API for the specified package
     fetch('/api/buy-package', {

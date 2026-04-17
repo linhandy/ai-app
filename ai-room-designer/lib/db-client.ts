@@ -24,7 +24,7 @@ export function dbUrl(): string {
 
 export function makeClient(): Client {
   const url = dbUrl()
-  const authToken = process.env.LIBSQL_AUTH_TOKEN
+  const authToken = process.env.LIBSQL_AUTH_TOKEN?.trim()
   const config: Config = authToken && url !== ':memory:' ? { url, authToken } : { url }
 
   // Remote Turso URLs — use the web client (no native bindings)

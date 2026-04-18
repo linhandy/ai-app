@@ -59,8 +59,8 @@ test('DESIGN_MODES has 10 entries', () => {
   expect(DESIGN_MODES).toHaveLength(10)
 })
 
-test('ALL_ROOM_TYPE_KEYS has 25 entries', () => {
-  expect(ALL_ROOM_TYPE_KEYS).toHaveLength(25)
+test('ALL_ROOM_TYPE_KEYS has 31 entries', () => {
+  expect(ALL_ROOM_TYPE_KEYS).toHaveLength(31)
 })
 
 test('freestyle mode has needsUpload false', () => {

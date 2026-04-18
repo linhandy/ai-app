@@ -444,6 +444,13 @@ export const ROOM_TYPES: RoomType[] = [
   { key: 'front_yard', label: '前院',     labelEn: 'Front Yard',     icon: '🏡', promptHint: 'front yard entrance garden',                     promptHintCn: '前院，入口花园' },
   { key: 'rooftop',    label: '屋顶花园', labelEn: 'Rooftop Garden',  icon: '🌇', promptHint: 'rooftop terrace garden with city view',          promptHintCn: '屋顶花园，城市景观' },
   { key: 'pool_area',  label: '泳池区',   labelEn: 'Pool Area',      icon: '🏊', promptHint: 'pool area with surrounding landscape',           promptHintCn: '泳池区，周边景观' },
+  // 特色空间
+  { key: 'game_room',    label: '游戏室',  labelEn: 'Game Room',      icon: '🎮', promptHint: 'game room with gaming setup and entertainment area',    promptHintCn: '游戏室，配有游戏设备和娱乐区域' },
+  { key: 'spa_bathroom', label: 'SPA浴室', labelEn: 'Spa Bathroom',   icon: '🧖', promptHint: 'spa-style bathroom with soaking tub and wellness area', promptHintCn: 'SPA浴室，配有浸泡浴缸和养生空间' },
+  { key: 'attic',        label: '阁楼',    labelEn: 'Attic',          icon: '🏠', promptHint: 'attic room with sloped ceiling and cozy living space',  promptHintCn: '阁楼，有斜面屋顶的温馨生活空间' },
+  { key: 'basement',     label: '地下室',  labelEn: 'Basement',       icon: '🪨', promptHint: 'finished basement with recreation or living area',      promptHintCn: '地下室，装修好的休闲或居住空间' },
+  { key: 'sunroom',      label: '阳光房',  labelEn: 'Sunroom',        icon: '☀️', promptHint: 'sunroom with large windows and natural light',          promptHintCn: '阳光房，大面积玻璃窗，采光充足' },
+  { key: 'mudroom',      label: '泥间',    labelEn: 'Mudroom',        icon: '🧣', promptHint: 'mudroom entryway with storage hooks and bench',         promptHintCn: '泥间，配有挂钩和换鞋凳的储物入口' },
 ]
 
 export const DESIGN_MODES: { key: DesignMode; label: string; labelEn: string; icon: string; desc: string; descEn: string; needsStyle: boolean; needsUpload: boolean }[] = [

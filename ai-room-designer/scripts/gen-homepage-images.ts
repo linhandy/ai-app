@@ -100,6 +100,7 @@ async function main() {
 
   // 3. Showcase pairs — one before/after per style for the BeforeAfter slider.
   console.log('\nStep 3: Generating showcase before/after pairs...')
+  fs.mkdirSync(SHOWCASE_DIR, { recursive: true })
   for (const { slug, label, afterPrompt } of STYLE_SET) {
     console.log(`  [${label}]`)
     const beforeOut = path.join(SHOWCASE_DIR, `${slug}-before.jpg`)

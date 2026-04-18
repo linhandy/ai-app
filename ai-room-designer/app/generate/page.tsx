@@ -7,7 +7,8 @@ import StyleSelector from '@/components/StyleSelector'
 import RoomTypeSelector from '@/components/RoomTypeSelector'
 import PaymentModal from '@/components/PaymentModal'
 import PackagePurchaseModal from '@/components/PackagePurchaseModal'
-import { DESIGN_MODES } from '@/lib/design-config'
+import BatchStyleSelector from '@/components/BatchStyleSelector'
+import { DESIGN_MODES, STYLE_CATEGORIES } from '@/lib/design-config'
 import type { DesignMode } from '@/lib/orders'
 import InpaintCanvas from '@/components/InpaintCanvas'
 import { saveToHistory } from '@/lib/history'
@@ -68,6 +69,13 @@ function GeneratePageInner() {
     setCustomPrompt('')
     compositeBlobRef.current = null
   }
+  const toggleBatchStyle = (styleKey: string) => {
+    setBatchStyles((prev) =>
+      prev.includes(styleKey)
+        ? prev.filter((k) => k !== styleKey)
+        : prev.length >= 8 ? prev : [...prev, styleKey]
+    )
+  }
   const [roomType, setRoomType] = useState('living_room')
   const [customPrompt, setCustomPrompt] = useState('')
   const [customPromptOpen, setCustomPromptOpen] = useState(false)
@@ -82,6 +90,9 @@ function GeneratePageInner() {
     orderId: string; qrDataUrl: string; amount: number; count: number; label: string
   } | null>(null)
   const [generating, setGenerating] = useState(false)
+  const [batchMode, setBatchMode] = useState(false)
+  const [batchStyles, setBatchStyles] = useState<string[]>([])
+  const [batchLoading, setBatchLoading] = useState(false)
 
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
   const canGenerate = !currentMode.needsUpload || (
@@ -236,6 +247,38 @@ function GeneratePageInner() {
     }
   }
 
+  const handleBatchGenerate = async () => {
+    if (batchStyles.length < 2) { setError('Select at least 2 styles for batch'); return }
+    if (!uploadId) { setError(s.errorUploadFirst); return }
+    setError(null)
+    setBatchLoading(true)
+    try {
+      const res = await fetch('/api/batch-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uploadId, styles: batchStyles, quality, mode, roomType, customPrompt: customPrompt.trim() || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        if (res.status === 401) {
+          router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent('/generate')}`)
+          return
+        }
+        if (res.status === 402) {
+          router.push(data.upgradeUrl || '/pricing')
+          return
+        }
+        throw new Error(data.error)
+      }
+      const ids = (data.orderIds as string[]).join(',')
+      router.push(`/batch-result?ids=${encodeURIComponent(ids)}`)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Batch generation failed')
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-black pb-24 md:pb-0">
       {/* Nav */}
@@ -350,8 +393,28 @@ function GeneratePageInner() {
           {/* Style selector */}
           {currentMode.needsStyle ? (
             <div>
-              <h2 className="text-white text-base md:text-xl font-bold mb-2">{s.styleTitle}</h2>
-              <StyleSelector selected={style} onChange={setStyle} />
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-white text-base md:text-xl font-bold">{s.styleTitle}</h2>
+                {isOverseas && (
+                  <button
+                    type="button"
+                    onClick={() => { setBatchMode((v) => !v); setBatchStyles([]) }}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium transition-all ${
+                      batchMode
+                        ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+                        : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                    }`}
+                  >
+                    <span>⚡</span>
+                    <span>{batchMode ? 'Batch ON' : 'Batch'}</span>
+                  </button>
+                )}
+              </div>
+              {batchMode ? (
+                <BatchStyleSelector selected={batchStyles} onToggle={toggleBatchStyle} />
+              ) : (
+                <StyleSelector selected={style} onChange={setStyle} />
+              )}
             </div>
           ) : (
             <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-gray-800 bg-gray-900/50">
@@ -431,16 +494,27 @@ function GeneratePageInner() {
               </svg>
               {s.ctaDisclaimer}
             </div>
-            <button
-              type="button"
-              onClick={handlePay}
-              disabled={loading || generating || !canGenerate}
-              className="flex items-center justify-center gap-2 w-full h-14 bg-amber-500 text-black font-bold text-base rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.3)]"
-            >
-              {generating ? s.ctaGenerating : loading ? s.ctaProcessing
-                : isOverseas ? `${s.ctaButton} · ${OVERSEAS_CREDIT_COST}`
-                : `⚡ 支付 ¥${currentOption.price} · 立即生成${currentOption.label}效果图`}
-            </button>
+            {batchMode ? (
+              <button
+                type="button"
+                onClick={handleBatchGenerate}
+                disabled={batchLoading || batchStyles.length < 2 || !uploadId}
+                className="flex items-center justify-center gap-2 w-full h-14 bg-amber-500 text-black font-bold text-base rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.3)]"
+              >
+                {batchLoading ? 'Generating…' : `⚡ Batch Generate · ${batchStyles.length} styles · ${batchStyles.length} credits`}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handlePay}
+                disabled={loading || generating || !canGenerate}
+                className="flex items-center justify-center gap-2 w-full h-14 bg-amber-500 text-black font-bold text-base rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.3)]"
+              >
+                {generating ? s.ctaGenerating : loading ? s.ctaProcessing
+                  : isOverseas ? `${s.ctaButton} · ${OVERSEAS_CREDIT_COST}`
+                  : `⚡ 支付 ¥${currentOption.price} · 立即生成${currentOption.label}效果图`}
+              </button>
+            )}
             {!isOverseas && <p className="text-gray-600 text-xs text-center">扫码支付宝付款 · 30秒内自动生成</p>}
             {freeRemaining !== null && freeRemaining > 0 && (
               <p className="text-amber-500 text-xs text-center">{freeRemaining} {s.creditsRemaining}</p>
@@ -465,17 +539,29 @@ function GeneratePageInner() {
             {s.creditsBalance} {creditBalance}
           </div>
         )}
-        <button
-          type="button"
-          onClick={handlePay}
-          disabled={loading || generating || !canGenerate}
-          className="flex items-center justify-center gap-2 w-full h-13 bg-amber-500 text-black font-bold text-base rounded-xl disabled:opacity-50 disabled:cursor-not-allowed active:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.4)]"
-          style={{ height: '52px' }}
-        >
-          {generating ? s.ctaGeneratingMobile : loading ? s.ctaProcessing
-            : isOverseas ? `${s.ctaButton} · ${OVERSEAS_CREDIT_COST}`
-            : `⚡ 支付 ¥${currentOption.price} · 立即生成`}
-        </button>
+        {batchMode ? (
+          <button
+            type="button"
+            onClick={handleBatchGenerate}
+            disabled={batchLoading || batchStyles.length < 2 || !uploadId}
+            className="flex items-center justify-center gap-2 w-full bg-amber-500 text-black font-bold text-base rounded-xl disabled:opacity-50 disabled:cursor-not-allowed active:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.4)]"
+            style={{ height: '52px' }}
+          >
+            {batchLoading ? 'Generating…' : `⚡ Batch · ${batchStyles.length} styles · ${batchStyles.length} credits`}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handlePay}
+            disabled={loading || generating || !canGenerate}
+            className="flex items-center justify-center gap-2 w-full h-13 bg-amber-500 text-black font-bold text-base rounded-xl disabled:opacity-50 disabled:cursor-not-allowed active:bg-amber-400 transition-colors shadow-[0_6px_20px_rgba(255,152,0,0.4)]"
+            style={{ height: '52px' }}
+          >
+            {generating ? s.ctaGeneratingMobile : loading ? s.ctaProcessing
+              : isOverseas ? `${s.ctaButton} · ${OVERSEAS_CREDIT_COST}`
+              : `⚡ 支付 ¥${currentOption.price} · 立即生成`}
+          </button>
+        )}
         {!canGenerate && (
           <p className="text-gray-500 text-xs text-center mt-1">{s.errorUploadFirst}</p>
         )}

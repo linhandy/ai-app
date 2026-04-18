@@ -266,7 +266,7 @@ export async function incrementGenerationsUsedBy(userId: string, count: number):
   }
 }
 
-const MAX_BONUS_GENERATIONS = 5
+export const MAX_BONUS_GENERATIONS = 30
 
 export async function addBonusGeneration(userId: string): Promise<boolean> {
   await ensureBonusColumn()
@@ -297,6 +297,45 @@ export async function addBonusGeneration(userId: string): Promise<boolean> {
     args: [userId],
   })
   return true
+}
+
+/**
+ * Adds up to `count` bonus generations, capped at MAX_BONUS_GENERATIONS total.
+ * Returns the number actually added (may be less than count if cap is reached).
+ */
+export async function addBonusGenerationsBy(userId: string, count: number): Promise<number> {
+  if (!Number.isFinite(count) || count <= 0) return 0
+  await ensureBonusColumn()
+  const client = await getClient()
+
+  const existing = await client.execute({
+    sql: 'SELECT id, bonusGenerations FROM subscriptions WHERE userId = ?',
+    args: [userId],
+  })
+
+  if (existing.rows.length === 0) {
+    const toAdd = Math.min(count, MAX_BONUS_GENERATIONS)
+    const id = `sub_${crypto.randomBytes(8).toString('hex')}`
+    await client.execute({
+      sql: `INSERT INTO subscriptions
+            (id, userId, stripeCustomerId, stripeSubscriptionId, plan, status,
+             currentPeriodEnd, generationsUsed, bonusGenerations, createdAt)
+            VALUES (?, ?, '', '', 'free', 'active', ?, 0, ?, ?)`,
+      args: [id, userId, Date.now() + 30 * 86400_000, toAdd, Date.now()],
+    })
+    return toAdd
+  }
+
+  const currentBonus = Number(existing.rows[0].bonusGenerations ?? 0)
+  const remainingCap = MAX_BONUS_GENERATIONS - currentBonus
+  if (remainingCap <= 0) return 0
+  const toAdd = Math.min(count, remainingCap)
+
+  await client.execute({
+    sql: 'UPDATE subscriptions SET bonusGenerations = bonusGenerations + ? WHERE userId = ?',
+    args: [toAdd, userId],
+  })
+  return toAdd
 }
 
 /** Expose for test cleanup */

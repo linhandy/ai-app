@@ -5,7 +5,7 @@ jest.mock('@/lib/storage', () => ({
   resultStoragePath: jest.fn((id: string) => `results/${id}`),
 }))
 
-import { getSubscription, addBonusGeneration, closeSubscriptionDb } from '@/lib/subscription'
+import { getSubscription, addBonusGeneration, closeSubscriptionDb, MAX_BONUS_GENERATIONS } from '@/lib/subscription'
 import { closeDb } from '@/lib/orders'
 
 beforeEach(() => {
@@ -31,12 +31,12 @@ describe('bonus generations', () => {
     expect(after.generationsLeft).toBe(4)
   })
 
-  it('bonus capped at 5', async () => {
-    for (let i = 0; i < 7; i++) {
+  it('bonus capped at 30', async () => {
+    for (let i = 0; i < MAX_BONUS_GENERATIONS + 2; i++) {
       await addBonusGeneration('capped_user')
     }
     const sub = await getSubscription('capped_user')
-    // Free: 3 base + 5 bonus cap = 8 max
-    expect(sub.generationsLeft).toBe(8)
+    // Free: 3 base + MAX_BONUS_GENERATIONS bonus cap
+    expect(sub.generationsLeft).toBe(3 + MAX_BONUS_GENERATIONS)
   })
 })

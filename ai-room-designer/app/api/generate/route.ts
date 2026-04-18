@@ -84,6 +84,10 @@ export async function POST(req: NextRequest) {
     if (order.mode === 'inpaint') {
       imagePath = referenceImagePath
       referenceImagePath = null
+      if (!imagePath) {
+        await updateOrder(orderId, { status: 'failed' })
+        return NextResponse.json({ error: 'Composite image not found, please retry' }, { status: 400 })
+      }
     }
 
     const resultBuffer = await generateRoomImage({

@@ -141,3 +141,19 @@ test('DESIGN_MODES inpaint entry has correct flags', () => {
   expect(inpaint?.needsUpload).toBe(true)
   expect(inpaint?.needsStyle).toBe(false)
 })
+
+test('buildStylePrompt for inpaint returns English prompt with customPrompt embedded', () => {
+  const prompt = buildStylePrompt('nordic_minimal', 'standard', 'inpaint', 'living_room', 'a modern velvet sofa')
+  expect(prompt).toContain('red-highlighted area')
+  expect(prompt).toContain('a modern velvet sofa')
+  expect(prompt).toContain('living room')
+  expect(prompt).not.toContain('Nordic')  // style is ignored
+})
+
+test('buildStylePrompt for inpaint returns Chinese prompt with customPrompt embedded', () => {
+  const prompt = buildStylePrompt('nordic_minimal', 'premium', 'inpaint', 'bedroom', '一张现代风格的床头灯')
+  expect(prompt).toContain('红色高亮区域')
+  expect(prompt).toContain('一张现代风格的床头灯')
+  expect(prompt).toContain('卧室')
+  expect(prompt).not.toContain('北欧简约')  // style is ignored
+})

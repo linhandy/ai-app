@@ -36,6 +36,15 @@ export function buildStylePrompt(
 
   let base: string
 
+  if (mode === 'inpaint') {
+    const replacement = customPrompt?.trim() ?? 'something new'
+    if (useEn) {
+      return `This room photo has a red-highlighted area painted over it.\nReplace only the red-highlighted area with: ${replacement}.\nPreserve all non-highlighted areas exactly — keep all colors, materials, furniture, lighting, and layout unchanged outside the red area.\nRoom: ${roomHint}.`
+    } else {
+      return `这张房间照片上有一块红色高亮区域。\n只将红色高亮区域替换为：${replacement}。\n精确保留所有非高亮区域——保持红色区域外的所有颜色、材质、家具、灯光和布局完全不变。\n房间：${roomHint}。`
+    }
+  }
+
   if (mode === 'paint_walls') {
     base = useEn
       ? 'Change only the wall colors and wall materials in this room. Try warm white, light grey or pastel tones. Keep all furniture, fixtures and layout completely unchanged. Generate a photorealistic interior photo.'

@@ -29,12 +29,14 @@ async function ensureDailyFreeColumns(): Promise<void> {
     await client.execute(
       `ALTER TABLE subscriptions ADD COLUMN dailyFreeUsed INTEGER NOT NULL DEFAULT 0`
     )
-  } catch { /* already exists */ }
+  } catch { // Column already exists — ignore
+  }
   try {
     await client.execute(
       `ALTER TABLE subscriptions ADD COLUMN lastFreeResetDate TEXT NOT NULL DEFAULT ''`
     )
-  } catch { /* already exists */ }
+  } catch { // Column already exists — ignore
+  }
   _dailyFreeMigrated = true
 }
 

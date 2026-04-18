@@ -34,6 +34,29 @@ export default function HomePage() {
           </a>
         </div>
 
+        {isOverseas && (
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              <span><strong className="text-white">3 free</strong> designs daily</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              <span>Pro from <strong className="text-white">$9.99/mo</strong> — vs $29 elsewhere</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              <span><strong className="text-white">10 design modes</strong> · Private by default</span>
+            </span>
+          </div>
+        )}
+
         {/* Before/After side-by-side direct comparison */}
         <div className="w-full max-w-[1100px] mt-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5">

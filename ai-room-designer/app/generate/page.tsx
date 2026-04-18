@@ -22,6 +22,24 @@ const QUALITY_OPTIONS = [
   { key: 'ultra',    label: '超清', labelEn: '4K',       price: 5, resolution: '4096px', color: 'border-purple-500 text-purple-400' },
 ] as const
 
+const PROMPT_SUGGESTIONS = [
+  { label: 'Warm wood accents', value: 'with warm wooden accents' },
+  { label: 'Built-in shelves', value: 'featuring built-in bookshelves' },
+  { label: 'Natural light', value: 'maximizing natural light from windows' },
+  { label: 'Plants & biophilic', value: 'with abundant indoor plants and biophilic elements' },
+  { label: 'Open floor plan', value: 'with an open floor plan layout' },
+  { label: 'Cozy fireplace', value: 'with a cozy fireplace as focal point' },
+]
+
+const PROMPT_SUGGESTIONS_CN = [
+  { label: '暖木元素', value: '加入温暖的木质装饰元素' },
+  { label: '内嵌书架', value: '设置内嵌式书架收纳' },
+  { label: '最大采光', value: '最大化自然采光效果' },
+  { label: '绿植氛围', value: '增加大量室内绿植和自然元素' },
+  { label: '开放布局', value: '打造开放式空间布局' },
+  { label: '壁炉焦点', value: '以壁炉为视觉焦点' },
+]
+
 export default function GeneratePage() {
   return (
     <Suspense>
@@ -353,7 +371,23 @@ function GeneratePageInner() {
               <span>{s.customPromptLabel}</span>
             </button>
             {customPromptOpen && (
-              <div className="mt-2">
+              <div className="mt-2 flex flex-col gap-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {(isOverseas ? PROMPT_SUGGESTIONS : PROMPT_SUGGESTIONS_CN).map((chip) => (
+                    <button
+                      key={chip.value}
+                      type="button"
+                      onClick={() => setCustomPrompt(chip.value)}
+                      className={`px-2.5 h-7 rounded-full text-xs font-medium transition-colors border ${
+                        customPrompt === chip.value
+                          ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+                          : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                      }`}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
                 <textarea
                   value={customPrompt}
                   onChange={(e) => setCustomPrompt(e.target.value.slice(0, 200))}
@@ -361,7 +395,7 @@ function GeneratePageInner() {
                   placeholder={s.customPromptPlaceholder}
                   className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 resize-none focus:outline-none focus:border-amber-500"
                 />
-                <p className="text-right text-xs text-gray-600 mt-1">{customPrompt.length}/200</p>
+                <p className="text-right text-xs text-gray-600">{customPrompt.length}/200</p>
               </div>
             )}
           </div>

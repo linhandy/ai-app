@@ -281,8 +281,8 @@ export default async function ResultPage({ params }: { params: { orderId: string
         {isOverseas && overseasFreeGenerationsLeft !== null && (
           <p className="text-gray-500 text-xs text-center">
             {overseasFreeGenerationsLeft === 0
-              ? 'No free generations left this month'
-              : `${overseasFreeGenerationsLeft} free generation${overseasFreeGenerationsLeft !== 1 ? 's' : ''} left this month`}
+              ? 'No free generations left today'
+              : `${overseasFreeGenerationsLeft} free generation${overseasFreeGenerationsLeft !== 1 ? 's' : ''} left today`}
             {' · '}
             <Link href="/pricing" className="text-amber-500 hover:text-amber-400 transition-colors">
               Upgrade to Pro →

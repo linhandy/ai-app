@@ -21,6 +21,29 @@ async function ensureBonusColumn(): Promise<void> {
   _bonusMigrated = true
 }
 
+let _dailyFreeMigrated = false
+async function ensureDailyFreeColumns(): Promise<void> {
+  if (_dailyFreeMigrated) return
+  const client = await getClient()
+  try {
+    await client.execute(
+      `ALTER TABLE subscriptions ADD COLUMN dailyFreeUsed INTEGER NOT NULL DEFAULT 0`
+    )
+  } catch { // Column already exists — ignore
+  }
+  try {
+    await client.execute(
+      `ALTER TABLE subscriptions ADD COLUMN lastFreeResetDate TEXT NOT NULL DEFAULT ''`
+    )
+  } catch { // Column already exists — ignore
+  }
+  _dailyFreeMigrated = true
+}
+
+function todayUtc(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export interface SubscriptionInfo {
   plan: SubscriptionPlan
   generationsUsed: number
@@ -41,9 +64,11 @@ const FREE_DEFAULTS: SubscriptionInfo = {
 
 export async function getSubscription(userId: string): Promise<SubscriptionInfo> {
   await ensureBonusColumn()
+  await ensureDailyFreeColumns()
   const client = await getClient()
   const result = await client.execute({
-    sql: `SELECT plan, status, generationsUsed, currentPeriodEnd, bonusGenerations
+    sql: `SELECT plan, status, generationsUsed, currentPeriodEnd, bonusGenerations,
+             dailyFreeUsed, lastFreeResetDate
           FROM subscriptions WHERE userId = ?
           ORDER BY createdAt DESC LIMIT 1`,
     args: [userId],
@@ -57,7 +82,19 @@ export async function getSubscription(userId: string): Promise<SubscriptionInfo>
 
   // Treat canceled/expired subscriptions as free
   const isActive = (status === 'active' || status === 'trialing') && currentPeriodEnd > Date.now()
-  if (!isActive) return { ...FREE_DEFAULTS }
+  if (!isActive) {
+    // Free / expired plan — use daily reset logic
+    const lastReset = String(row.lastFreeResetDate ?? '')
+    const dailyUsed = lastReset === todayUtc() ? Number(row.dailyFreeUsed ?? 0) : 0
+    return {
+      plan: 'free',
+      generationsUsed: dailyUsed,
+      generationsLimit: 3,
+      generationsLeft: Math.max(0, 3 - dailyUsed),
+      hasWatermark: false,
+      status: 'active',
+    }
+  }
 
   const plan = String(row.plan) as SubscriptionPlan
   const limit = PLAN_LIMITS[plan] ?? 3
@@ -126,23 +163,53 @@ export async function upsertSubscription(params: {
 }
 
 export async function incrementGenerationsUsed(userId: string): Promise<void> {
+  await ensureDailyFreeColumns()
   const client = await getClient()
-  // Ensure a free subscription record exists so the counter can increment
   const existing = await client.execute({
-    sql: 'SELECT id FROM subscriptions WHERE userId = ?',
+    sql: 'SELECT id, plan, status, currentPeriodEnd FROM subscriptions WHERE userId = ?',
     args: [userId],
   })
+
+  const today = todayUtc()
+
   if (existing.rows.length === 0) {
     await client.execute({
       sql: `INSERT INTO subscriptions
-            (id, userId, stripeCustomerId, stripeSubscriptionId, plan, status, currentPeriodEnd, generationsUsed, createdAt)
-            VALUES (?, ?, '', '', 'free', 'active', ?, 1, ?)`,
-      args: [`sub_${crypto.randomBytes(8).toString('hex')}`, userId, Date.now() + 365 * 86400_000, Date.now()],
+            (id, userId, stripeCustomerId, stripeSubscriptionId, plan, status, currentPeriodEnd,
+             generationsUsed, dailyFreeUsed, lastFreeResetDate, createdAt)
+            VALUES (?, ?, '', '', 'free', 'active', ?, 1, 1, ?, ?)`,
+      args: [
+        `sub_${crypto.randomBytes(8).toString('hex')}`,
+        userId,
+        Date.now() + 365 * 86400_000,
+        today,
+        Date.now(),
+      ],
     })
-  } else {
+    return
+  }
+
+  const row = existing.rows[0]
+  const status = String(row.status)
+  const currentPeriodEnd = Number(row.currentPeriodEnd ?? 0)
+  const isActive = (status === 'active' || status === 'trialing') && currentPeriodEnd > Date.now()
+  const plan = String(row.plan) as SubscriptionPlan
+
+  if (isActive && plan !== 'free') {
+    // Paid plan — track monthly generationsUsed only
     await client.execute({
       sql: `UPDATE subscriptions SET generationsUsed = generationsUsed + 1 WHERE userId = ?`,
       args: [userId],
+    })
+  } else {
+    // Free / expired — reset dailyFreeUsed if date changed, then increment
+    await client.execute({
+      sql: `UPDATE subscriptions
+            SET dailyFreeUsed     = CASE WHEN lastFreeResetDate = ? THEN dailyFreeUsed + 1 ELSE 1 END,
+                lastFreeResetDate = ?,
+                generationsUsed   = generationsUsed + 1
+            WHERE userId = ?`,
+      args: [today, today, userId],
     })
   }
 }
@@ -183,5 +250,6 @@ export async function addBonusGeneration(userId: string): Promise<boolean> {
 /** Expose for test cleanup */
 export function closeSubscriptionDb(): void {
   _bonusMigrated = false
+  _dailyFreeMigrated = false
   // Subscriptions use the orders DB client — closing orders DB closes this too
 }

@@ -4,6 +4,7 @@ import { createOrder, updateOrder, getUploadData } from '@/lib/orders'
 import { getSubscription, incrementGenerationsUsedBy } from '@/lib/subscription'
 import { ALL_STYLE_KEYS, ALL_ROOM_TYPE_KEYS, DESIGN_MODES } from '@/lib/design-config'
 import { isRateLimited } from '@/lib/rate-limit'
+import { isOverseas } from '@/lib/region'
 import { ERR } from '@/lib/errors'
 import { logger } from '@/lib/logger'
 import type { QualityTier, DesignMode } from '@/lib/orders'
@@ -16,6 +17,10 @@ export async function POST(req: NextRequest) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
     if (isRateLimited(`batch-generate:${ip}`, 5, 60_000)) {
       return NextResponse.json({ error: ERR.rateLimited }, { status: 429 })
+    }
+
+    if (!isOverseas) {
+      return NextResponse.json({ error: 'Not available' }, { status: 403 })
     }
 
     const session = await getServerSession(req)
@@ -74,6 +79,7 @@ export async function POST(req: NextRequest) {
     if (!uploadId) {
       return NextResponse.json({ error: ERR.uploadMissing }, { status: 400 })
     }
+    // TODO: verify uploadData.userId === session.userId once uploads table tracks ownership
     const uploadData = await getUploadData(uploadId)
     if (!uploadData) {
       return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })

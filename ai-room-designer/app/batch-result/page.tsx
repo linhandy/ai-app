@@ -24,8 +24,10 @@ function BatchResultInner() {
   const [orders, setOrders] = useState<BatchOrder[]>(
     orderIds.map((id) => ({ orderId: id, status: 'pending' }))
   )
+  const ordersRef = useRef<BatchOrder[]>([])
   const triggeredRef = useRef<Set<string>>(new Set())
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => { ordersRef.current = orders }, [orders])
 
   // Trigger generation for each order on mount
   useEffect(() => {
@@ -54,20 +56,11 @@ function BatchResultInner() {
 
   // Poll order statuses every 3 seconds until all done/failed
   useEffect(() => {
-    const allSettled = orders.every(
-      (o) => o.status === 'done' || o.status === 'failed'
-    )
-    if (allSettled && orders.length > 0) {
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current)
-      return
-    }
-
-    if (pollTimerRef.current) clearInterval(pollTimerRef.current)
-
-    pollTimerRef.current = setInterval(async () => {
-      const pending = orders.filter(
-        (o) => o.status !== 'done' && o.status !== 'failed'
-      )
+    const timer = setInterval(async () => {
+      const current = ordersRef.current
+      const allSettled = current.every((o) => o.status === 'done' || o.status === 'failed')
+      if (allSettled) { clearInterval(timer); return }
+      const pending = current.filter((o) => o.status !== 'done' && o.status !== 'failed')
       await Promise.all(
         pending.map(async (o) => {
           try {
@@ -77,20 +70,13 @@ function BatchResultInner() {
               setOrders((prev) =>
                 prev.map((x) =>
                   x.orderId === o.orderId
-                    ? {
-                        ...x,
-                        status: 'done',
-                        resultUrl: data.resultUrl,
-                        style: data.style,
-                      }
+                    ? { ...x, status: 'done', resultUrl: data.resultUrl, style: data.style }
                     : x
                 )
               )
             } else if (data.status === 'failed') {
               setOrders((prev) =>
-                prev.map((x) =>
-                  x.orderId === o.orderId ? { ...x, status: 'failed' } : x
-                )
+                prev.map((x) => x.orderId === o.orderId ? { ...x, status: 'failed' } : x)
               )
             }
           } catch {
@@ -99,11 +85,8 @@ function BatchResultInner() {
         })
       )
     }, 3000)
-
-    return () => {
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current)
-    }
-  }, [orders])
+    return () => clearInterval(timer)
+  }, []) // runs once — reads live orders via ordersRef
 
   const doneCount = orders.filter((o) => o.status === 'done').length
   const totalCount = orders.length
@@ -174,7 +157,7 @@ function BatchResultInner() {
                   <div className="flex gap-1.5">
                     <a
                       href={order.resultUrl}
-                      download="RoomAI-Design.png"
+                      download={`RoomAI-${order.style ?? order.orderId}.png`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 flex items-center justify-center h-8 bg-amber-500 text-black text-xs font-bold rounded hover:bg-amber-400 transition-colors"

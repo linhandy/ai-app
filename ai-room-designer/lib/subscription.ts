@@ -21,6 +21,27 @@ async function ensureBonusColumn(): Promise<void> {
   _bonusMigrated = true
 }
 
+let _dailyFreeMigrated = false
+async function ensureDailyFreeColumns(): Promise<void> {
+  if (_dailyFreeMigrated) return
+  const client = await getClient()
+  try {
+    await client.execute(
+      `ALTER TABLE subscriptions ADD COLUMN dailyFreeUsed INTEGER NOT NULL DEFAULT 0`
+    )
+  } catch { /* already exists */ }
+  try {
+    await client.execute(
+      `ALTER TABLE subscriptions ADD COLUMN lastFreeResetDate TEXT NOT NULL DEFAULT ''`
+    )
+  } catch { /* already exists */ }
+  _dailyFreeMigrated = true
+}
+
+function todayUtc(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export interface SubscriptionInfo {
   plan: SubscriptionPlan
   generationsUsed: number
@@ -41,9 +62,11 @@ const FREE_DEFAULTS: SubscriptionInfo = {
 
 export async function getSubscription(userId: string): Promise<SubscriptionInfo> {
   await ensureBonusColumn()
+  await ensureDailyFreeColumns()
   const client = await getClient()
   const result = await client.execute({
-    sql: `SELECT plan, status, generationsUsed, currentPeriodEnd, bonusGenerations
+    sql: `SELECT plan, status, generationsUsed, currentPeriodEnd, bonusGenerations,
+             dailyFreeUsed, lastFreeResetDate
           FROM subscriptions WHERE userId = ?
           ORDER BY createdAt DESC LIMIT 1`,
     args: [userId],
@@ -183,5 +206,6 @@ export async function addBonusGeneration(userId: string): Promise<boolean> {
 /** Expose for test cleanup */
 export function closeSubscriptionDb(): void {
   _bonusMigrated = false
+  _dailyFreeMigrated = false
   // Subscriptions use the orders DB client — closing orders DB closes this too
 }

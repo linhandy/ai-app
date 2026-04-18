@@ -70,4 +70,16 @@ describe('getSubscription', () => {
     expect(sub.plan).toBe('free')
     expect(sub.hasWatermark).toBe(false)
   })
+
+  it('persists dailyFreeUsed and lastFreeResetDate columns after first call', async () => {
+    await getSubscription('user_col_test')
+    const { getClient } = await import('@/lib/orders')
+    const db = await getClient()
+    const result = await db.execute({
+      sql: 'SELECT dailyFreeUsed, lastFreeResetDate FROM subscriptions WHERE userId = ?',
+      args: ['user_col_test'],
+    })
+    expect(result.columns).toContain('dailyFreeUsed')
+    expect(result.columns).toContain('lastFreeResetDate')
+  })
 })

@@ -20,9 +20,10 @@ interface Props {
   onCompositeReady: (getBlob: () => Promise<Blob>) => void
   onMaskChange: (hasMask: boolean) => void
   onPromptChange: (prompt: string) => void
+  onCompositeCleared?: () => void
 }
 
-export default function InpaintCanvas({ onOriginalUpload, onCompositeReady, onMaskChange, onPromptChange }: Props) {
+export default function InpaintCanvas({ onOriginalUpload, onCompositeReady, onMaskChange, onPromptChange, onCompositeCleared }: Props) {
   const [phase, setPhase] = useState<'upload' | 'paint'>('upload')
   const [brushSize, setBrushSize] = useState(40)
   const [tool, setTool] = useState<'brush' | 'eraser'>('brush')
@@ -168,7 +169,8 @@ export default function InpaintCanvas({ onOriginalUpload, onCompositeReady, onMa
     canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height)
     hasStrokesRef.current = false
     onMaskChange(false)
-  }, [onMaskChange])
+    onCompositeCleared?.()
+  }, [onMaskChange, onCompositeCleared])
 
   const handlePromptChange = (value: string) => {
     setPrompt(value)

@@ -270,6 +270,7 @@ function GeneratePageInner() {
                 onCompositeReady={(getBlob) => { compositeBlobRef.current = getBlob }}
                 onMaskChange={setHasMask}
                 onPromptChange={(p) => setCustomPrompt(p)}
+                onCompositeCleared={() => { compositeBlobRef.current = null }}
               />
             </>
           ) : (

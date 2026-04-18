@@ -171,6 +171,8 @@ export async function POST(req: NextRequest) {
     if (mode === 'inpaint') {
       if (!referenceUploadId) return NextResponse.json({ error: ERR.uploadMissing }, { status: 400 })
       if (!customPrompt?.trim()) return NextResponse.json({ error: ERR.invalidMode }, { status: 400 })
+      const refData = await getUploadData(referenceUploadId)
+      if (!refData) return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })
     }
 
     const sessionToken = req.cookies.get('session')?.value
@@ -182,14 +184,14 @@ export async function POST(req: NextRequest) {
     if (creditBalance > 0) {
       const consumed = await consumeCredit(owner)
       if (consumed) {
-        const order = await createOrder({ style, uploadId: uploadId ?? null, quality, mode, roomType, customPrompt: trimmedPrompt, userId: session?.userId, isFree: false })
+        const order = await createOrder({ style, uploadId: uploadId ?? null, referenceUploadId: referenceUploadId ?? undefined, quality, mode, roomType, customPrompt: trimmedPrompt, userId: session?.userId, isFree: false })
         await updateOrder(order.id, { status: 'paid' })
         return NextResponse.json({ orderId: order.id, creditUsed: true })
       }
     }
 
     const order = await createOrder({
-      style, uploadId: uploadId ?? null, quality, mode, roomType, customPrompt: trimmedPrompt,
+      style, uploadId: uploadId ?? null, referenceUploadId: referenceUploadId ?? undefined, quality, mode, roomType, customPrompt: trimmedPrompt,
       isFree: true, userId,
     })
 

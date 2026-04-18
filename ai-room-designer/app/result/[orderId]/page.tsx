@@ -290,7 +290,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
           </p>
         )}
 
-        <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={shareUrl} referralCount={referralCount} />
+        <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={shareUrl} referralCount={referralCount} isOverseas={isOverseas} />
 
         {isOverseas && !isOverseasGuest && (
           <GalleryOptIn orderId={order.id} initialOptIn={order.isPublicGallery ?? false} />

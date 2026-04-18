@@ -10,6 +10,7 @@ interface Props {
   resultUrl: string    // relative /api/preview?... URL for the result image
   pageUrl?: string     // full URL of the result page (passed from server)
   referralCount?: number
+  isOverseas?: boolean
 }
 
 type Modal = 'wechat' | 'douyin' | 'xiaohongshu' | null
@@ -25,11 +26,24 @@ function useCopy() {
   return { copied, copy }
 }
 
-export default function SharePanel({ style, pageUrl, referralCount = 0 }: Props) {
+export default function SharePanel({ style, pageUrl, referralCount = 0, isOverseas = false }: Props) {
   const [modal, setModal] = useState<Modal>(null)
   const [qrDataUrl, setQrDataUrl] = useState<string>('')
   const [canNativeShare, setCanNativeShare] = useState(false)
+  const [bonusToast, setBonusToast] = useState<'awarded' | 'already' | null>(null)
   const { copied, copy } = useCopy()
+
+  const claimShareBonus = async () => {
+    if (!isOverseas) return
+    try {
+      const res = await fetch('/api/claim-share-bonus', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        setBonusToast(data.awarded ? 'awarded' : 'already')
+        setTimeout(() => setBonusToast(null), 4000)
+      }
+    } catch { /* non-fatal */ }
+  }
 
   const shareUrl = pageUrl ?? (typeof window !== 'undefined' ? window.location.href : '')
 
@@ -124,6 +138,7 @@ export default function SharePanel({ style, pageUrl, referralCount = 0 }: Props)
           onClick: () => {
             const url = getShareUrl('twitter', { url: shareUrl, title: regionConfig.strings.shareText })
             if (url) window.open(url, '_blank', 'noopener')
+            claimShareBonus()
           },
         }
       case 'facebook':
@@ -137,6 +152,7 @@ export default function SharePanel({ style, pageUrl, referralCount = 0 }: Props)
           onClick: () => {
             const url = getShareUrl('facebook', { url: shareUrl, title: regionConfig.strings.shareText })
             if (url) window.open(url, '_blank', 'noopener')
+            claimShareBonus()
           },
         }
       default:
@@ -184,6 +200,13 @@ export default function SharePanel({ style, pageUrl, referralCount = 0 }: Props)
             {regionConfig.currency === 'CNY'
               ? `已有 ${referralCount} 人通过你的链接体验`
               : `${referralCount} people have tried it via your link`}
+          </p>
+        )}
+        {bonusToast && (
+          <p className="text-green-400 text-xs mt-1 animate-pulse">
+            {bonusToast === 'awarded'
+              ? '🎉 +1 free generation added for sharing!'
+              : '✓ You already claimed your share bonus today'}
           </p>
         )}
       </div>

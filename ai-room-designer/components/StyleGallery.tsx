@@ -33,14 +33,14 @@ export default function StyleGallery() {
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-4 w-full">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4 w-full">
         {STYLES.map(({ key, desc, labelEn, descEn }) => (
           <button
             key={key}
             onClick={() => setActive(key)}
             className="group rounded-xl overflow-hidden border border-gray-800 hover:border-amber-500 transition-all hover:scale-[1.02] text-left cursor-zoom-in"
           >
-            <div className="relative h-[200px] w-full overflow-hidden">
+            <div className="relative h-[140px] sm:h-[180px] md:h-[200px] w-full overflow-hidden">
               <Image
                 src={`/styles/${key}.jpg`}
                 alt={isOverseas ? labelEn : key}

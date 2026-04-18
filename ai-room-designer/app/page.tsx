@@ -6,6 +6,9 @@ import { regionConfig } from '@/lib/region-config'
 import PricingCards from '@/components/PricingCards'
 import { isOverseas } from '@/lib/region'
 import SocialProof from '@/components/SocialProof'
+import PriceComparisonCard from '@/components/PriceComparisonCard'
+import DesignModesGrid from '@/components/DesignModesGrid'
+import BeforeAfterShowcase from '@/components/BeforeAfterShowcase'
 
 const s = regionConfig.strings
 
@@ -15,14 +18,14 @@ export default function HomePage() {
       <NavBar />
 
       {/* Hero */}
-      <section className="flex flex-col items-center px-6 md:px-[120px] pt-16 pb-12 gap-6">
-        <div className="flex items-center gap-2 px-3.5 h-7 rounded-full bg-amber-950 border border-amber-500 text-amber-500 text-sm font-semibold">
+      <section className="flex flex-col items-center px-4 sm:px-6 lg:px-[120px] pt-12 sm:pt-16 pb-12 gap-6 max-w-7xl mx-auto">
+        <div className="flex items-center gap-2 px-3.5 h-7 rounded-full bg-amber-950 border border-amber-500 text-amber-500 text-xs sm:text-sm font-semibold text-center">
           {s.heroBadge}
         </div>
-        <h1 className="text-4xl md:text-6xl font-bold text-center leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-center leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
           {s.heroTitle}
         </h1>
-        <p className="text-gray-400 text-lg text-center max-w-lg">
+        <p className="text-gray-400 text-base sm:text-lg text-center max-w-lg">
           {s.heroSubtitle}
         </p>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-2 w-full max-w-sm sm:max-w-none">
@@ -103,6 +106,15 @@ export default function HomePage() {
 
       {/* Social proof — counter + testimonials (overseas only) */}
       {isOverseas && <SocialProof />}
+
+      {/* Price & feature comparison vs leading competitor (overseas only) */}
+      {isOverseas && <PriceComparisonCard />}
+
+      {/* Interactive Before/After slider showcase (overseas only) */}
+      {isOverseas && <BeforeAfterShowcase />}
+
+      {/* 10 Design Modes showcase (overseas only) */}
+      {isOverseas && <DesignModesGrid />}
 
       {/* Styles section */}
       <section id="examples" className="px-6 md:px-[120px] py-16 bg-[#050505] flex flex-col items-center gap-8">
@@ -248,7 +260,7 @@ export default function HomePage() {
               },
               {
                 q: "What's the difference between Free, Pro, and Unlimited?",
-                a: 'Free gives you 3 watermarked generations per month. Pro ($9.99/mo) gives 150 HD watermark-free designs with commercial use rights. Unlimited ($19.99/mo) removes all limits and adds priority processing.',
+                a: 'Free gives you 3 HD designs every day (resets daily UTC midnight, no watermark). Pro ($9.99/mo) gives 150 designs per month with priority and commercial use rights. Unlimited ($19.99/mo) offers up to 500 designs per month under fair use, plus priority processing.',
               },
               {
                 q: 'How does billing work?',

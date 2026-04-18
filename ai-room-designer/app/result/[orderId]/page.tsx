@@ -4,7 +4,6 @@ import { createHash } from 'crypto'
 import type { Metadata } from 'next'
 import { getOrder } from '@/lib/orders'
 import { regionConfig } from '@/lib/region-config'
-import { getReferralCount } from '@/lib/referral'
 import ComparePanel from '@/components/ComparePanel'
 import SaveToHistory from '@/components/SaveToHistory'
 import SharePanel from '@/components/SharePanel'
@@ -186,7 +185,6 @@ export default async function ResultPage({ params }: { params: { orderId: string
   const visitorIp = visitorForwarded?.split(',')[0]?.trim() ?? 'unknown'
   const refCode = createHash('sha256').update(visitorIp).digest('hex').slice(0, 6)
   const shareUrl = `${proto}://${host}/r/${order.id}?ref=${refCode}`
-  const referralCount = await getReferralCount(refCode)
 
   return (
     <main className="min-h-screen bg-black">
@@ -289,7 +287,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
           </p>
         )}
 
-        <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={shareUrl} referralCount={referralCount} isOverseas={isOverseas} />
+        <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={shareUrl} isOverseas={isOverseas} />
 
         {isOverseas && !isOverseasGuest && (
           <GalleryOptIn orderId={order.id} initialOptIn={order.isPublicGallery ?? false} />

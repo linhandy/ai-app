@@ -82,4 +82,45 @@ describe('getSubscription', () => {
     expect(result.columns).toContain('dailyFreeUsed')
     expect(result.columns).toContain('lastFreeResetDate')
   })
+
+  it('free user with no record today gets 3 generations left', async () => {
+    const sub = await getSubscription('user_daily_new')
+    expect(sub.plan).toBe('free')
+    expect(sub.generationsLeft).toBe(3)
+    expect(sub.generationsLimit).toBe(3)
+  })
+
+  it('free user who used 2 today has 1 left', async () => {
+    // Trigger migration to create columns
+    await getSubscription('user_temp')
+    const client = await (await import('@/lib/orders')).getClient()
+    const today = new Date().toISOString().slice(0, 10)
+    await client.execute({
+      sql: `INSERT INTO subscriptions
+            (id, userId, stripeCustomerId, stripeSubscriptionId, plan, status, currentPeriodEnd,
+             generationsUsed, dailyFreeUsed, lastFreeResetDate, createdAt)
+            VALUES ('sub_d1', 'user_daily_used2', '', '', 'free', 'active', ?, 2, 2, ?, ?)`,
+      args: [Date.now() - 1000, today, Date.now()],
+    })
+    const sub = await getSubscription('user_daily_used2')
+    expect(sub.generationsLeft).toBe(1)
+    expect(sub.generationsUsed).toBe(2)
+  })
+
+  it('free user with stale date (yesterday) gets full 3 today', async () => {
+    // Trigger migration to create columns
+    await getSubscription('user_temp2')
+    const client = await (await import('@/lib/orders')).getClient()
+    const yesterday = new Date(Date.now() - 86400_000).toISOString().slice(0, 10)
+    await client.execute({
+      sql: `INSERT INTO subscriptions
+            (id, userId, stripeCustomerId, stripeSubscriptionId, plan, status, currentPeriodEnd,
+             generationsUsed, dailyFreeUsed, lastFreeResetDate, createdAt)
+            VALUES ('sub_d2', 'user_daily_stale', '', '', 'free', 'active', ?, 3, 3, ?, ?)`,
+      args: [Date.now() - 1000, yesterday, Date.now()],
+    })
+    const sub = await getSubscription('user_daily_stale')
+    expect(sub.generationsLeft).toBe(3)
+    expect(sub.generationsUsed).toBe(0)
+  })
 })

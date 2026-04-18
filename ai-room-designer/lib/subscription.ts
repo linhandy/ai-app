@@ -82,7 +82,19 @@ export async function getSubscription(userId: string): Promise<SubscriptionInfo>
 
   // Treat canceled/expired subscriptions as free
   const isActive = (status === 'active' || status === 'trialing') && currentPeriodEnd > Date.now()
-  if (!isActive) return { ...FREE_DEFAULTS }
+  if (!isActive) {
+    // Free / expired plan — use daily reset logic
+    const lastReset = String(row.lastFreeResetDate ?? '')
+    const dailyUsed = lastReset === todayUtc() ? Number(row.dailyFreeUsed ?? 0) : 0
+    return {
+      plan: 'free',
+      generationsUsed: dailyUsed,
+      generationsLimit: 3,
+      generationsLeft: Math.max(0, 3 - dailyUsed),
+      hasWatermark: false,
+      status: 'active',
+    }
+  }
 
   const plan = String(row.plan) as SubscriptionPlan
   const limit = PLAN_LIMITS[plan] ?? 3

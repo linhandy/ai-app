@@ -124,3 +124,38 @@ describe('getSubscription', () => {
     expect(sub.generationsUsed).toBe(0)
   })
 })
+
+describe('incrementGenerationsUsed daily', () => {
+  it('new free user starts at 1 used after first increment', async () => {
+    await incrementGenerationsUsed('user_inc_new')
+    const sub = await getSubscription('user_inc_new')
+    expect(sub.generationsUsed).toBe(1)
+    expect(sub.generationsLeft).toBe(2)
+  })
+
+  it('free user increments dailyFreeUsed within same day', async () => {
+    await incrementGenerationsUsed('user_inc_same')
+    await incrementGenerationsUsed('user_inc_same')
+    const sub = await getSubscription('user_inc_same')
+    expect(sub.generationsUsed).toBe(2)
+    expect(sub.generationsLeft).toBe(1)
+  })
+
+  it('free user gets dailyFreeUsed reset to 1 when date changes', async () => {
+    // Trigger migration to create columns
+    await getSubscription('user_temp3')
+    const client = await (await import('@/lib/orders')).getClient()
+    const yesterday = new Date(Date.now() - 86400_000).toISOString().slice(0, 10)
+    await client.execute({
+      sql: `INSERT INTO subscriptions
+            (id, userId, stripeCustomerId, stripeSubscriptionId, plan, status, currentPeriodEnd,
+             generationsUsed, dailyFreeUsed, lastFreeResetDate, createdAt)
+            VALUES ('sub_inc_stale', 'user_inc_stale', '', '', 'free', 'active', ?, 3, 3, ?, ?)`,
+      args: [Date.now() - 1000, yesterday, Date.now()],
+    })
+    await incrementGenerationsUsed('user_inc_stale')
+    const sub = await getSubscription('user_inc_stale')
+    expect(sub.generationsUsed).toBe(1)
+    expect(sub.generationsLeft).toBe(2)
+  })
+})

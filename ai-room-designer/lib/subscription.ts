@@ -163,23 +163,53 @@ export async function upsertSubscription(params: {
 }
 
 export async function incrementGenerationsUsed(userId: string): Promise<void> {
+  await ensureDailyFreeColumns()
   const client = await getClient()
-  // Ensure a free subscription record exists so the counter can increment
   const existing = await client.execute({
-    sql: 'SELECT id FROM subscriptions WHERE userId = ?',
+    sql: 'SELECT id, plan, status, currentPeriodEnd FROM subscriptions WHERE userId = ?',
     args: [userId],
   })
+
+  const today = todayUtc()
+
   if (existing.rows.length === 0) {
     await client.execute({
       sql: `INSERT INTO subscriptions
-            (id, userId, stripeCustomerId, stripeSubscriptionId, plan, status, currentPeriodEnd, generationsUsed, createdAt)
-            VALUES (?, ?, '', '', 'free', 'active', ?, 1, ?)`,
-      args: [`sub_${crypto.randomBytes(8).toString('hex')}`, userId, Date.now() + 365 * 86400_000, Date.now()],
+            (id, userId, stripeCustomerId, stripeSubscriptionId, plan, status, currentPeriodEnd,
+             generationsUsed, dailyFreeUsed, lastFreeResetDate, createdAt)
+            VALUES (?, ?, '', '', 'free', 'active', ?, 1, 1, ?, ?)`,
+      args: [
+        `sub_${crypto.randomBytes(8).toString('hex')}`,
+        userId,
+        Date.now() + 365 * 86400_000,
+        today,
+        Date.now(),
+      ],
     })
-  } else {
+    return
+  }
+
+  const row = existing.rows[0]
+  const status = String(row.status)
+  const currentPeriodEnd = Number(row.currentPeriodEnd ?? 0)
+  const isActive = (status === 'active' || status === 'trialing') && currentPeriodEnd > Date.now()
+  const plan = String(row.plan) as SubscriptionPlan
+
+  if (isActive && plan !== 'free') {
+    // Paid plan — track monthly generationsUsed only
     await client.execute({
       sql: `UPDATE subscriptions SET generationsUsed = generationsUsed + 1 WHERE userId = ?`,
       args: [userId],
+    })
+  } else {
+    // Free / expired — reset dailyFreeUsed if date changed, then increment
+    await client.execute({
+      sql: `UPDATE subscriptions
+            SET dailyFreeUsed     = CASE WHEN lastFreeResetDate = ? THEN dailyFreeUsed + 1 ELSE 1 END,
+                lastFreeResetDate = ?,
+                generationsUsed   = generationsUsed + 1
+            WHERE userId = ?`,
+      args: [today, today, userId],
     })
   }
 }

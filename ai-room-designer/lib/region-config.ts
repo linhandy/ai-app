@@ -23,7 +23,7 @@ export const regionConfig = {
     heroSubtitle:         isOverseas ? 'Upload a photo. Get a professional interior design in 30 seconds.' : '上传任意角度的房间照片，30秒内看到专业室内设计师级别的装修效果图',
     heroCta:              isOverseas ? 'Generate for Free'                                      : '免费生成效果图',
     heroSecondaryCta:     isOverseas ? 'View Examples'                                          : '查看示例效果',
-    heroBadge:            isOverseas ? '✦ Free to generate · Pay only if you love it'          : '✦ 免费生成 · 满意再付费',
+    heroBadge:            isOverseas ? '✦ 3 free designs daily · No credit card needed'         : '✦ 免费生成 · 满意再付费',
     // Hero before/after labels
     beforeLabel:          isOverseas ? 'Before'                                                 : '改造前',
     afterLabel:           isOverseas ? 'AI Result'                                              : 'AI效果图',
@@ -78,7 +78,7 @@ export const regionConfig = {
     ctaProcessing:        isOverseas ? 'Processing...'                                          : '处理中...',
     ctaButton:            isOverseas ? '⚡ Generate Now'                                        : '',
     // Credits / subscription display
-    creditsRemaining:     isOverseas ? 'generations left this month'                            : '次免费体验',
+    creditsRemaining:     isOverseas ? 'generations left today'                                 : '次免费体验',
     creditsBalance:       isOverseas ? 'Credits remaining:'                                     : '剩余额度:',
     // Errors
     errorUploadFirst:     isOverseas ? 'Please upload a room photo first'                       : '请先上传房间照片',
@@ -97,7 +97,7 @@ export const regionConfig = {
     shareText:            isOverseas ? 'See my AI room redesign! Try it free →'                 : '用AI生成了装修效果图，免费试试 →',
     shareSkip:            isOverseas ? 'Skip, just download'                                    : '跳过，直接下载',
     // Upgrade
-    upgradePrompt:        isOverseas ? 'You have used all your free generations this month. Upgrade to continue.' : '本月免费次数已用完，升级套餐继续生成',
+    upgradePrompt:        isOverseas ? "You've used today's 3 free designs. Upgrade to Pro ($9.99/mo) for 30/month — or come back tomorrow for 3 more free." : '本月免费次数已用完，升级套餐继续生成',
     // Style/room selectors
     styleSelectTitle:     isOverseas ? 'Choose a Style'                                         : '选择装修风格',
     roomTypeSelectTitle:  isOverseas ? 'Room Type'                                              : '房间类型',

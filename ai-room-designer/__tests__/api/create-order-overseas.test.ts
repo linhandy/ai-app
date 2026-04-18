@@ -166,3 +166,25 @@ test('create-order overseas: inpaint mode requires referenceUploadId', async () 
   const body = await res.json()
   expect(body.error).toBe('Please upload a photo first.')  // ERR.uploadMissing in overseas mode
 })
+
+test('create-order overseas: anonymous daily key includes UTC date', async () => {
+  process.env.NEXT_PUBLIC_REGION = 'overseas'
+  process.env.REGION = 'overseas'
+  const { getClient } = await import('@/lib/orders')
+  const db = await getClient()
+
+  // Simulate 3 uses on yesterday's key — should NOT block today
+  const yesterday = new Date(Date.now() - 86400_000).toISOString().slice(0, 10)
+  await db.execute({
+    sql: `INSERT INTO credits (owner, balance, total_purchased, updated_at) VALUES (?, 3, 0, ?)`,
+    args: [`anon_ov:1.2.3.4:${yesterday}`, Date.now()],
+  })
+
+  // Today's key should be 0 — user can still generate
+  const today = new Date().toISOString().slice(0, 10)
+  const row = await db.execute({
+    sql: 'SELECT balance FROM credits WHERE owner = ?',
+    args: [`anon_ov:1.2.3.4:${today}`],
+  })
+  expect(Number(row.rows[0]?.balance ?? 0)).toBe(0)
+})

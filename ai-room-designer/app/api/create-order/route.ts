@@ -77,7 +77,8 @@ export async function POST(req: NextRequest) {
       if (!session) {
         const { getClient: getDb } = await import('@/lib/orders')
         const db = await getDb()
-        const anonKey = `anon_ov:${ip}`
+        const today = new Date().toISOString().slice(0, 10)
+        const anonKey = `anon_ov:${ip}:${today}`
         const anonRow = await db.execute({ sql: 'SELECT balance FROM credits WHERE owner = ?', args: [anonKey] })
         const anonUsed = Number(anonRow.rows[0]?.balance ?? 0)
         if (anonUsed >= 3) {

@@ -1,6 +1,5 @@
 import NavBar from '@/components/NavBar'
 import { getSubscription } from '@/lib/subscription'
-import { getReferralCount } from '@/lib/referral'
 import { isOverseas } from '@/lib/region'
 import { redirect } from 'next/navigation'
 import { createHash } from 'crypto'
@@ -23,7 +22,6 @@ export default async function AccountPage() {
   const refCode = createHash('sha256').update(sub_session.userId).digest('hex').slice(0, 8)
   const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
   const inviteUrl = `${base}?ref=${refCode}`
-  const referralCount = await getReferralCount(refCode)
 
   const planLabel: Record<string, string> = {
     free: 'Free',
@@ -106,7 +104,7 @@ export default async function AccountPage() {
           </div>
 
           <p className="text-gray-500 text-xs">
-            {referralCount} friend{referralCount !== 1 ? 's' : ''} invited so far
+            Invite friends to get +2 bonus generations each.
           </p>
         </div>
       </div>

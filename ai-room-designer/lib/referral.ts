@@ -1,157 +1,97 @@
-import { getClient } from '@/lib/orders'
-import { rewardFreeUse } from '@/lib/free-uses'
-import { addBonusGeneration } from '@/lib/subscription'
+import crypto from 'crypto'
+import { getClient } from './orders'
 
-const MAX_REFERRAL_REWARDS = 10 // max bonus uses per IP via sharing
-const MAX_OVERSEAS_REFERRAL_REWARDS = 5
-
-// closeDb is a no-op here since we share the orders client
-// but exported for test teardown compatibility
-export function closeDb(): void {
-  // no-op: uses shared getClient() from orders
-}
-
+// ---- Table bootstrap ----
+let _migrated = false
 async function ensureTables(): Promise<void> {
+  if (_migrated) return
   const db = await getClient()
   await db.execute(`
-    CREATE TABLE IF NOT EXISTS referral_clicks (
-      ref_code    TEXT NOT NULL,
-      visitor_ip  TEXT NOT NULL,
-      created_at  INTEGER NOT NULL,
-      PRIMARY KEY (ref_code, visitor_ip)
+    CREATE TABLE IF NOT EXISTS referral_codes (
+      refCode   TEXT PRIMARY KEY,
+      userId    TEXT NOT NULL UNIQUE,
+      createdAt INTEGER NOT NULL
     )
   `)
   await db.execute(`
-    CREATE TABLE IF NOT EXISTS referral_rewards (
-      ip          TEXT PRIMARY KEY,
-      reward_count INTEGER NOT NULL DEFAULT 0
+    CREATE TABLE IF NOT EXISTS referral_attributions (
+      id                  TEXT PRIMARY KEY,
+      referrerUserId      TEXT NOT NULL,
+      refereeUserId       TEXT NOT NULL UNIQUE,
+      refCode             TEXT NOT NULL,
+      visitorIpAtSignup   TEXT NOT NULL,
+      status              TEXT NOT NULL,
+      createdAt           INTEGER NOT NULL,
+      completedAt         INTEGER
     )
   `)
+  await db.execute(
+    `CREATE INDEX IF NOT EXISTS idx_ref_attr_referrer
+     ON referral_attributions(referrerUserId, status)`
+  )
+  await db.execute(
+    `CREATE INDEX IF NOT EXISTS idx_ref_attr_ip
+     ON referral_attributions(visitorIpAtSignup, createdAt)`
+  )
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS referral_monthly_stats (
+      referrerUserId  TEXT NOT NULL,
+      yearMonth       TEXT NOT NULL,
+      completedCount  INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (referrerUserId, yearMonth)
+    )
+  `)
+  _migrated = true
 }
 
-/**
- * Records a referral click and rewards both parties if the visitor is new.
- * Returns true if rewards were granted, false if this visitor already clicked.
- */
-export async function recordReferralClick({
-  refCode,
-  sharerIp,
-  visitorIp,
-}: {
-  refCode: string
-  sharerIp: string
-  visitorIp: string
-}): Promise<boolean> {
+/** Exposed for test cleanup; no-op since we share the orders client. */
+export function closeDb(): void {
+  _migrated = false
+}
+
+// ---- Ref code ----
+function salt(): string {
+  return process.env.REFERRAL_SALT ?? 'dev-referral-salt-change-me'
+}
+
+function deriveRefCode(userId: string): string {
+  return crypto.createHash('sha256').update(userId + salt()).digest('hex').slice(0, 8)
+}
+
+export async function getOrCreateRefCode(userId: string): Promise<string> {
   await ensureTables()
   const db = await getClient()
-
-  // Check for duplicate
   const existing = await db.execute({
-    sql: 'SELECT 1 FROM referral_clicks WHERE ref_code = ? AND visitor_ip = ?',
-    args: [refCode, visitorIp],
+    sql: 'SELECT refCode FROM referral_codes WHERE userId = ?',
+    args: [userId],
   })
-  if (existing.rows.length > 0) return false
+  if (existing.rows.length > 0) return String(existing.rows[0].refCode)
 
-  // Don't reward self-referral
-  if (visitorIp === sharerIp) return false
-
-  // Check sharer reward cap
-  const sharerRewards = await db.execute({
-    sql: 'SELECT reward_count FROM referral_rewards WHERE ip = ?',
-    args: [sharerIp],
-  })
-  const sharerCount = sharerRewards.rows.length > 0 ? Number(sharerRewards.rows[0].reward_count) : 0
-  if (sharerCount >= MAX_REFERRAL_REWARDS) {
-    // Record the click but don't reward
+  const refCode = deriveRefCode(userId)
+  try {
     await db.execute({
-      sql: 'INSERT INTO referral_clicks (ref_code, visitor_ip, created_at) VALUES (?, ?, ?)',
-      args: [refCode, visitorIp, Date.now()],
+      sql: 'INSERT INTO referral_codes (refCode, userId, createdAt) VALUES (?, ?, ?)',
+      args: [refCode, userId, Date.now()],
     })
-    return false
+  } catch {
+    // Race — another request inserted it; just re-fetch
+    const row = await db.execute({
+      sql: 'SELECT refCode FROM referral_codes WHERE userId = ?',
+      args: [userId],
+    })
+    if (row.rows.length > 0) return String(row.rows[0].refCode)
+    throw new Error('failed to create refCode')
   }
-
-  // Record click
-  await db.execute({
-    sql: 'INSERT INTO referral_clicks (ref_code, visitor_ip, created_at) VALUES (?, ?, ?)',
-    args: [refCode, visitorIp, Date.now()],
-  })
-
-  // Reward both parties
-  await Promise.all([
-    rewardFreeUse(sharerIp),
-    rewardFreeUse(visitorIp),
-  ])
-
-  // Increment sharer reward counter
-  await db.execute({
-    sql: `INSERT INTO referral_rewards (ip, reward_count) VALUES (?, 1)
-          ON CONFLICT(ip) DO UPDATE SET reward_count = reward_count + 1`,
-    args: [sharerIp],
-  })
-
-  return true
+  return refCode
 }
 
-/**
- * Records an overseas referral and rewards both parties with bonus generations.
- * Returns true if rewards were granted, false otherwise.
- */
-export async function recordOverseasReferral({
-  referrerUserId,
-  refereeUserId,
-}: {
-  referrerUserId: string
-  refereeUserId: string
-}): Promise<boolean> {
-  if (referrerUserId === refereeUserId) return false
-
+export async function lookupRefCode(refCode: string): Promise<{ userId: string } | null> {
   await ensureTables()
   const db = await getClient()
-
-  // Check duplicate (reuse referral_clicks: ref_code=referrer, visitor_ip=referee)
-  const existing = await db.execute({
-    sql: 'SELECT 1 FROM referral_clicks WHERE ref_code = ? AND visitor_ip = ?',
-    args: [referrerUserId, refereeUserId],
-  })
-  if (existing.rows.length > 0) return false
-
-  // Check referrer cap
-  const rewards = await db.execute({
-    sql: 'SELECT reward_count FROM referral_rewards WHERE ip = ?',
-    args: [referrerUserId],
-  })
-  const count = rewards.rows.length > 0 ? Number(rewards.rows[0].reward_count) : 0
-  if (count >= MAX_OVERSEAS_REFERRAL_REWARDS) return false
-
-  // Record
-  await db.execute({
-    sql: 'INSERT INTO referral_clicks (ref_code, visitor_ip, created_at) VALUES (?, ?, ?)',
-    args: [referrerUserId, refereeUserId, Date.now()],
-  })
-
-  // Reward both
-  await Promise.all([
-    addBonusGeneration(referrerUserId),
-    addBonusGeneration(refereeUserId),
-  ])
-
-  // Increment referrer counter
-  await db.execute({
-    sql: `INSERT INTO referral_rewards (ip, reward_count) VALUES (?, 1)
-          ON CONFLICT(ip) DO UPDATE SET reward_count = reward_count + 1`,
-    args: [referrerUserId],
-  })
-
-  return true
-}
-
-/** Returns how many unique visitors have clicked this refCode. */
-export async function getReferralCount(refCode: string): Promise<number> {
-  await ensureTables()
-  const db = await getClient()
-  const result = await db.execute({
-    sql: 'SELECT COUNT(*) as c FROM referral_clicks WHERE ref_code = ?',
+  const row = await db.execute({
+    sql: 'SELECT userId FROM referral_codes WHERE refCode = ?',
     args: [refCode],
   })
-  return Number(result.rows[0].c)
+  if (row.rows.length === 0) return null
+  return { userId: String(row.rows[0].userId) }
 }

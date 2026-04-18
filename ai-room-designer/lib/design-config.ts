@@ -456,6 +456,7 @@ export const DESIGN_MODES: { key: DesignMode; label: string; labelEn: string; ic
   { key: 'freestyle',        label: '自由生成', labelEn: 'AI Generate',      icon: '✨', desc: '无需上传照片',       descEn: 'Generate without a photo',           needsStyle: true,  needsUpload: false },
   { key: 'outdoor_redesign', label: '户外设计', labelEn: 'Outdoor Design',   icon: '🌿', desc: '庭院景观改造',       descEn: 'Redesign outdoor / garden space',    needsStyle: false, needsUpload: true  }, // fixed landscaping prompt — interior styles don't apply
   { key: 'style-match',      label: '风格参考', labelEn: 'Match a Style',   icon: '🖼️', desc: '参考图片的风格',    descEn: 'Copy style from a reference photo',  needsStyle: false, needsUpload: true  },
+  { key: 'inpaint',          label: '局部修改', labelEn: 'Inpaint',          icon: '🎯', desc: '涂抹区域局部替换',  descEn: 'Paint an area — AI replaces only that part', needsStyle: false, needsUpload: true  },
 ]
 
 /** Look up a Style by its English key across all categories. Returns undefined if not found. */

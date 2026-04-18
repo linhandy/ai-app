@@ -55,8 +55,8 @@ test('change_lighting mode ignores style, appends room type (Chinese)', () => {
   expect(prompt).toContain('卧室')
 })
 
-test('DESIGN_MODES has 9 entries', () => {
-  expect(DESIGN_MODES).toHaveLength(9)
+test('DESIGN_MODES has 10 entries', () => {
+  expect(DESIGN_MODES).toHaveLength(10)
 })
 
 test('ALL_ROOM_TYPE_KEYS has 25 entries', () => {
@@ -133,4 +133,11 @@ test('buildStylePrompt style-match returns Chinese prompt for premium quality', 
   expect(prompt).toContain('参考图')
   expect(prompt).toContain('卧室')
   expect(prompt.length).toBeGreaterThan(50)
+})
+
+test('DESIGN_MODES inpaint entry has correct flags', () => {
+  const inpaint = DESIGN_MODES.find((m) => m.key === 'inpaint')
+  expect(inpaint).toBeDefined()
+  expect(inpaint?.needsUpload).toBe(true)
+  expect(inpaint?.needsStyle).toBe(false)
 })

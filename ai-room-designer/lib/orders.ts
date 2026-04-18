@@ -4,7 +4,7 @@ import crypto from 'crypto'
 
 export type OrderStatus = 'pending' | 'paid' | 'generating' | 'done' | 'failed'
 export type QualityTier = 'standard' | 'premium' | 'ultra'
-export type DesignMode = 'redesign' | 'virtual_staging' | 'add_furniture' | 'paint_walls' | 'change_lighting' | 'sketch2render' | 'freestyle' | 'outdoor_redesign' | 'style-match'
+export type DesignMode = 'redesign' | 'virtual_staging' | 'add_furniture' | 'paint_walls' | 'change_lighting' | 'sketch2render' | 'freestyle' | 'outdoor_redesign' | 'style-match' | 'inpaint'
 
 export interface Order {
   id: string

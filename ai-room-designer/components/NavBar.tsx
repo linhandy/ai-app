@@ -25,7 +25,7 @@ export default async function NavBar() {
         if (session.user.id) {
           const { getSubscription } = await import('@/lib/subscription')
           const sub = await getSubscription(session.user.id)
-          if (sub.plan === 'free' && sub.generationsLeft > 0 && sub.generationsLeft !== Infinity) {
+          if (sub.plan === 'free' && sub.generationsLeft > 0) {
             overseasFreeLeft = sub.generationsLeft
           }
         }
@@ -118,7 +118,7 @@ export default async function NavBar() {
               aria-label={`${overseasFreeLeft} free generations remaining`}
               className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30"
             >
-              {overseasFreeLeft} free left
+              {overseasFreeLeft} free today
             </span>
           )}
           <Link

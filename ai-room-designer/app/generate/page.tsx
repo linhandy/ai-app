@@ -11,6 +11,7 @@ import BatchStyleSelector from '@/components/BatchStyleSelector'
 import { DESIGN_MODES } from '@/lib/design-config'
 import type { DesignMode } from '@/lib/orders'
 import InpaintCanvas from '@/components/InpaintCanvas'
+import FreeQuotaBanner from '@/components/FreeQuotaBanner'
 import { saveToHistory } from '@/lib/history'
 import { isOverseas } from '@/lib/region'
 import { regionConfig } from '@/lib/region-config'
@@ -302,10 +303,16 @@ function GeneratePageInner() {
         )}
       </nav>
 
-      <div className="flex flex-col md:flex-row px-4 md:px-[120px] pt-6 md:pt-12 pb-4 md:pb-16 gap-6 md:gap-10 items-start">
+      {isOverseas && (
+        <div className="px-4 sm:px-6 lg:px-[120px] pt-4 md:pt-6 max-w-7xl mx-auto w-full">
+          <FreeQuotaBanner />
+        </div>
+      )}
+
+      <div className="flex flex-col lg:flex-row px-4 sm:px-6 lg:px-[120px] pt-4 md:pt-6 pb-4 md:pb-16 gap-6 lg:gap-10 items-start max-w-7xl mx-auto w-full">
 
         {/* ── Left column: Upload ── */}
-        <div className="w-full md:w-[520px] flex flex-col gap-4">
+        <div className="w-full lg:w-[480px] flex flex-col gap-4">
           {mode === 'style-match' ? (
             <>
               <div>

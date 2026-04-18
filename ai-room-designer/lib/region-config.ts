@@ -97,7 +97,7 @@ export const regionConfig = {
     shareText:            isOverseas ? 'See my AI room redesign! Try it free →'                 : '用AI生成了装修效果图，免费试试 →',
     shareSkip:            isOverseas ? 'Skip, just download'                                    : '跳过，直接下载',
     // Upgrade
-    upgradePrompt:        isOverseas ? "You've used today's 3 free designs. Upgrade to Pro ($9.99/mo) for 30/month — or come back tomorrow for 3 more free." : '本月免费次数已用完，升级套餐继续生成',
+    upgradePrompt:        isOverseas ? "You've used today's 3 free designs. Upgrade to Pro ($9.99/mo) for 150/month — or come back tomorrow for 3 more free." : '本月免费次数已用完，升级套餐继续生成',
     // Style/room selectors
     styleSelectTitle:     isOverseas ? 'Choose a Style'                                         : '选择装修风格',
     roomTypeSelectTitle:  isOverseas ? 'Room Type'                                              : '房间类型',

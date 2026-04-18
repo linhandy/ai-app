@@ -14,6 +14,7 @@ jest.mock('@/lib/storage', () => ({
 
 import { getSubscription, upsertSubscription, closeSubscriptionDb } from '@/lib/subscription'
 import { getUploadData, closeDb } from '@/lib/orders'
+import { downloadFromStorage } from '@/lib/storage'
 
 beforeEach(() => {
   process.env.ORDERS_DB = ':memory:'
@@ -117,6 +118,10 @@ describe('style-match referenceUploadId validation (unit tests for logic used by
 })
 
 test('create-order overseas: inpaint mode requires referenceUploadId', async () => {
+  // mock downloadFromStorage so getUploadData('upload_abc') returns non-null,
+  // allowing execution to reach the inpaint-specific validation block
+  jest.mocked(downloadFromStorage).mockResolvedValueOnce(Buffer.from('fake'))
+
   process.env.NEXT_PUBLIC_REGION = 'overseas'
   process.env.REGION = 'overseas'
   const { POST } = await import('@/app/api/create-order/route')
@@ -134,4 +139,6 @@ test('create-order overseas: inpaint mode requires referenceUploadId', async () 
   })
   const res = await POST(req as unknown as NextRequest)
   expect(res.status).toBe(400)
+  const body = await res.json()
+  expect(body.error).toBe('Please upload a photo first.')  // ERR.uploadMissing in overseas mode
 })

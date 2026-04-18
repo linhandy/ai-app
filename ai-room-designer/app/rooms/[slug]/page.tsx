@@ -14,7 +14,7 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
 
   if (isOverseas) {
     const title = `AI ${room.labelEn} Design — Redesign in 30 Seconds | RoomAI`
-    const description = `Upload a photo of your ${room.labelEn.toLowerCase()} and AI redesigns it in 30 seconds. Get 3 free HD designs on signup — no credit card needed.`
+    const description = room.seoDescription.slice(0, 160)
     return {
       title,
       description,
@@ -60,9 +60,9 @@ export default function RoomPage({ params }: { params: { slug: string } }) {
           {isOverseas ? `AI ${name} Designer` : `AI ${name}设计`}
         </h1>
 
-        <p className="text-gray-400 text-lg text-center max-w-lg">
+        <p className="text-gray-400 text-lg text-center max-w-2xl leading-relaxed">
           {isOverseas
-            ? `Upload a photo of your ${name.toLowerCase()} and AI redesigns it in any style — results in under 30 seconds.`
+            ? room.seoDescription
             : `上传${name}照片，AI 30秒内生成专业的装修效果图`}
         </p>
 

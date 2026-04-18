@@ -16,8 +16,8 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   if (!style) return { title: isOverseas ? 'RoomAI' : '装AI' }
 
   if (isOverseas) {
-    const title = `${style.labelEn} Interior Design — AI Generated | RoomAI`
-    const description = `Get a ${style.labelEn} room design in 30 seconds. Upload a photo of your space and AI instantly redesigns it. 3 free designs on signup.`
+    const title = `${style.labelEn} Interior Design AI — Redesign in 30 Seconds | RoomAI`
+    const description = style.seoDescription.slice(0, 160)
     return {
       title,
       description,
@@ -40,6 +40,25 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   }
 }
 
+const OVERSEAS_FAQS = (styleName: string) => [
+  {
+    q: `How does AI ${styleName} interior design work?`,
+    a: `Upload a photo of your room, select the ${styleName} style, and RoomAI's AI redesigns it in under 30 seconds. The result is a photorealistic image showing exactly what your space would look like in that style.`,
+  },
+  {
+    q: 'Is it free to try?',
+    a: 'Yes — new users get 3 free HD designs per day with no credit card required. Pro plans start at $9.99/month for 150 designs.',
+  },
+  {
+    q: 'Can I use my own room photo?',
+    a: "Absolutely. Just upload a photo of your actual room and the AI will redesign it while preserving the room's structure and dimensions.",
+  },
+  {
+    q: 'Will my photos stay private?',
+    a: 'Yes. All designs are private by default. Only you can see your generated images unless you choose to share them.',
+  },
+]
+
 export default function StylePage({ params }: { params: { slug: string } }) {
   const style = findStyleByKey(params.slug)
   if (!style) notFound()
@@ -51,8 +70,22 @@ export default function StylePage({ params }: { params: { slug: string } }) {
   const siteName = isOverseas ? 'RoomAI' : '装AI'
   const logoLetter = isOverseas ? 'R' : '装'
 
+  const faqs = isOverseas ? OVERSEAS_FAQS(name) : []
+  const faqJsonLd = isOverseas ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(f => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  } : null
+
   return (
     <main className="min-h-screen bg-black text-white">
+      {faqJsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      )}
       <nav className="flex items-center px-4 md:px-[120px] h-16 border-b border-gray-900">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">{logoLetter}</div>
@@ -60,15 +93,20 @@ export default function StylePage({ params }: { params: { slug: string } }) {
         </Link>
       </nav>
 
-      <div className="flex flex-col items-center px-4 md:px-[120px] pt-12 pb-16 gap-8">
+      <div className="flex flex-col items-center px-4 md:px-[120px] pt-12 pb-16 gap-8 max-w-[900px] mx-auto">
         <h1 className="text-3xl md:text-5xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>
           {isOverseas ? `${name} Interior Design` : `${name}装修效果图`}
         </h1>
-        <p className="text-gray-400 text-lg text-center max-w-lg">
-          {isOverseas
-            ? `Upload a photo of your room and AI redesigns it in the ${name} style — results in 30 seconds.`
-            : `上传您的房间照片，AI 30秒内生成专业的${name}风格装修效果图`}
-        </p>
+
+        {isOverseas ? (
+          <p className="text-gray-400 text-lg text-center max-w-2xl leading-relaxed">
+            {style.seoDescription}
+          </p>
+        ) : (
+          <p className="text-gray-400 text-lg text-center max-w-lg">
+            上传您的房间照片，AI 30秒内生成专业的{name}风格装修效果图
+          </p>
+        )}
 
         <div className="relative w-full max-w-[600px] rounded-xl overflow-hidden border border-gray-700">
           <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
@@ -106,6 +144,20 @@ export default function StylePage({ params }: { params: { slug: string } }) {
                     </div>
                   </div>
                 </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {isOverseas && faqs.length > 0 && (
+          <div className="w-full max-w-[800px] mt-4 border-t border-gray-900 pt-8">
+            <h2 className="text-xl font-bold mb-6">Frequently Asked Questions</h2>
+            <div className="flex flex-col gap-4">
+              {faqs.map((faq, i) => (
+                <div key={i} className="border border-gray-800 rounded-xl p-5">
+                  <p className="font-semibold text-white mb-2">{faq.q}</p>
+                  <p className="text-gray-400 text-sm leading-relaxed">{faq.a}</p>
+                </div>
               ))}
             </div>
           </div>

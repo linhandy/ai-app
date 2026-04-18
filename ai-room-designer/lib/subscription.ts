@@ -214,6 +214,58 @@ export async function incrementGenerationsUsed(userId: string): Promise<void> {
   }
 }
 
+export async function incrementGenerationsUsedBy(userId: string, count: number): Promise<void> {
+  await ensureDailyFreeColumns()
+  const client = await getClient()
+  const existing = await client.execute({
+    sql: 'SELECT id, plan, status, currentPeriodEnd FROM subscriptions WHERE userId = ?',
+    args: [userId],
+  })
+
+  const today = todayUtc()
+
+  if (existing.rows.length === 0) {
+    await client.execute({
+      sql: `INSERT INTO subscriptions
+            (id, userId, stripeCustomerId, stripeSubscriptionId, plan, status, currentPeriodEnd,
+             generationsUsed, dailyFreeUsed, lastFreeResetDate, createdAt)
+            VALUES (?, ?, '', '', 'free', 'active', ?, ?, ?, ?, ?)`,
+      args: [
+        `sub_${crypto.randomBytes(8).toString('hex')}`,
+        userId,
+        Date.now() + 365 * 86400_000,
+        count,
+        count,
+        today,
+        Date.now(),
+      ],
+    })
+    return
+  }
+
+  const row = existing.rows[0]
+  const status = String(row.status)
+  const currentPeriodEnd = Number(row.currentPeriodEnd ?? 0)
+  const isActive = (status === 'active' || status === 'trialing') && currentPeriodEnd > Date.now()
+  const plan = String(row.plan) as SubscriptionPlan
+
+  if (isActive && plan !== 'free') {
+    await client.execute({
+      sql: `UPDATE subscriptions SET generationsUsed = generationsUsed + ? WHERE userId = ?`,
+      args: [count, userId],
+    })
+  } else {
+    await client.execute({
+      sql: `UPDATE subscriptions
+            SET dailyFreeUsed     = CASE WHEN lastFreeResetDate = ? THEN dailyFreeUsed + ? ELSE ? END,
+                lastFreeResetDate = ?,
+                generationsUsed   = generationsUsed + ?
+            WHERE userId = ?`,
+      args: [today, count, count, today, count, userId],
+    })
+  }
+}
+
 const MAX_BONUS_GENERATIONS = 5
 
 export async function addBonusGeneration(userId: string): Promise<boolean> {

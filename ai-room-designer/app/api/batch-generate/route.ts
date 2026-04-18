@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     if (sub.plan === 'free') {
       return NextResponse.json({ error: ERR.upgradeRequired, upgradeUrl: '/pricing' }, { status: 402 })
     }
-    if (sub.generationsLeft !== Infinity && sub.generationsLeft < styles.length) {
+    if (sub.generationsLeft < styles.length) {
       return NextResponse.json({ error: ERR.upgradeRequired, upgradeUrl: '/pricing' }, { status: 402 })
     }
 

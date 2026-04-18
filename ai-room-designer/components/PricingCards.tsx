@@ -7,8 +7,8 @@ const PLANS = [
     name: 'Free',
     monthlyPrice: 0,
     yearlyPrice: 0,
-    generationsBadge: '3 / month',
-    features: ['3 free generations', 'All 40+ styles', 'All room types', 'Standard quality'],
+    generationsBadge: '3 / day',
+    features: ['3 HD designs every day', 'No watermark', 'All 40+ styles', 'All room types'],
     cta: 'Start Free',
     ctaHref: '/generate',
     plan: null as string | null,
@@ -34,8 +34,9 @@ const PLANS = [
     name: 'Unlimited',
     monthlyPrice: 19.99,
     yearlyPrice: 15.99,
-    generationsBadge: 'Unlimited',
-    features: ['Unlimited generations', 'No watermark', 'All 40+ styles', 'All room types', 'High-res downloads', 'Priority generation'],
+    generationsBadge: 'Unlimited*',
+    features: ['Unlimited generations*', 'No watermark', 'All 40+ styles', 'All room types', 'High-res downloads', 'Priority generation'],
+    footnote: '* Fair use: up to 500 generations per month',
     cta: 'Go Unlimited',
     ctaHref: null,
     plan: 'unlimited' as string | null,
@@ -132,6 +133,9 @@ export default function PricingCards() {
                   </li>
                 ))}
               </ul>
+              {'footnote' in p && p.footnote && (
+                <p className="text-gray-500 text-[11px] leading-snug -mt-2">{p.footnote}</p>
+              )}
 
               {/* CTA */}
               {p.ctaHref ? (

@@ -22,7 +22,7 @@ describe('getSubscription', () => {
     expect(sub.hasWatermark).toBe(false)
   })
 
-  it('returns unlimited for active unlimited plan', async () => {
+  it('returns 500/month cap for active unlimited plan (fair use)', async () => {
     await upsertSubscription({
       userId: 'user_1',
       stripeCustomerId: 'cus_1',
@@ -33,8 +33,8 @@ describe('getSubscription', () => {
     })
     const sub = await getSubscription('user_1')
     expect(sub.plan).toBe('unlimited')
-    expect(sub.generationsLimit).toBe(-1)
-    expect(sub.generationsLeft).toBe(Infinity)
+    expect(sub.generationsLimit).toBe(500)
+    expect(sub.generationsLeft).toBe(500)
     expect(sub.hasWatermark).toBe(false)
   })
 

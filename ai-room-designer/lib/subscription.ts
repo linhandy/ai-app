@@ -6,7 +6,7 @@ export type SubscriptionPlan = 'free' | 'pro' | 'unlimited'
 const PLAN_LIMITS: Record<SubscriptionPlan, number> = {
   free:      3,
   pro:       150,
-  unlimited: -1,   // -1 = unlimited
+  unlimited: 500,  // Fair use cap — marketed as "Unlimited*" with footnote
 }
 
 let _bonusMigrated = false
@@ -47,8 +47,8 @@ function todayUtc(): string {
 export interface SubscriptionInfo {
   plan: SubscriptionPlan
   generationsUsed: number
-  generationsLimit: number    // -1 = unlimited
-  generationsLeft: number     // Infinity when unlimited
+  generationsLimit: number    // Hard cap for the current billing period
+  generationsLeft: number     // Remaining in the current billing period
   hasWatermark: boolean
   status: string
 }
@@ -100,7 +100,7 @@ export async function getSubscription(userId: string): Promise<SubscriptionInfo>
   const limit = PLAN_LIMITS[plan] ?? 3
   const used = Number(row.generationsUsed ?? 0)
   const bonus = Number(row.bonusGenerations ?? 0)
-  const left = limit === -1 ? Infinity : Math.max(0, (limit + bonus) - used)
+  const left = Math.max(0, (limit + bonus) - used)
 
   return {
     plan,

@@ -143,8 +143,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
       try {
         const sub = await getSubscription(session.user.id)
         if (sub.plan === 'free') {
-          const left = sub.generationsLeft
-          overseasFreeGenerationsLeft = left === Infinity ? null : left
+          overseasFreeGenerationsLeft = sub.generationsLeft
         }
       } catch {
         // non-fatal — upsell strip simply won't render

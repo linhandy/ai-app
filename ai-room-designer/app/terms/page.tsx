@@ -17,9 +17,9 @@ export default function TermsPage() {
 
         <h2>Subscriptions and Billing</h2>
         <ul>
-          <li>Free plan: 3 generations per month, watermarked results.</li>
+          <li>Free plan: 3 generations per day (resets daily UTC midnight), no watermark.</li>
           <li>Pro ($9.99/mo): 150 generations per month, no watermark.</li>
-          <li>Unlimited ($19.99/mo): unlimited generations, no watermark.</li>
+          <li>Unlimited ($19.99/mo): up to 500 generations per month under fair use, no watermark. Exceeding fair use may trigger temporary throttling.</li>
           <li>Subscriptions renew automatically. Cancel anytime via Account → Manage Billing.</li>
           <li>Refunds are handled on a case-by-case basis. Contact support within 7 days of charge.</li>
         </ul>

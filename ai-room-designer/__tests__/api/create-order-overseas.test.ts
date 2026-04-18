@@ -52,7 +52,7 @@ describe('subscription gate for overseas order creation', () => {
     expect(sub.generationsLeft).toBe(0)
   })
 
-  it('unlimited plan always has generationsLeft as Infinity', async () => {
+  it('unlimited plan has 500/month fair use cap', async () => {
     await upsertSubscription({
       userId: 'unlimited_user',
       stripeCustomerId: 'cus_x',
@@ -62,7 +62,8 @@ describe('subscription gate for overseas order creation', () => {
       currentPeriodEnd: Date.now() + 86400_000,
     })
     const sub = await getSubscription('unlimited_user')
-    expect(sub.generationsLeft).toBe(Infinity)
+    expect(sub.generationsLimit).toBe(500)
+    expect(sub.generationsLeft).toBe(500)
   })
 })
 

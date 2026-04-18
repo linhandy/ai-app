@@ -228,11 +228,13 @@ export default async function ResultPage({ params }: { params: { orderId: string
               : order.mode === 'virtual_staging' ? `Your ${order.style} virtual staging is ready`
               : order.mode === 'add_furniture' ? `Your ${order.style} furnished design is ready`
               : order.mode === 'style-match' ? 'Your style-matched redesign is ready'
+              : order.mode === 'inpaint' ? 'Your inpainting result is ready'
               : `Your ${order.style} redesign is ready`)
             : (order.mode === 'paint_walls' ? '墙面换色效果图已生成'
               : order.mode === 'change_lighting' ? '灯光优化效果图已生成'
               : order.mode === 'virtual_staging' ? `您的${order.style}虚拟家装效果图已生成`
               : order.mode === 'add_furniture' ? `您的${order.style}家具效果图已生成`
+              : order.mode === 'inpaint' ? '局部修改效果图已生成'
               : `您的${order.style}装修效果图已生成`)}
         </h1>
 

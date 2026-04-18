@@ -1,8 +1,9 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import UploadZone from '@/components/UploadZone'
+import { isOverseas } from '@/lib/region'
 
-const CHIPS = [
+const CHIPS_EN = [
   { label: 'Sofa', value: 'a modern sofa' },
   { label: 'Rug', value: 'a stylish area rug' },
   { label: 'Curtains', value: 'elegant curtains' },
@@ -11,6 +12,17 @@ const CHIPS = [
   { label: 'Coffee Table', value: 'a coffee table' },
   { label: 'Plant', value: 'indoor plants' },
   { label: 'Lamp', value: 'a floor lamp' },
+]
+
+const CHIPS_CN = [
+  { label: '沙发', value: '一款现代风格沙发' },
+  { label: '地毯', value: '一块时尚区域地毯' },
+  { label: '窗帘', value: '优雅的窗帘' },
+  { label: '墙面颜色', value: '清新的墙面色彩' },
+  { label: '吸顶灯', value: '一款现代吸顶灯' },
+  { label: '茶几', value: '一张茶几' },
+  { label: '绿植', value: '室内绿植' },
+  { label: '落地灯', value: '一盏落地灯' },
 ]
 
 interface DisplayRect { dx: number; dy: number; dw: number; dh: number }
@@ -24,6 +36,7 @@ interface Props {
 }
 
 export default function InpaintCanvas({ onOriginalUpload, onCompositeReady, onMaskChange, onPromptChange, onCompositeCleared }: Props) {
+  const CHIPS = isOverseas ? CHIPS_EN : CHIPS_CN
   const [phase, setPhase] = useState<'upload' | 'paint'>('upload')
   const [brushSize, setBrushSize] = useState(40)
   const [tool, setTool] = useState<'brush' | 'eraser'>('brush')
@@ -215,14 +228,14 @@ export default function InpaintCanvas({ onOriginalUpload, onCompositeReady, onMa
           onClick={() => setTool('brush')}
           className={`px-3 h-8 rounded text-sm font-medium transition-colors ${tool === 'brush' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
         >
-          🖌️ Brush
+          {isOverseas ? '🖌️ Brush' : '🖌️ 画笔'}
         </button>
         <button
           type="button"
           onClick={() => setTool('eraser')}
           className={`px-3 h-8 rounded text-sm font-medium transition-colors ${tool === 'eraser' ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
         >
-          ⬜ Eraser
+          {isOverseas ? '⬜ Eraser' : '⬜ 橡皮擦'}
         </button>
         <input
           type="range"
@@ -246,7 +259,7 @@ export default function InpaintCanvas({ onOriginalUpload, onCompositeReady, onMa
 
       {/* Chips + text */}
       <div>
-        <p className="text-gray-400 text-xs mb-2">Replace with:</p>
+        <p className="text-gray-400 text-xs mb-2">{isOverseas ? 'Replace with:' : '替换为：'}</p>
         <div className="flex flex-wrap gap-1.5 mb-2">
           {CHIPS.map((chip) => (
             <button
@@ -267,7 +280,7 @@ export default function InpaintCanvas({ onOriginalUpload, onCompositeReady, onMa
           type="text"
           value={prompt}
           onChange={(e) => handlePromptChange(e.target.value.slice(0, 150))}
-          placeholder="or describe what to put here..."
+          placeholder={isOverseas ? 'or describe what to put here...' : '或输入你想放置的内容…'}
           className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500"
         />
       </div>

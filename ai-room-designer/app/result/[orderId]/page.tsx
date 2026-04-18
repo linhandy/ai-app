@@ -300,11 +300,11 @@ export default async function ResultPage({ params }: { params: { orderId: string
 
         <div className="w-full max-w-[600px] grid grid-cols-3 divide-x divide-gray-800 rounded-lg bg-[#0A0A0A] border border-gray-800 overflow-hidden">
           {(isOverseas ? [
-            { label: 'Style', value: order.style, color: 'text-amber-500' },
+            { label: 'Mode', value: order.mode === 'inpaint' ? 'Inpaint' : (order.style || order.mode), color: 'text-amber-500' },
             { label: 'Resolution', value: order.quality === 'ultra' ? '4096×4096' : order.quality === 'premium' ? '2048×2048' : '1024×1024', color: 'text-white' },
             { label: 'Quality', value: order.quality === 'ultra' ? '4K' : order.quality === 'premium' ? 'HD' : 'Standard', color: 'text-green-400' },
           ] : [
-            { label: '装修风格', value: order.style, color: 'text-amber-500' },
+            { label: '装修风格', value: order.mode === 'inpaint' ? '局部修改' : order.style, color: 'text-amber-500' },
             { label: '分辨率', value: order.quality === 'ultra' ? '4096×4096' : order.quality === 'premium' ? '2048×2048' : '1024×1024', color: 'text-white' },
             { label: order.isFree ? '解锁价格' : '已付费', value: order.quality === 'ultra' ? '¥5' : order.quality === 'premium' ? '¥3' : '¥1', color: order.isFree ? 'text-amber-500' : 'text-green-400' },
           ]).map(({ label, value, color }) => (

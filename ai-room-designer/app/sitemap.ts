@@ -26,11 +26,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }))
 
+  const vsPages = ['interiorai', 'roomgpt', 'homedesigns-ai'].map(slug => ({
+    url: `${base}/vs/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
+
   return [
     { url: base, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 1 },
     { url: `${base}/generate`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.9 },
     { url: `${base}/blog`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.8 },
     { url: `${base}/gallery`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.8 },
+    ...vsPages,
     ...stylePages,
     ...roomPages,
     ...blogPages,

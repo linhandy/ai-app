@@ -9,6 +9,7 @@ import PaymentModal from '@/components/PaymentModal'
 import PackagePurchaseModal from '@/components/PackagePurchaseModal'
 import { DESIGN_MODES } from '@/lib/design-config'
 import type { DesignMode } from '@/lib/orders'
+import InpaintCanvas from '@/components/InpaintCanvas'
 import { saveToHistory } from '@/lib/history'
 import { isOverseas } from '@/lib/region'
 import { regionConfig } from '@/lib/region-config'
@@ -37,12 +38,17 @@ function GeneratePageInner() {
 
   const [uploadId, setUploadId] = useState<string | null>(null)
   const [referenceUploadId, setReferenceUploadId] = useState<string | null>(null)
+  const [hasMask, setHasMask] = useState(false)
+  const compositeBlobRef = useRef<(() => Promise<Blob>) | null>(null)
   const [style, setStyle] = useState('nordic_minimal')
   const [quality, setQuality] = useState(initialQuality)
   const [mode, setMode] = useState<DesignMode>('redesign')
   const handleModeChange = (newMode: DesignMode) => {
     setMode(newMode)
-    if (newMode !== 'style-match') setReferenceUploadId(null)
+    setReferenceUploadId(null)
+    setHasMask(false)
+    setCustomPrompt('')
+    compositeBlobRef.current = null
   }
   const [roomType, setRoomType] = useState('living_room')
   const [customPrompt, setCustomPrompt] = useState('')
@@ -61,7 +67,9 @@ function GeneratePageInner() {
 
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
   const canGenerate = !currentMode.needsUpload || (
-    !!uploadId && (mode !== 'style-match' || !!referenceUploadId)
+    !!uploadId &&
+    (mode !== 'style-match' || !!referenceUploadId) &&
+    (mode !== 'inpaint' || (hasMask && !!customPrompt.trim()))
   )
 
   const initialPackageId = searchParams.get('package')
@@ -107,13 +115,37 @@ function GeneratePageInner() {
   const handlePay = async () => {
     if (currentMode.needsUpload && !uploadId) { setError(s.errorUploadFirst); return }
     if (mode === 'style-match' && !referenceUploadId) { setError(s.errorUploadFirst); return }
+    if (mode === 'inpaint' && (!hasMask || !customPrompt.trim())) { setError('Paint the area to change and describe the replacement'); return }
     setError(null)
     setLoading(true)
+
+    // Inpaint: composite original + mask → upload before creating order
+    let inpaintCompositeId: string | undefined
+    if (mode === 'inpaint') {
+      try {
+        const blob = await compositeBlobRef.current!()
+        const fd = new FormData()
+        fd.append('image', blob, 'composite.jpg')
+        const upRes = await fetch('/api/upload', { method: 'POST', body: fd })
+        const upData = await upRes.json()
+        if (!upRes.ok) throw new Error(upData.error ?? 'Upload failed')
+        inpaintCompositeId = upData.uploadId
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to process mask')
+        setLoading(false)
+        return
+      }
+    }
+
     try {
       const res = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uploadId, referenceUploadId: mode === 'style-match' ? referenceUploadId : undefined, style, quality, mode, roomType, customPrompt: customPrompt.trim() || undefined }),
+        body: JSON.stringify({ uploadId, referenceUploadId: mode === 'style-match'
+            ? referenceUploadId
+            : mode === 'inpaint'
+            ? inpaintCompositeId
+            : undefined, style, quality, mode, roomType, customPrompt: customPrompt.trim() || undefined }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -226,6 +258,20 @@ function GeneratePageInner() {
               </div>
               <UploadZone key="reference" onUpload={(id) => setReferenceUploadId(id)} />
             </>
+          ) : mode === 'inpaint' ? (
+            <>
+              <div>
+                <h2 className="text-white text-base md:text-xl font-bold">Paint the area to change</h2>
+                <p className="text-gray-500 text-xs md:text-sm mt-1">Upload your room photo, then brush over the area you want to replace</p>
+              </div>
+              <InpaintCanvas
+                key="inpaint"
+                onOriginalUpload={(id) => setUploadId(id)}
+                onCompositeReady={(getBlob) => { compositeBlobRef.current = getBlob }}
+                onMaskChange={setHasMask}
+                onPromptChange={(p) => setCustomPrompt(p)}
+              />
+            </>
           ) : (
             <>
               <div>
@@ -295,6 +341,7 @@ function GeneratePageInner() {
           )}
 
           {/* Custom prompt */}
+          {mode !== 'inpaint' && (
           <div>
             <button
               type="button"
@@ -317,6 +364,7 @@ function GeneratePageInner() {
               </div>
             )}
           </div>
+          )}
 
           {/* Quality selector */}
           <div>

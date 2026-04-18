@@ -1,3 +1,10 @@
+import { NextRequest } from 'next/server'
+
+jest.mock('@/lib/auth', () => ({
+  parseSessionToken: jest.fn().mockReturnValue(null),
+  getServerSession: jest.fn().mockResolvedValue(null),
+}))
+
 jest.mock('@/lib/storage', () => ({
   downloadFromStorage: jest.fn().mockResolvedValue(null),
   uploadStoragePath: jest.fn((id: string) => `uploads/${id}`),
@@ -107,4 +114,24 @@ describe('style-match referenceUploadId validation (unit tests for logic used by
     expect(found?.referenceUploadId).toBe('ref_upload_1')
     expect(found?.mode).toBe('style-match')
   })
+})
+
+test('create-order overseas: inpaint mode requires referenceUploadId', async () => {
+  process.env.NEXT_PUBLIC_REGION = 'overseas'
+  process.env.REGION = 'overseas'
+  const { POST } = await import('@/app/api/create-order/route')
+  const req = new Request('http://localhost/api/create-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      uploadId: 'upload_abc',
+      mode: 'inpaint',
+      roomType: 'living_room',
+      customPrompt: 'a modern sofa',
+      quality: 'standard',
+      // referenceUploadId intentionally missing
+    }),
+  })
+  const res = await POST(req as unknown as NextRequest)
+  expect(res.status).toBe(400)
 })

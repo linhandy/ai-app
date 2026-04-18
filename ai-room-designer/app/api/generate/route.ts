@@ -79,6 +79,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Inpaint mode: the composite image (stored as referenceUploadId) is the primary image.
+    // Swap it into imagePath; don't send a second image to the AI.
+    if (order.mode === 'inpaint') {
+      imagePath = referenceImagePath
+      referenceImagePath = null
+    }
+
     const resultBuffer = await generateRoomImage({
       imagePath,
       referenceImagePath: referenceImagePath ?? undefined,

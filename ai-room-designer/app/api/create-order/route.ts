@@ -66,6 +66,10 @@ export async function POST(req: NextRequest) {
         const refData = await getUploadData(referenceUploadId)
         if (!refData) return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })
       }
+      if (mode === 'inpaint') {
+        if (!referenceUploadId) return NextResponse.json({ error: ERR.uploadMissing }, { status: 400 })
+        if (!customPrompt?.trim()) return NextResponse.json({ error: ERR.invalidMode }, { status: 400 })
+      }
 
       const trimmedPrompt = customPrompt?.trim().slice(0, 200) || undefined
 
@@ -163,6 +167,10 @@ export async function POST(req: NextRequest) {
     if (modeConfig.needsUpload && uploadId) {
       const uploadData = await getUploadData(uploadId)
       if (!uploadData) return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })
+    }
+    if (mode === 'inpaint') {
+      if (!referenceUploadId) return NextResponse.json({ error: ERR.uploadMissing }, { status: 400 })
+      if (!customPrompt?.trim()) return NextResponse.json({ error: ERR.invalidMode }, { status: 400 })
     }
 
     const sessionToken = req.cookies.get('session')?.value

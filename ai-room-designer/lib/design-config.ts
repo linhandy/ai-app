@@ -25,6 +25,7 @@ export interface RoomType {
   icon: string
   promptHint: string    // English room context appended to AI prompt
   promptHintCn: string  // Chinese room context appended to AI prompt
+  seoDescription: string
 }
 
 export const STYLE_CATEGORIES: StyleCategory[] = [
@@ -456,35 +457,160 @@ export const STYLE_CATEGORIES: StyleCategory[] = [
 
 export const ROOM_TYPES: RoomType[] = [
   // 居住空间
-  { key: 'living_room',    label: '客厅',    labelEn: 'Living Room',     icon: '🛋️', promptHint: 'living room with sofa and seating area',         promptHintCn: '客厅，配有沙发和茶几区域' },
-  { key: 'bedroom',        label: '卧室',    labelEn: 'Bedroom',         icon: '🛏️', promptHint: 'bedroom with bed and wardrobe',                  promptHintCn: '卧室，配有床铺和衣柜' },
-  { key: 'kids_room',      label: '儿童房',  labelEn: "Kids' Room",      icon: '🧸', promptHint: "children's bedroom with playful elements",        promptHintCn: '儿童房，含玩耍和学习区域' },
-  { key: 'study',          label: '书房',    labelEn: 'Home Office',     icon: '📚', promptHint: 'home office or study with desk and bookshelves',  promptHintCn: '书房，配有书桌和书架' },
-  { key: 'dressing_room',  label: '衣帽间',  labelEn: 'Walk-in Closet',  icon: '👗', promptHint: 'walk-in closet with wardrobes and storage',       promptHintCn: '衣帽间，配有储衣柜和梳妆台' },
+  {
+    key: 'living_room', label: '客厅', labelEn: 'Living Room', icon: '🛋️',
+    promptHint: 'living room with sofa and seating area',
+    promptHintCn: '客厅，配有沙发和茶几区域',
+    seoDescription: 'The living room is the heart of any home — the space for gathering, relaxing, and expressing personal style. AI Room Designer can transform your living room in any of 40+ aesthetic directions, from dramatic contemporary overhauls to gentle style refreshes, all from a single photo upload.',
+  },
+  {
+    key: 'bedroom', label: '卧室', labelEn: 'Bedroom', icon: '🛏️',
+    promptHint: 'bedroom with bed and wardrobe',
+    promptHintCn: '卧室，配有床铺和衣柜',
+    seoDescription: 'The bedroom is your most personal space — its design profoundly affects sleep quality and daily mood. Whether you want a serene sanctuary, a glamorous boudoir, or a cozy cocoon, AI Room Designer generates a photorealistic preview of your new bedroom in under 30 seconds.',
+  },
+  {
+    key: 'kids_room', label: '儿童房', labelEn: "Kids' Room", icon: '🧸',
+    promptHint: "children's bedroom with playful elements",
+    promptHintCn: '儿童房，含玩耍和学习区域',
+    seoDescription: 'A child\'s bedroom should grow with them — stimulating enough for play, calming enough for sleep, and easy for parents to maintain. AI Room Designer helps you visualize everything from jungle-themed adventure rooms to cozy minimalist retreats tailored perfectly for children.',
+  },
+  {
+    key: 'study', label: '书房', labelEn: 'Home Office', icon: '📚',
+    promptHint: 'home office or study with desk and bookshelves',
+    promptHintCn: '书房，配有书桌和书架',
+    seoDescription: 'The home office or study has become one of the most important rooms in any home. AI Room Designer helps you visualize a workspace that is both functional and inspiring — from sleek executive setups to cozy scholar\'s dens stacked with books and character.',
+  },
+  {
+    key: 'dressing_room', label: '衣帽间', labelEn: 'Walk-in Closet', icon: '👗',
+    promptHint: 'walk-in closet with wardrobes and storage',
+    promptHintCn: '衣帽间，配有储衣柜和梳妆台',
+    seoDescription: 'A well-designed walk-in closet turns getting dressed into a luxury ritual. AI Room Designer visualizes your ideal wardrobe space — from boutique-inspired glam to clean-lined minimalist organization systems — so you can plan with confidence before committing.',
+  },
   // 功能空间
-  { key: 'kitchen',        label: '厨房',    labelEn: 'Kitchen',         icon: '🍳', promptHint: 'kitchen with countertops and appliances',         promptHintCn: '厨房，配有操作台和厨具' },
-  { key: 'dining_room',    label: '餐厅',    labelEn: 'Dining Room',     icon: '🍽️', promptHint: 'dining room with table and chairs',              promptHintCn: '餐厅，配有餐桌椅' },
-  { key: 'bathroom',       label: '卫生间',  labelEn: 'Bathroom',        icon: '🛁', promptHint: 'bathroom with sink, toilet and shower',           promptHintCn: '卫生间，配有洗手台和淋浴' },
-  { key: 'balcony',        label: '阳台',    labelEn: 'Balcony',         icon: '🌿', promptHint: 'balcony with plants and relaxing seating',        promptHintCn: '阳台，配有绿植和休闲座椅' },
-  { key: 'laundry_room',   label: '洗衣房',  labelEn: 'Laundry Room',    icon: '🧺', promptHint: 'laundry room with washer and storage cabinets',   promptHintCn: '洗衣房，配有洗衣机和储物柜' },
+  {
+    key: 'kitchen', label: '厨房', labelEn: 'Kitchen', icon: '🍳',
+    promptHint: 'kitchen with countertops and appliances',
+    promptHintCn: '厨房，配有操作台和厨具',
+    seoDescription: 'The kitchen is where design and function must coexist perfectly. AI Room Designer helps you visualize everything from Shaker farmhouse kitchens to sleek all-matte-black contemporary designs, letting you explore major decisions before any cabinets are ordered.',
+  },
+  {
+    key: 'dining_room', label: '餐厅', labelEn: 'Dining Room', icon: '🍽️',
+    promptHint: 'dining room with table and chairs',
+    promptHintCn: '餐厅，配有餐桌椅',
+    seoDescription: 'The dining room sets the tone for how you gather and entertain. AI Room Designer helps you envision your ideal dining space — whether a dramatic statement room with a sculptural chandelier or a warm, intimate space for everyday family meals.',
+  },
+  {
+    key: 'bathroom', label: '卫生间', labelEn: 'Bathroom', icon: '🛁',
+    promptHint: 'bathroom with sink, toilet and shower',
+    promptHintCn: '卫生间，配有洗手台和淋浴',
+    seoDescription: 'The bathroom is one of the highest-impact rooms for design investment. AI Room Designer helps you visualize transformations from dated tile and fixtures to stunning spa-like retreats with marble, rainfall showers, and artisan craftsmanship.',
+  },
+  {
+    key: 'balcony', label: '阳台', labelEn: 'Balcony', icon: '🌿',
+    promptHint: 'balcony with plants and relaxing seating',
+    promptHintCn: '阳台，配有绿植和休闲座椅',
+    seoDescription: 'Even a small balcony can become a treasured outdoor room with the right design. AI Room Designer helps you visualize your balcony transformed into an urban garden, a serene meditation space, or a stylish alfresco dining area.',
+  },
+  {
+    key: 'laundry_room', label: '洗衣房', labelEn: 'Laundry Room', icon: '🧺',
+    promptHint: 'laundry room with washer and storage cabinets',
+    promptHintCn: '洗衣房，配有洗衣机和储物柜',
+    seoDescription: 'The laundry room does not have to be purely utilitarian. AI Room Designer shows how smart storage, quality cabinetry, and thoughtful finishes can transform this overlooked room into a space that is actually pleasant to spend time in.',
+  },
   // 公共空间
-  { key: 'entrance',       label: '玄关',    labelEn: 'Entryway',        icon: '🚪', promptHint: 'entrance foyer with shoe storage and coat hooks', promptHintCn: '玄关，配有鞋柜和换鞋凳' },
-  { key: 'hallway',        label: '走廊',    labelEn: 'Hallway',         icon: '🏃', promptHint: 'corridor or hallway',                             promptHintCn: '走廊过道空间' },
-  { key: 'staircase',      label: '楼梯间',  labelEn: 'Staircase',       icon: '🪜', promptHint: 'staircase area with railing',                    promptHintCn: '楼梯间区域' },
-  { key: 'elevator_lobby', label: '电梯间',  labelEn: 'Elevator Lobby',  icon: '🔼', promptHint: 'elevator lobby area',                             promptHintCn: '电梯厅区域' },
+  {
+    key: 'entrance', label: '玄关', labelEn: 'Entryway', icon: '🚪',
+    promptHint: 'entrance foyer with shoe storage and coat hooks',
+    promptHintCn: '玄关，配有鞋柜和换鞋凳',
+    seoDescription: 'The entryway sets the first impression of your entire home. AI Room Designer helps you design an entry that is both functional — with smart shoe and coat storage — and stylistically welcoming, establishing the character of your home from the moment guests arrive.',
+  },
+  {
+    key: 'hallway', label: '走廊', labelEn: 'Hallway', icon: '🏃',
+    promptHint: 'corridor or hallway',
+    promptHintCn: '走廊过道空间',
+    seoDescription: 'Hallways and corridors are often neglected, but they represent significant square footage. AI Room Designer shows how thoughtful lighting, gallery walls, and strategic furniture can transform a functional passage into a design feature.',
+  },
+  {
+    key: 'staircase', label: '楼梯间', labelEn: 'Staircase', icon: '🪜',
+    promptHint: 'staircase area with railing',
+    promptHintCn: '楼梯间区域',
+    seoDescription: 'A staircase is an architectural opportunity that many homes underutilize. AI Room Designer visualizes how different baluster designs, handrail materials, stair treads, and lighting strategies can transform your staircase into a genuine showpiece.',
+  },
+  {
+    key: 'elevator_lobby', label: '电梯间', labelEn: 'Elevator Lobby', icon: '🔼',
+    promptHint: 'elevator lobby area',
+    promptHintCn: '电梯厅区域',
+    seoDescription: 'Building common areas and elevator lobbies set the tone for any multi-unit property. AI Room Designer helps property managers and developers visualize lobby upgrades that maximize perceived value and resident satisfaction.',
+  },
   // 商业空间
-  { key: 'office',         label: '办公室',  labelEn: 'Office',          icon: '💼', promptHint: 'office workspace with desks and meeting area',    promptHintCn: '办公室，配有工位和会议区' },
-  { key: 'cafe',           label: '咖啡厅',  labelEn: 'Café',            icon: '☕', promptHint: 'cafe with counter and customer seating',          promptHintCn: '咖啡厅，配有吧台和座位区' },
-  { key: 'restaurant',     label: '餐馆',    labelEn: 'Restaurant',      icon: '🍜', promptHint: 'restaurant dining area with tables',              promptHintCn: '餐馆用餐区，配有餐桌椅' },
-  { key: 'hotel_room',     label: '酒店客房', labelEn: 'Hotel Room',     icon: '🏨', promptHint: 'hotel room with bed and amenities',              promptHintCn: '酒店客房，配有床铺和设施' },
-  { key: 'retail_store',   label: '零售店',  labelEn: 'Retail Store',    icon: '🛍️', promptHint: 'retail shop with display shelves and counter',   promptHintCn: '零售店，配有展示架和收银台' },
-  { key: 'gym',            label: '健身房',  labelEn: 'Gym',             icon: '🏋️', promptHint: 'gym with exercise equipment',                    promptHintCn: '健身房，配有健身器械' },
+  {
+    key: 'office', label: '办公室', labelEn: 'Office', icon: '💼',
+    promptHint: 'office workspace with desks and meeting area',
+    promptHintCn: '办公室，配有工位和会议区',
+    seoDescription: 'A commercial office environment profoundly affects productivity, creativity, and talent retention. AI Room Designer helps teams and managers visualize new workplace configurations — from collaborative open plans to private executive offices — before committing to expensive renovations.',
+  },
+  {
+    key: 'cafe', label: '咖啡厅', labelEn: 'Café', icon: '☕',
+    promptHint: 'cafe with counter and customer seating',
+    promptHintCn: '咖啡厅，配有吧台和座位区',
+    seoDescription: 'Café design is a critical success factor in the competitive hospitality market. AI Room Designer lets café owners rapidly visualize different aesthetic directions — from Scandinavian minimalism to retro American diners — helping identify the concept that will resonate with their target customers.',
+  },
+  {
+    key: 'restaurant', label: '餐馆', labelEn: 'Restaurant', icon: '🍜',
+    promptHint: 'restaurant dining area with tables',
+    promptHintCn: '餐馆用餐区，配有餐桌椅',
+    seoDescription: 'Restaurant interior design directly influences dining experience, table turnover, and brand perception. AI Room Designer gives restaurateurs a rapid visualization tool for testing different atmospheres before major capital investment in refurbishment.',
+  },
+  {
+    key: 'hotel_room', label: '酒店客房', labelEn: 'Hotel Room', icon: '🏨',
+    promptHint: 'hotel room with bed and amenities',
+    promptHintCn: '酒店客房，配有床铺和设施',
+    seoDescription: 'Hotel room design determines guest ratings, repeat bookings, and brand positioning. AI Room Designer gives hoteliers a fast and affordable way to visualize room renovation concepts across multiple style directions before committing to specification and procurement.',
+  },
+  {
+    key: 'retail_store', label: '零售店', labelEn: 'Retail Store', icon: '🛍️',
+    promptHint: 'retail shop with display shelves and counter',
+    promptHintCn: '零售店，配有展示架和收银台',
+    seoDescription: 'Retail environment design influences dwell time, purchase behavior, and brand perception. AI Room Designer helps store designers and retailers rapidly visualize merchandising layouts and aesthetic concepts before committing to fixtures and fit-out.',
+  },
+  {
+    key: 'gym', label: '健身房', labelEn: 'Gym', icon: '🏋️',
+    promptHint: 'gym with exercise equipment',
+    promptHintCn: '健身房，配有健身器械',
+    seoDescription: 'The gym or home workout space needs to balance practical function with motivational energy. AI Room Designer helps you visualize everything from professional-grade home gym setups to stylish boutique fitness studio concepts.',
+  },
   // 室外空间
-  { key: 'garden',     label: '花园',     labelEn: 'Garden',         icon: '🌳', promptHint: 'backyard garden with lawn and plants',           promptHintCn: '花园，有草坪和植物' },
-  { key: 'patio',      label: '露台',     labelEn: 'Patio',          icon: '🪑', promptHint: 'patio or terrace outdoor seating area',          promptHintCn: '露台，户外休闲区' },
-  { key: 'front_yard', label: '前院',     labelEn: 'Front Yard',     icon: '🏡', promptHint: 'front yard entrance garden',                     promptHintCn: '前院，入口花园' },
-  { key: 'rooftop',    label: '屋顶花园', labelEn: 'Rooftop Garden',  icon: '🌇', promptHint: 'rooftop terrace garden with city view',          promptHintCn: '屋顶花园，城市景观' },
-  { key: 'pool_area',  label: '泳池区',   labelEn: 'Pool Area',      icon: '🏊', promptHint: 'pool area with surrounding landscape',           promptHintCn: '泳池区，周边景观' },
+  {
+    key: 'garden', label: '花园', labelEn: 'Garden', icon: '🌳',
+    promptHint: 'backyard garden with lawn and plants',
+    promptHintCn: '花园，有草坪和植物',
+    seoDescription: 'Garden and outdoor space design can dramatically extend a home\'s usable living area and increase property value. AI Room Designer helps homeowners and designers visualize landscape concepts, outdoor furniture arrangements, and hardscaping ideas.',
+  },
+  {
+    key: 'patio', label: '露台', labelEn: 'Patio', icon: '🪑',
+    promptHint: 'patio or terrace outdoor seating area',
+    promptHintCn: '露台，户外休闲区',
+    seoDescription: 'A patio or terrace is an investment in outdoor living — a space that extends the home into the open air. AI Room Designer helps visualize different outdoor furniture arrangements, surface finishes, and planting schemes so you can plan with confidence.',
+  },
+  {
+    key: 'front_yard', label: '前院', labelEn: 'Front Yard', icon: '🏡',
+    promptHint: 'front yard entrance garden',
+    promptHintCn: '前院，入口花园',
+    seoDescription: 'The front yard creates the first impression of any property. AI Room Designer helps homeowners visualize curb appeal improvements — from classic formal gardens to contemporary landscaping with geometric planting and clean hardscaping.',
+  },
+  {
+    key: 'rooftop', label: '屋顶花园', labelEn: 'Rooftop Garden', icon: '🌇',
+    promptHint: 'rooftop terrace garden with city view',
+    promptHintCn: '屋顶花园，城市景观',
+    seoDescription: 'Rooftop spaces are some of urban living\'s most coveted amenities. AI Room Designer helps visualize rooftop garden and entertaining space concepts — from minimal seating terraces with city views to lush planted roof gardens and outdoor kitchen setups.',
+  },
+  {
+    key: 'pool_area', label: '泳池区', labelEn: 'Pool Area', icon: '🏊',
+    promptHint: 'pool area with surrounding landscape',
+    promptHintCn: '泳池区，周边景观',
+    seoDescription: 'Pool and outdoor living area design is one of the highest-value additions to any residential property. AI Room Designer helps visualize pool surrounds, outdoor furniture groupings, shade structures, and planting schemes that maximize both beauty and function.',
+  },
 ]
 
 export const DESIGN_MODES: { key: DesignMode; label: string; labelEn: string; icon: string; desc: string; descEn: string; needsStyle: boolean; needsUpload: boolean }[] = [

@@ -68,6 +68,8 @@ function GeneratePageInner() {
     setHasMask(false)
     setCustomPrompt('')
     compositeBlobRef.current = null
+    setBatchMode(false)
+    setBatchStyles([])
   }
   const toggleBatchStyle = (styleKey: string) => {
     setBatchStyles((prev) =>

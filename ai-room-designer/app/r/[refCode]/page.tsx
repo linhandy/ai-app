@@ -16,7 +16,7 @@ async function getPublicWorks(userId: string): Promise<Array<{ id: string; url: 
   const db = await getClient()
   const rows = await db.execute({
     sql: `SELECT id, resultStoragePath FROM orders
-          WHERE owner = ? AND status = 'done' AND isPublicGallery = 1
+          WHERE userId = ? AND status = 'done' AND isPublicGallery = 1
           ORDER BY createdAt DESC LIMIT 8`,
     args: [userId],
   })

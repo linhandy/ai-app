@@ -1,1 +1,5 @@
-{"framework":"nextjs"}
+{
+  "env": {
+    "REGION": "overseas"
+  }
+}

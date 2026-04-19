@@ -75,7 +75,7 @@ export default function PricingCards() {
       body: JSON.stringify({ plan, interval: billingInterval }),
     })
     const data = await res.json()
-    if (data.error === 'authRequired') {
+    if (res.status === 401 || data.error === 'Sign in required.') {
       window.location.href = '/api/auth/signin?callbackUrl=' + encodeURIComponent('/pricing')
       return
     }

@@ -63,7 +63,7 @@ export const { handlers: { GET, POST }, handlers, auth, signIn, signOut } = Next
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        domain: process.env.NODE_ENV === 'production' ? '.roomai.shop' : undefined,
+        domain: isOverseas && process.env.NODE_ENV === 'production' ? '.roomai.shop' : undefined,
       },
     },
   },

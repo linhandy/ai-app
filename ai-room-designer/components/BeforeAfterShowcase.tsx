@@ -17,7 +17,7 @@ export default function BeforeAfterShowcase() {
 
   return (
     <section className="px-4 sm:px-6 lg:px-[120px] py-16 bg-black">
-      <div className="max-w-5xl mx-auto flex flex-col items-center gap-6">
+      <div className="max-w-6xl mx-auto flex flex-col items-center gap-6">
          <div className="text-center max-w-2xl">
            <h2 className="text-3xl md:text-4xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>
              Drag to compare <span className="text-amber-500">before & after</span>

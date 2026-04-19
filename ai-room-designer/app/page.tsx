@@ -117,25 +117,28 @@ export default function HomePage() {
       {isOverseas && <DesignModesGrid />}
 
       {/* Styles section */}
-      <section id="examples" className="px-6 md:px-[120px] py-16 bg-[#050505] flex flex-col items-center gap-8">
-        <div className="flex flex-col items-center gap-3">
-          <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>{s.stylesTitle}</h2>
-          <p className="text-gray-500 text-sm text-center">{s.stylesSubtitle}</p>
+      <section id="examples" className="px-6 md:px-[120px] py-16 bg-[#050505]">
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-8">
+          <div className="flex flex-col items-center gap-3">
+            <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>{s.stylesTitle}</h2>
+            <p className="text-gray-500 text-sm text-center">{s.stylesSubtitle}</p>
+          </div>
+          <StyleGallery />
         </div>
-        <StyleGallery />
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="px-6 md:px-[120px] py-16 flex flex-col items-center gap-8">
-        <div className="flex flex-col items-center gap-3">
-          <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>{s.pricingTitle}</h2>
-          <p className="text-gray-500 text-sm text-center">{s.pricingSubtitle}</p>
-        </div>
+      <section id="pricing" className="px-6 md:px-[120px] py-16">
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-8">
+          <div className="flex flex-col items-center gap-3">
+            <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>{s.pricingTitle}</h2>
+            <p className="text-gray-500 text-sm text-center">{s.pricingSubtitle}</p>
+          </div>
 
-        {isOverseas ? (
-          <PricingCards />
-        ) : (
-          <>
+          {isOverseas ? (
+            <PricingCards />
+          ) : (
+            <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 w-full max-w-[960px]">
               {/* Standard */}
               <div className="p-6 rounded-xl bg-[#0D0D0D] border border-gray-800 flex flex-col gap-4">
@@ -241,6 +244,7 @@ export default function HomePage() {
             </div>
           </>
         )}
+        </div>
       </section>
 
       {/* FAQ */}

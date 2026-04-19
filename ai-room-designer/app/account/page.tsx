@@ -1,9 +1,9 @@
 import NavBar from '@/components/NavBar'
 import { getSubscription } from '@/lib/subscription'
+import { getReferralStats } from '@/lib/referral'
 import { isOverseas } from '@/lib/region'
 import { redirect } from 'next/navigation'
-import { createHash } from 'crypto'
-import CopyButton from '@/components/CopyButton'
+import ReferralDisplay from '@/components/ReferralDisplay'
 
 export default async function AccountPage() {
   if (!isOverseas) redirect('/')
@@ -19,9 +19,22 @@ export default async function AccountPage() {
 
   const subscription = await getSubscription(sub_session.userId)
 
-  const refCode = createHash('sha256').update(sub_session.userId).digest('hex').slice(0, 8)
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
-  const inviteUrl = `${base}?ref=${refCode}`
+  // 获取推荐统计数据
+  let referralStats = {
+    refCode: '',
+    inviteUrl: '',
+    thisMonthCompleted: 0,
+    totalCompleted: 0,
+    monthlyLimit: 10,
+  }
+  let referralError: string | null = null
+
+  try {
+    referralStats = await getReferralStats(sub_session.userId)
+  } catch (error) {
+    console.error('Failed to fetch referral stats:', error)
+    referralError = 'Failed to load referral stats'
+  }
 
   const planLabel: Record<string, string> = {
     free: 'Free',
@@ -86,27 +99,15 @@ export default async function AccountPage() {
           )}
         </div>
 
-        {/* Referral section */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mt-6">
-          <h2 className="text-lg font-semibold mb-1">Invite Friends</h2>
-          <p className="text-gray-400 text-sm mb-4">
-            Share your link — you both get 1 extra free design (up to 5 bonus).
-          </p>
-
-          <div className="flex items-center gap-2 mb-4">
-            <input
-              type="text"
-              readOnly
-              value={inviteUrl}
-              className="flex-1 bg-gray-800 text-gray-300 text-sm px-3 h-10 rounded border border-gray-700 outline-none"
-            />
-            <CopyButton text={inviteUrl} />
-          </div>
-
-          <p className="text-gray-500 text-xs">
-            Invite friends to get +2 bonus generations each.
-          </p>
-        </div>
+        {/* Referral section - using new ReferralDisplay component */}
+        <ReferralDisplay
+          refCode={referralStats.refCode}
+          inviteUrl={referralStats.inviteUrl}
+          thisMonthCompleted={referralStats.thisMonthCompleted}
+          totalCompleted={referralStats.totalCompleted}
+          monthlyLimit={referralStats.monthlyLimit}
+          error={referralError}
+        />
       </div>
     </main>
   )

@@ -104,6 +104,18 @@ export const regionConfig = {
     // Styles section (homepage)
     stylesTitle:          isOverseas ? '40+ Styles, One Click'                                  : '40+ 装修风格，一键切换',
     stylesSubtitle:       isOverseas ? 'The most popular interior design styles · Click to preview' : '覆盖当下最流行的室内设计风格 · 点击图片可放大预览',
+    // Referral section
+    referralTitle:        isOverseas ? 'Your Referral Code'                                     : '你的推荐码',
+    referralCodeLabel:    isOverseas ? 'Referral Code'                                          : '推荐码',
+    referralInviteLabel:  isOverseas ? 'Invite URL'                                             : '邀请链接',
+    referralCopyBtn:      isOverseas ? 'Copy Link'                                              : '复制链接',
+    referralCopied:       isOverseas ? 'Copied!'                                                : '已复制！',
+    referralThisMonth:    isOverseas ? 'Referrals This Month'                                  : '本月邀请',
+    referralMonthProgress:isOverseas ? (count: number) => `${count}/10` : (count: number) => `${count}/10`,
+    referralDescription:  isOverseas ? 'Share your link and earn +2 bonus designs each (up to 10/month).' : '分享你的链接，每成功邀请一个用户就能获得 +2 次免费生成（每月最多 10 个）',
+    referralTotalStats:   isOverseas ? 'All-time referrals'                                    : '总邀请数',
+    referralLoading:      isOverseas ? 'Loading referral stats...'                             : '加载推荐数据中...',
+    referralError:        isOverseas ? 'Failed to load referral stats'                         : '加载推荐数据失败',
   },
 
   // --- SEO ---

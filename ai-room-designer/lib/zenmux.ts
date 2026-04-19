@@ -3,6 +3,7 @@ import fs from 'fs'
 import sharp from 'sharp'
 import type { DesignMode } from './orders'
 import { findStyleByKey, findRoomType } from './design-config'
+import { isOverseas } from './region'
 
 // Re-export for backward compatibility
 export { STYLE_CATEGORIES, DESIGN_MODES } from './design-config'
@@ -28,7 +29,7 @@ export function buildStylePrompt(
   roomType: string = 'living_room',
   customPrompt?: string,
 ): string {
-  const useEn = quality === 'standard'
+  const useEn = isOverseas || quality === 'standard'
   const room = findRoomType(roomType)
   const roomHint = useEn
     ? (room?.promptHint ?? 'a room')

@@ -323,6 +323,11 @@ function GeneratePageInner() {
             Sign in
           </Link>
         )}
+        {isOverseas && isLoggedIn === true && (
+          <Link href="/admin" className="ml-4 text-amber-500 text-xs hover:text-amber-400 transition-colors hidden sm:block font-semibold">
+            Admin
+          </Link>
+        )}
       </nav>
 
       {isOverseas && (
@@ -331,10 +336,10 @@ function GeneratePageInner() {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row px-4 sm:px-6 lg:px-12 pt-4 md:pt-6 pb-4 md:pb-16 gap-6 lg:gap-10 items-start max-w-[1200px] mx-auto w-full">
+       <div className="flex flex-col px-4 sm:px-6 lg:px-12 pt-4 md:pt-6 pb-4 md:pb-16 gap-6 lg:gap-8 items-start max-w-[1200px] mx-auto w-full">
 
-        {/* ── Left column: Upload ── */}
-        <div className="w-full lg:flex-[1_1_50%] xl:flex-[0_0_550px] flex flex-col gap-4">
+        {/* ── Top section: Upload ── */}
+        <div className="w-full flex flex-col gap-4">
           {mode === 'style-match' ? (
             <>
               <div>
@@ -390,8 +395,8 @@ function GeneratePageInner() {
           )}
         </div>
 
-        {/* ── Right column: Settings ── */}
-        <div className="flex-1 w-full flex flex-col gap-4 md:gap-5">
+         {/* ── Bottom section: Settings ── */}
+         <div className="w-full flex flex-col gap-4 md:gap-5">
 
           {/* Mode selector */}
           <div>

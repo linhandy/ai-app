@@ -1,5 +1,9 @@
 import crypto from 'crypto'
 import { getClient } from './orders'
+import { addBonusGenerationsBy } from './subscription'
+import { addCredits } from './credits'
+import { isOverseas } from './region'
+
 
 // ---- Table bootstrap ----
 let _migrated = false
@@ -216,4 +220,72 @@ export async function tryAttributeReferral(params: {
     ],
   })
   return { ok: true }
+}
+// ---- Reward completion (Task 4) ----
+
+async function grantBonus(userId: string, count: number): Promise<void> {
+  if (isOverseas) {
+    await addBonusGenerationsBy(userId, count)
+  } else {
+    await addCredits(userId, count)
+  }
+}
+
+export interface CompleteReferralResult {
+  completed: boolean
+  referrerUserId?: string
+}
+
+export async function tryCompleteReferral(userId: string): Promise<CompleteReferralResult> {
+  await ensureTables()
+  const db = await getClient()
+
+  // 1. Find pending attribution for this referee
+  const attr = await db.execute({
+    sql: `SELECT id, referrerUserId FROM referral_attributions
+          WHERE refereeUserId = ? AND status = 'pending'`,
+    args: [userId],
+  })
+  if (attr.rows.length === 0) {
+    return { completed: false }
+  }
+
+  const attributionId = String(attr.rows[0].id)
+  const referrerUserId = String(attr.rows[0].referrerUserId)
+
+  // 2. Re-check referrer's monthly cap (prevent month-end explosion)
+  const month = currentYearMonth()
+  const thisMonth = await getMonthlyCount(referrerUserId, month)
+  if (thisMonth >= MONTHLY_CAP) {
+    // Cap exceeded void this attribution
+    await db.execute({
+      sql: `UPDATE referral_attributions SET status = 'voided' WHERE id = ?`,
+      args: [attributionId],
+    })
+    return { completed: false, referrerUserId }
+  }
+
+  // 3. Grant bonuses
+  await Promise.all([
+    grantBonus(referrerUserId, 2),
+    grantBonus(userId, 2),
+  ])
+
+  // 4. Mark as completed and increment monthly stats
+  const now = Date.now()
+  await db.execute({
+    sql: `UPDATE referral_attributions SET status = 'completed', completedAt = ?
+          WHERE id = ?`,
+    args: [now, attributionId],
+  })
+
+  await db.execute({
+    sql: `INSERT INTO referral_monthly_stats (referrerUserId, yearMonth, completedCount)
+          VALUES (?, ?, 1)
+          ON CONFLICT(referrerUserId, yearMonth)
+          DO UPDATE SET completedCount = completedCount + 1`,
+    args: [referrerUserId, month],
+  })
+
+  return { completed: true, referrerUserId }
 }

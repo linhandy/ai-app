@@ -3,6 +3,10 @@ import {
   lookupRefCode,
   closeDb,
   tryAttributeReferral,
+  tryCompleteReferral,
+  currentYearMonth,
+  getMonthlyCount as getMonthlyCountLib,
+  MONTHLY_CAP,
 } from '@/lib/referral'
 import { closeDb as closeOrdersDb, getClient } from '@/lib/orders'
 
@@ -140,5 +144,85 @@ describe('tryAttributeReferral', () => {
       refCode, newUserId: 'usr_v6b', visitorIp: '2001:db8:abcd:1234:ffff::ff',
     })
     expect(result).toEqual({ ok: false, reason: 'ip_dedupe' })
+  })
+})
+
+describe('tryCompleteReferral', () => {
+  const seedAttribution = async (referrerUserId: string, refereeUserId: string, status = 'pending'): Promise<string> => {
+    const db = await getClient()
+    const refCode = await getOrCreateRefCode(referrerUserId)
+    const id = `ref_${Math.random().toString(16).slice(2, 10)}`
+    await db.execute({
+      sql: `INSERT INTO referral_attributions
+            (id, referrerUserId, refereeUserId, refCode, visitorIpAtSignup, status, createdAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [id, referrerUserId, refereeUserId, refCode, '1.1.1.1', status, Date.now()],
+    })
+    return id
+  }
+
+  const getAttributionStatus = async (refereeUserId: string): Promise<string | null> => {
+    const db = await getClient()
+    const row = await db.execute({
+      sql: 'SELECT status FROM referral_attributions WHERE refereeUserId = ?',
+      args: [refereeUserId],
+    })
+    return row.rows.length > 0 ? String(row.rows[0].status) : null
+  }
+
+  test('returns completed false if no pending attribution', async () => {
+    const result = await tryCompleteReferral('nonexistent_user')
+    expect(result).toEqual({ completed: false })
+  })
+
+  test('marks attribution as completed and increments monthly stats', async () => {
+    await seedAttribution('ref_user_1', 'new_user_1', 'pending')
+
+    const result = await tryCompleteReferral('new_user_1')
+    expect(result.completed).toBe(true)
+    expect(result.referrerUserId).toBe('ref_user_1')
+
+    const status = await getAttributionStatus('new_user_1')
+    expect(status).toBe('completed')
+
+    const month = currentYearMonth()
+    const count = await getMonthlyCountLib('ref_user_1', month)
+    expect(count).toBe(1)
+  })
+
+  test('idempotent: second call returns completed false', async () => {
+    await seedAttribution('ref_user_2', 'new_user_2', 'pending')
+
+    const result1 = await tryCompleteReferral('new_user_2')
+    expect(result1.completed).toBe(true)
+
+    const result2 = await tryCompleteReferral('new_user_2')
+    expect(result2.completed).toBe(false)
+
+    const month = currentYearMonth()
+    const count = await getMonthlyCountLib('ref_user_2', month)
+    expect(count).toBe(1)
+  })
+
+  test('voids attribution if referrer monthly cap exceeded', async () => {
+    // Trigger table creation first
+    await tryCompleteReferral('trigger_tables')
+
+    const db = await getClient()
+    const month = currentYearMonth()
+    await db.execute({
+      sql: `INSERT INTO referral_monthly_stats (referrerUserId, yearMonth, completedCount)
+            VALUES (?, ?, ?)`,
+      args: ['ref_user_3', month, MONTHLY_CAP],
+    })
+
+    await seedAttribution('ref_user_3', 'new_user_3', 'pending')
+
+    const result = await tryCompleteReferral('new_user_3')
+    expect(result.completed).toBe(false)
+    expect(result.referrerUserId).toBe('ref_user_3')
+
+    const status = await getAttributionStatus('new_user_3')
+    expect(status).toBe('voided')
   })
 })

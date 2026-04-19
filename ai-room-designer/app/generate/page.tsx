@@ -334,7 +334,7 @@ function GeneratePageInner() {
       <div className="flex flex-col lg:flex-row px-4 sm:px-6 lg:px-12 pt-4 md:pt-6 pb-4 md:pb-16 gap-6 lg:gap-10 items-start max-w-[1200px] mx-auto w-full">
 
         {/* ── Left column: Upload ── */}
-        <div className="w-full lg:flex-1 lg:min-w-0 flex flex-col gap-4">
+        <div className="w-full lg:flex-[1_1_50%] xl:flex-[0_0_550px] flex flex-col gap-4">
           {mode === 'style-match' ? (
             <>
               <div>

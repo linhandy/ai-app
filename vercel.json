@@ -1,5 +1,0 @@
-{
-  "buildCommand": "npm install --prefix ai-room-designer && npm run build --prefix ai-room-designer",
-  "outputDirectory": "ai-room-designer/.next",
-  "installCommand": "npm install --prefix ai-room-designer"
-}

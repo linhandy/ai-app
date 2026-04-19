@@ -28,7 +28,7 @@ export default function HomePage() {
         <p className="text-gray-400 text-base sm:text-lg text-center max-w-lg">
           {s.heroSubtitle}
         </p>
-         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2 w-full max-w-sm sm:max-w-none mx-auto">
+         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2 w-full mx-auto">
            <Link href="/generate" className="bg-amber-500 text-black font-bold text-base px-8 rounded flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-[0_8px_24px_rgba(255,152,0,0.3)] w-full sm:w-auto" style={{height:'52px'}}>
              {s.heroCta}
            </Link>

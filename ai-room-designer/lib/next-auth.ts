@@ -51,4 +51,8 @@ export const { handlers: { GET, POST }, handlers, auth, signIn, signOut } = Next
       return session
     },
   },
+  pages: {
+    signIn: '/api/auth/signin',
+    signOut: '/api/auth/signout',
+  },
 })

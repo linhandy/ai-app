@@ -364,15 +364,15 @@ function GeneratePageInner() {
                     : s.freeGenSubtitle}
                 </p>
               </div>
-              {currentMode.needsUpload ? (
-                <UploadZone key="room" onUpload={(id) => setUploadId(id)} />
-              ) : (
-                <div className="w-full h-[160px] md:h-[200px] border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center bg-gray-900/30">
-                  <p className="text-gray-500 text-sm text-center leading-relaxed">
-                    {isOverseas ? <>✨ Freestyle<br />AI generates from scratch</> : <>✨ 自由生成<br />AI 从零生成效果图</>}
-                  </p>
-                </div>
-              )}
+            {currentMode.needsUpload ? (
+              <UploadZone key="room" onUpload={(id) => setUploadId(id)} />
+            ) : (
+              <div className="w-full h-[160px] md:h-[200px] border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center bg-gray-900/30">
+                <p className="text-gray-500 text-sm text-center leading-relaxed">
+                  {isOverseas ? <>✨ Freestyle<br />AI generates from scratch</> : <>✨ 自由生成<br />AI 从零生成效果图</>}
+                </p>
+              </div>
+            )}
             </>
           )}
         </div>

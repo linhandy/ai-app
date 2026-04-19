@@ -100,7 +100,7 @@ export default function LoginPage() {
 
             <div className="flex flex-col gap-4">
               <a
-                href="/api/auth/signin?callbackUrl=/"
+                href="/api/auth/signin/google?callbackUrl=/"
                 className="w-full h-12 bg-white text-black font-bold text-base rounded flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">

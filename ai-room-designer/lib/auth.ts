@@ -75,7 +75,7 @@ export async function sendCode(phone: string): Promise<{ success: true }> {
 export async function verifyCode(
   phone: string,
   code: string,
-): Promise<{ userId: string; phone: string } | null> {
+): Promise<{ userId: string; phone: string; isNew: boolean } | null> {
   const client = await getClient()
 
   // In dev mode, any 6-digit code passes
@@ -97,24 +97,27 @@ export async function verifyCode(
   })
 
   let userId: string
+  let isNew: boolean
   if (existing.rows.length > 0) {
     userId = String(existing.rows[0].id)
+    isNew = false
   } else {
     userId = `usr_${crypto.randomBytes(8).toString('hex')}`
     await client.execute({
       sql: 'INSERT INTO users (id, phone, createdAt) VALUES (?, ?, ?)',
       args: [userId, phone, Date.now()],
     })
+    isNew = true
   }
 
-  return { userId, phone }
+  return { userId, phone, isNew }
 }
 
 export async function findOrCreateWechatUser(params: {
   openid: string
   nickname: string
   avatar: string
-}): Promise<{ userId: string; openid: string; nickname: string; avatar: string }> {
+}): Promise<{ userId: string; openid: string; nickname: string; avatar: string; isNew: boolean }> {
   const client = await getClient()
 
   // Check if user with this openid already exists
@@ -124,9 +127,11 @@ export async function findOrCreateWechatUser(params: {
   })
 
   let userId: string
+  let isNew: boolean
   if (existing.rows.length > 0) {
     // User exists, update their info
     userId = String(existing.rows[0].id)
+    isNew = false
     await client.execute({
       sql: `UPDATE users SET wechat_nickname = ?, wechat_avatar = ? WHERE id = ?`,
       args: [params.nickname, params.avatar, userId],
@@ -134,6 +139,7 @@ export async function findOrCreateWechatUser(params: {
   } else {
     // Create new user
     userId = `usr_${crypto.randomBytes(8).toString('hex')}`
+    isNew = true
     await client.execute({
       sql: `INSERT INTO users (id, phone, wechat_openid, wechat_nickname, wechat_avatar, createdAt)
             VALUES (?, NULL, ?, ?, ?, ?)`,
@@ -146,6 +152,7 @@ export async function findOrCreateWechatUser(params: {
     openid: params.openid,
     nickname: params.nickname,
     avatar: params.avatar,
+    isNew,
   }
 }
 
@@ -217,7 +224,7 @@ export async function findOrCreateGoogleUser(params: {
   email: string
   name: string
   avatar: string
-}): Promise<{ userId: string; googleId: string; email: string }> {
+}): Promise<{ userId: string; googleId: string; email: string; isNew: boolean }> {
   const client = await getClient()
 
   const existing = await client.execute({
@@ -226,14 +233,17 @@ export async function findOrCreateGoogleUser(params: {
   })
 
   let userId: string
+  let isNew: boolean
   if (existing.rows.length > 0) {
     userId = String(existing.rows[0].id)
+    isNew = false
     await client.execute({
       sql: `UPDATE users SET google_email = ?, google_avatar = ? WHERE id = ?`,
       args: [params.email, params.avatar, userId],
     })
   } else {
     userId = `usr_${crypto.randomBytes(8).toString('hex')}`
+    isNew = true
     await client.execute({
       sql: `INSERT INTO users (id, phone, google_id, google_email, google_avatar, createdAt)
             VALUES (?, NULL, ?, ?, ?, ?)`,
@@ -241,7 +251,7 @@ export async function findOrCreateGoogleUser(params: {
     })
   }
 
-  return { userId, googleId: params.googleId, email: params.email }
+  return { userId, googleId: params.googleId, email: params.email, isNew }
 }
 
 /** Close and reset the auth DB client (used in tests). */

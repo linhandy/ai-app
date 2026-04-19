@@ -7,6 +7,7 @@ import {
   currentYearMonth,
   getMonthlyCount as getMonthlyCountLib,
   MONTHLY_CAP,
+  getReferralStats,
 } from '@/lib/referral'
 import { closeDb as closeOrdersDb, getClient } from '@/lib/orders'
 
@@ -224,5 +225,143 @@ describe('tryCompleteReferral', () => {
 
     const status = await getAttributionStatus('new_user_3')
     expect(status).toBe('voided')
+  })
+})
+
+describe('getReferralStats', () => {
+  const seedAttribution = async (
+    referrerUserId: string,
+    refereeUserId: string,
+    status: 'pending' | 'completed' | 'voided' = 'pending',
+  ): Promise<string> => {
+    const db = await getClient()
+    const refCode = await getOrCreateRefCode(referrerUserId)
+    const id = `ref_${Math.random().toString(16).slice(2, 10)}`
+    const now = Date.now()
+    await db.execute({
+      sql: `INSERT INTO referral_attributions
+            (id, referrerUserId, refereeUserId, refCode, visitorIpAtSignup, status, createdAt, completedAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [id, referrerUserId, refereeUserId, refCode, '1.1.1.1', status, now, status === 'completed' ? now : null],
+    })
+    return id
+  }
+
+  test('basic stats: new user with no referrals', async () => {
+    const stats = await getReferralStats('usr_new_referrer')
+    expect(stats.refCode).toMatch(/^[a-f0-9]{8}$/)
+    expect(stats.inviteUrl).toContain('/r/')
+    expect(stats.inviteUrl).toContain(stats.refCode)
+    expect(stats.thisMonthCompleted).toBe(0)
+    expect(stats.totalCompleted).toBe(0)
+    expect(stats.monthlyLimit).toBe(MONTHLY_CAP)
+  })
+
+  test('stats reflect base URL from env', async () => {
+    process.env.NEXT_PUBLIC_BASE_URL = 'https://custom.example.com'
+    const stats = await getReferralStats('usr_base_url_test')
+    expect(stats.inviteUrl).toMatch(/^https:\/\/custom\.example\.com\/r\/[a-f0-9]{8}$/)
+  })
+
+  test('stats with completed referrals', async () => {
+    const referrerUserId = 'usr_with_referrals'
+
+    // Create 3 completed referrals this month
+    for (let i = 0; i < 3; i++) {
+      const month = currentYearMonth()
+      const db = await getClient()
+      await seedAttribution(referrerUserId, `usr_referee_${i}`, 'completed')
+      // Manually increment monthly stats to simulate completion
+      await db.execute({
+        sql: `INSERT INTO referral_monthly_stats (referrerUserId, yearMonth, completedCount)
+              VALUES (?, ?, 1)
+              ON CONFLICT(referrerUserId, yearMonth)
+              DO UPDATE SET completedCount = completedCount + 1`,
+        args: [referrerUserId, month],
+      })
+    }
+
+    const stats = await getReferralStats(referrerUserId)
+    expect(stats.thisMonthCompleted).toBe(3)
+    expect(stats.totalCompleted).toBe(3)
+    expect(stats.refCode).toMatch(/^[a-f0-9]{8}$/)
+    expect(stats.monthlyLimit).toBe(10)
+  })
+
+  test('distinguishes this month vs total completed', async () => {
+    const referrerUserId = 'usr_multi_month'
+    const db = await getClient()
+
+    // Seed old completed referral (manual entry to simulate past month)
+    await db.execute({
+      sql: `INSERT INTO referral_attributions
+            (id, referrerUserId, refereeUserId, refCode, visitorIpAtSignup, status, createdAt, completedAt)
+            VALUES (?, ?, ?, ?, ?, 'completed', ?, ?)`,
+      args: [
+        `ref_old_${Math.random().toString(16).slice(2, 10)}`,
+        referrerUserId,
+        'usr_old_referee',
+        await getOrCreateRefCode(referrerUserId),
+        '1.1.1.1',
+        Date.now() - 60 * 24 * 3600 * 1000, // 60 days ago
+        Date.now() - 60 * 24 * 3600 * 1000,
+      ],
+    })
+
+    // Create this month's monthly stats entry for the old referral
+    const oldMonth = new Date(Date.now() - 60 * 24 * 3600 * 1000).toISOString().slice(0, 7)
+    await db.execute({
+      sql: `INSERT INTO referral_monthly_stats (referrerUserId, yearMonth, completedCount)
+            VALUES (?, ?, 1)`,
+      args: [referrerUserId, oldMonth],
+    })
+
+    // Create 2 completed referrals this month
+    const month = currentYearMonth()
+    for (let i = 0; i < 2; i++) {
+      await seedAttribution(referrerUserId, `usr_new_referee_${i}`, 'completed')
+      await db.execute({
+        sql: `INSERT INTO referral_monthly_stats (referrerUserId, yearMonth, completedCount)
+              VALUES (?, ?, 1)
+              ON CONFLICT(referrerUserId, yearMonth)
+              DO UPDATE SET completedCount = completedCount + 1`,
+        args: [referrerUserId, month],
+      })
+    }
+
+    const stats = await getReferralStats(referrerUserId)
+    expect(stats.thisMonthCompleted).toBe(2)
+    expect(stats.totalCompleted).toBe(3)
+  })
+
+  test('includes voided attributions in total count', async () => {
+    const referrerUserId = 'usr_with_voided'
+
+    // Create 2 completed and 1 voided
+    await seedAttribution(referrerUserId, 'usr_ref_a', 'completed')
+    await seedAttribution(referrerUserId, 'usr_ref_b', 'completed')
+    await seedAttribution(referrerUserId, 'usr_ref_voided', 'voided')
+
+    // Update monthly stats for completed ones
+    const month = currentYearMonth()
+    const db = await getClient()
+    await db.execute({
+      sql: `INSERT INTO referral_monthly_stats (referrerUserId, yearMonth, completedCount)
+            VALUES (?, ?, 2)`,
+      args: [referrerUserId, month],
+    })
+
+    const stats = await getReferralStats(referrerUserId)
+    // totalCompleted should only count 'completed' status, not 'voided'
+    expect(stats.totalCompleted).toBe(2)
+    expect(stats.thisMonthCompleted).toBe(2)
+  })
+
+  test('returns same refCode on multiple calls (idempotent)', async () => {
+    const userId = 'usr_idempotent'
+    const stats1 = await getReferralStats(userId)
+    const stats2 = await getReferralStats(userId)
+    expect(stats1.refCode).toBe(stats2.refCode)
+    expect(stats1.inviteUrl).toBe(stats2.inviteUrl)
   })
 })

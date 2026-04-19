@@ -289,3 +289,47 @@ export async function tryCompleteReferral(userId: string): Promise<CompleteRefer
 
   return { completed: true, referrerUserId }
 }
+
+// ---- Referral Stats (Task 5) ----
+
+export interface ReferralStats {
+  refCode: string
+  inviteUrl: string
+  thisMonthCompleted: number
+  totalCompleted: number
+  monthlyLimit: number
+}
+
+export async function getReferralStats(userId: string): Promise<ReferralStats> {
+  await ensureTables()
+  const db = await getClient()
+
+  // 1. Get or create refCode for user
+  const refCode = await getOrCreateRefCode(userId)
+
+  // 2. Construct invite URL
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://example.com'
+  const inviteUrl = `${baseUrl}/r/${refCode}`
+
+  // 3. Get this month's completed attributions
+  const month = currentYearMonth()
+  const thisMonthCompleted = await getMonthlyCount(userId, month)
+
+  // 4. Get total completed attributions (all time)
+  const totalResult = await db.execute({
+    sql: `SELECT COUNT(*) as count FROM referral_attributions
+          WHERE referrerUserId = ? AND status = 'completed'`,
+    args: [userId],
+  })
+  const totalCompleted = totalResult.rows.length > 0
+    ? Number(totalResult.rows[0].count)
+    : 0
+
+  return {
+    refCode,
+    inviteUrl,
+    thisMonthCompleted,
+    totalCompleted,
+    monthlyLimit: MONTHLY_CAP,
+  }
+}

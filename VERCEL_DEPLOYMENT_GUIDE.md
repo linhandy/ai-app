@@ -1,5 +1,27 @@
 # Vercel 部署故障排查指南
 
+## ⚠️ 重要提示：手动部署是必需的
+
+**Git commit 不会自动触发 Vercel 部署。** 即使代码已提交并推送到主分支，仍然需要手动执行部署命令。
+
+### 每次部署的完整流程
+
+```bash
+# 1. 提交代码
+git add .
+git commit -m "fix: description"
+git push origin main
+
+# 2. 手动部署到生产
+npx vercel deploy --prod
+
+# 3. 验证部署成功
+curl -I https://www.roomai.shop
+# 应返回 HTTP/1.1 200 OK
+```
+
+**不要假设提交后会自动上线。**
+
 ## 问题场景：部署显示成功，但网站返回 404
 
 当 Vercel 部署显示 "Ready"，但访问网站返回 404 "The page could not be found"。

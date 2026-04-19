@@ -7,6 +7,7 @@ import { getPublicUrl, resultStoragePath } from '@/lib/storage'
 import { UPLOAD_DIR } from '@/lib/paths'
 import { logger } from '@/lib/logger'
 import { isOverseas } from '@/lib/region'
+import { tryCompleteReferral } from '@/lib/referral'
 import path from 'path'
 import fs from 'fs'
 
@@ -49,6 +50,27 @@ export async function POST(req: NextRequest) {
         : `/api/result-image/${linkedOrderId}`
       await updateOrder(linkedOrderId, { isFree: false, resultUrl: cleanUrl })
       await updateOrder(orderId, { status: 'done', resultUrl: cleanUrl })
+
+      // Try to complete referral if user exists
+      if (order.userId) {
+        try {
+          const refResult = await tryCompleteReferral(order.userId)
+          if (refResult.completed) {
+            logger.info('generate', 'Referral completed', {
+              orderId,
+              userId: order.userId,
+              referrerUserId: refResult.referrerUserId
+            })
+          }
+        } catch (err) {
+          logger.warn('generate', 'Referral completion failed', {
+            orderId,
+            userId: order.userId,
+            error: String(err)
+          })
+        }
+      }
+
       return NextResponse.json({ resultUrl: cleanUrl })
     }
 
@@ -113,6 +135,26 @@ export async function POST(req: NextRequest) {
       : getPublicUrl(resultStoragePath(orderId))
 
     await updateOrder(orderId, { status: 'done', resultUrl })
+
+    // Try to complete referral if user exists
+    if (order.userId) {
+      try {
+        const refResult = await tryCompleteReferral(order.userId)
+        if (refResult.completed) {
+          logger.info('generate', 'Referral completed', {
+            orderId,
+            userId: order.userId,
+            referrerUserId: refResult.referrerUserId
+          })
+        }
+      } catch (err) {
+        logger.warn('generate', 'Referral completion failed', {
+          orderId,
+          userId: order.userId,
+          error: String(err)
+        })
+      }
+    }
 
     return NextResponse.json({ resultUrl })
   } catch (err) {

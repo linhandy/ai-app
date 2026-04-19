@@ -21,7 +21,7 @@ export default function HomePage() {
         <div className="flex items-center gap-2 px-3.5 h-7 rounded-full bg-amber-950 border border-amber-500 text-amber-500 text-xs sm:text-sm font-semibold text-center">
           {s.heroBadge}
         </div>
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-center leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-center leading-tight text-white" style={{ fontFamily: 'Georgia, serif' }}>
           {s.heroTitle}
         </h1>
         <p className="text-gray-400 text-base sm:text-lg text-center max-w-lg">
@@ -48,7 +48,7 @@ export default function HomePage() {
               <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              <span>Pro from <strong className="text-white">$9.99/mo</strong> — vs $29 elsewhere</span>
+              <span>Pro from <strong className="text-white">$9.99/mo</strong></span>
             </span>
             <span className="flex items-center gap-1.5">
               <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -77,7 +77,7 @@ export default function HomePage() {
       <section id="examples" className="px-6 md:px-[120px] py-16 bg-[#050505]">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-8">
           <div className="flex flex-col items-center gap-3">
-            <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>{s.stylesTitle}</h2>
+            <h2 className="text-3xl font-bold text-center text-white" style={{ fontFamily: 'Georgia, serif' }}>{s.stylesTitle}</h2>
             <p className="text-gray-500 text-sm text-center">{s.stylesSubtitle}</p>
           </div>
           <StyleGallery />
@@ -88,7 +88,7 @@ export default function HomePage() {
       <section id="pricing" className="px-6 md:px-[120px] py-16">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-8">
           <div className="flex flex-col items-center gap-3">
-            <h2 className="text-3xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>{s.pricingTitle}</h2>
+            <h2 className="text-3xl font-bold text-center text-white" style={{ fontFamily: 'Georgia, serif' }}>{s.pricingTitle}</h2>
             <p className="text-gray-500 text-sm text-center">{s.pricingSubtitle}</p>
           </div>
 
@@ -207,7 +207,7 @@ export default function HomePage() {
       {/* FAQ */}
       <section id="faq" className="px-6 md:px-[120px] py-16 bg-[#050505]">
         <div className="max-w-[800px] mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-10" style={{ fontFamily: 'Georgia, serif' }}>{s.faqTitle}</h2>
+          <h2 className="text-3xl font-bold text-center mb-10 text-white" style={{ fontFamily: 'Georgia, serif' }}>{s.faqTitle}</h2>
 
           <div className="space-y-4">
             {(isOverseas ? [

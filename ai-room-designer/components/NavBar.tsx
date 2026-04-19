@@ -49,7 +49,7 @@ export default async function NavBar() {
         <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">
           {isOverseas ? 'R' : '装'}
         </div>
-        <span className="font-bold text-xl">{isOverseas ? 'RoomAI' : '装AI'}</span>
+        <span className="font-bold text-xl text-white">{isOverseas ? 'RoomAI' : '装AI'}</span>
       </Link>
       <div className="flex-1" />
 

@@ -32,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang={isOverseas ? 'en' : 'zh-CN'}>
+    <html lang={isOverseas ? 'en' : 'zh-CN'} className="dark">
       <body>
         {children}
         <Toaster position="top-center" richColors duration={5000} />

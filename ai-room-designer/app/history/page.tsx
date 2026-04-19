@@ -168,7 +168,7 @@ export default function HistoryPage() {
       <nav className="flex items-center px-6 md:px-[120px] h-16 border-b border-gray-900">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">{isOverseas ? 'R' : '装'}</div>
-          <span className="font-bold text-xl">{isOverseas ? 'RoomAI' : '装AI'}</span>
+          <span className="font-bold text-xl text-white">{isOverseas ? 'RoomAI' : '装AI'}</span>
         </Link>
         <div className="flex-1" />
         <Link href="/generate" className="bg-amber-500 text-black text-sm font-semibold px-5 h-9 rounded flex items-center hover:bg-amber-400 transition-colors">
@@ -179,7 +179,7 @@ export default function HistoryPage() {
       <div className="px-6 md:px-[120px] pt-12 pb-16">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>{isOverseas ? 'My Designs' : '生成历史'}</h1>
+            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>{isOverseas ? 'My Designs' : '生成历史'}</h1>
             <p className="text-gray-500 text-sm mt-1">
               {isOverseas
                 ? (isCloud ? 'Signed in — designs synced to cloud' : 'Saved locally — images expire after 7 days')

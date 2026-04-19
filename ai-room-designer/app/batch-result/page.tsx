@@ -101,7 +101,7 @@ function BatchResultInner() {
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-black font-bold text-base">
             R
           </div>
-          <span className="font-bold text-xl">RoomAI</span>
+          <span className="font-bold text-xl text-white">RoomAI</span>
         </Link>
         <div className="flex-1" />
         <Link
@@ -114,7 +114,7 @@ function BatchResultInner() {
 
       <div className="px-4 md:px-[120px] pt-8 pb-4">
         <h1
-          className="text-2xl md:text-3xl font-bold mb-2"
+          className="text-2xl md:text-3xl font-bold mb-2 text-white"
           style={{ fontFamily: 'Georgia, serif' }}
         >
           {allSettled

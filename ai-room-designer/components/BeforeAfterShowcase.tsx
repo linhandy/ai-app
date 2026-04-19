@@ -20,10 +20,10 @@ export default function BeforeAfterShowcase() {
       <div className="max-w-6xl mx-auto flex flex-col items-center gap-6">
          <div className="text-center max-w-2xl">
            <h2 className="text-3xl md:text-4xl font-bold text-center text-white" style={{ fontFamily: 'Georgia, serif' }}>
-             Drag to compare <span className="text-amber-500">before & after</span>
+             Same room. <span className="text-amber-500">Four dramatic styles.</span> 100% AI-generated.
            </h2>
            <p className="text-gray-400 text-sm md:text-base mt-3 text-center">
-             Same room. Four different styles. Actual AI output — no stock photography.
+             Drag the slider to compare. Each transformation takes ~30 seconds.
            </p>
          </div>
 

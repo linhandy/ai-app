@@ -18,7 +18,7 @@ export default function DesignModesGrid() {
           {DESIGN_MODES.map((m) => (
             <Link
               key={m.key}
-              href={`/generate?mode=${m.key}`}
+              href={`/generate?mode=${m.key}${m.defaultStyle ? `&style=${m.defaultStyle}` : ''}`}
               className="rounded-xl border border-gray-800 bg-[#0A0A0A] hover:border-amber-500/60 hover:bg-[#0F0D08] transition-colors p-4 flex flex-col gap-2 group"
             >
               <span className="text-2xl" aria-hidden>{m.icon}</span>

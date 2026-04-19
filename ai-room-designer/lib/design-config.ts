@@ -650,15 +650,15 @@ export const ROOM_TYPES: RoomType[] = [
   },
 ]
 
-export const DESIGN_MODES: { key: DesignMode; label: string; labelEn: string; icon: string; desc: string; descEn: string; needsStyle: boolean; needsUpload: boolean }[] = [
-  { key: 'redesign',         label: '风格改造', labelEn: 'Style Redesign',   icon: '🎨', desc: '改变整体装修风格',   descEn: 'Change the overall interior style',  needsStyle: true,  needsUpload: true  },
-  { key: 'virtual_staging',  label: '虚拟家装', labelEn: 'Virtual Staging',  icon: '🛋️', desc: '空房间添加全套家具', descEn: 'Furnish an empty room',              needsStyle: true,  needsUpload: true  },
-  { key: 'add_furniture',    label: '添加家具', labelEn: 'Add Furniture',    icon: '🪑', desc: '现有房间增添家具',   descEn: 'Add furniture to existing room',     needsStyle: true,  needsUpload: true  },
+export const DESIGN_MODES: { key: DesignMode; label: string; labelEn: string; icon: string; desc: string; descEn: string; needsStyle: boolean; needsUpload: boolean; defaultStyle?: string }[] = [
+  { key: 'redesign',         label: '风格改造', labelEn: 'Style Redesign',   icon: '🎨', desc: '改变整体装修风格',   descEn: 'Change the overall interior style',  needsStyle: true,  needsUpload: true,   defaultStyle: 'nordic_minimal' },
+  { key: 'virtual_staging',  label: '虚拟家装', labelEn: 'Virtual Staging',  icon: '🛋️', desc: '空房间添加全套家具', descEn: 'Furnish an empty room',              needsStyle: true,  needsUpload: true,   defaultStyle: 'nordic_minimal' },
+  { key: 'add_furniture',    label: '添加家具', labelEn: 'Add Furniture',    icon: '🪑', desc: '现有房间增添家具',   descEn: 'Add furniture to existing room',     needsStyle: true,  needsUpload: true,   defaultStyle: 'nordic_minimal' },
   { key: 'paint_walls',      label: '墙面换色', labelEn: 'Paint Walls',      icon: '🖌️', desc: '改变墙面颜色材质',   descEn: 'Change wall color and material',     needsStyle: false, needsUpload: true  },
   { key: 'change_lighting',  label: '灯光优化', labelEn: 'Lighting Upgrade', icon: '💡', desc: '改善房间光照效果',   descEn: 'Improve room lighting',              needsStyle: false, needsUpload: true  },
-  { key: 'sketch2render',    label: '草图生成', labelEn: 'Sketch to Render', icon: '✏️', desc: '草图变效果图',       descEn: 'Turn a sketch into a render',        needsStyle: true,  needsUpload: true  },
-  { key: 'freestyle',        label: '自由生成', labelEn: 'AI Generate',      icon: '✨', desc: '无需上传照片',       descEn: 'Generate without a photo',           needsStyle: true,  needsUpload: false },
-  { key: 'outdoor_redesign', label: '户外设计', labelEn: 'Outdoor Design',   icon: '🌿', desc: '庭院景观改造',       descEn: 'Redesign outdoor / garden space',    needsStyle: false, needsUpload: true  }, // fixed landscaping prompt — interior styles don't apply
+  { key: 'sketch2render',    label: '草图生成', labelEn: 'Sketch to Render', icon: '✏️', desc: '草图变效果图',       descEn: 'Turn a sketch into a render',        needsStyle: true,  needsUpload: true,   defaultStyle: 'nordic_minimal' },
+  { key: 'freestyle',        label: '自由生成', labelEn: 'AI Generate',      icon: '✨', desc: '无需上传照片',       descEn: 'Generate without a photo',           needsStyle: true,  needsUpload: false,  defaultStyle: 'nordic_minimal' },
+  { key: 'outdoor_redesign', label: '户外设计', labelEn: 'Outdoor Design',   icon: '🌿', desc: '庭院景观改造',       descEn: 'Redesign outdoor / garden space',    needsStyle: false, needsUpload: true  },
   { key: 'style-match',      label: '风格参考', labelEn: 'Match a Style',   icon: '🖼️', desc: '参考图片的风格',    descEn: 'Copy style from a reference photo',  needsStyle: false, needsUpload: true  },
   { key: 'inpaint',          label: '局部修改', labelEn: 'Inpaint',          icon: '🎯', desc: '涂抹区域局部替换',  descEn: 'Paint an area — AI replaces only that part', needsStyle: false, needsUpload: true  },
 ]

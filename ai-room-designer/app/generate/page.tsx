@@ -331,12 +331,12 @@ function GeneratePageInner() {
       </nav>
 
       {isOverseas && (
-        <div className="px-4 sm:px-6 lg:px-12 pt-4 md:pt-6 max-w-[1200px] mx-auto w-full">
+        <div className="px-4 sm:px-6 lg:px-12 pt-4 md:pt-6 max-w-[880px] mx-auto w-full">
           <FreeQuotaBanner />
         </div>
       )}
 
-       <div className="flex flex-col px-4 sm:px-6 lg:px-12 pt-4 md:pt-6 pb-4 md:pb-16 gap-6 lg:gap-8 items-start max-w-[1200px] mx-auto w-full">
+       <div className="flex flex-col px-4 sm:px-6 lg:px-12 pt-4 md:pt-6 pb-4 md:pb-16 gap-6 lg:gap-8 items-start max-w-[880px] mx-auto w-full">
 
         {/* ── Top section: Upload ── */}
         <div className="w-full flex flex-col gap-4">
@@ -346,14 +346,18 @@ function GeneratePageInner() {
                 <h2 className="text-white text-base md:text-xl font-bold">Your Room</h2>
                 <p className="text-gray-500 text-xs md:text-sm mt-1">Upload a photo of the room you want to redesign</p>
               </div>
-              <UploadZone key="room" onUpload={(id) => setUploadId(id)} />
+              <div className="w-full max-w-[720px] mx-auto">
+                <UploadZone key="room" onUpload={(id) => setUploadId(id)} />
+              </div>
               <div>
                 <h2 className="text-white text-base md:text-xl font-bold mt-2">Style Reference</h2>
                 <p className="text-gray-500 text-xs md:text-sm mt-1">
                   Upload a photo whose style you want to copy — works great with Pinterest, Houzz, or magazine photos
                 </p>
               </div>
-              <UploadZone key="reference" onUpload={(id) => setReferenceUploadId(id)} />
+              <div className="w-full max-w-[720px] mx-auto">
+                <UploadZone key="reference" onUpload={(id) => setReferenceUploadId(id)} />
+              </div>
             </>
           ) : mode === 'inpaint' ? (
             <>
@@ -383,7 +387,9 @@ function GeneratePageInner() {
                 </p>
               </div>
             {currentMode.needsUpload ? (
-              <UploadZone key="room" onUpload={(id) => setUploadId(id)} />
+              <div className="w-full max-w-[720px] mx-auto">
+                <UploadZone key="room" onUpload={(id) => setUploadId(id)} />
+              </div>
             ) : (
               <div className="w-full h-[160px] md:h-[200px] border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center bg-gray-900/30">
                 <p className="text-gray-500 text-sm text-center leading-relaxed">
@@ -434,16 +440,23 @@ function GeneratePageInner() {
                 {isOverseas && (
                   <button
                     type="button"
-                    onClick={() => { setBatchMode((v) => !v); setBatchStyles([]) }}
+                    onClick={() => {
+                      if (userPlan === 'pro' || userPlan === 'unlimited') {
+                        setBatchMode((v) => !v)
+                        setBatchStyles([])
+                      } else {
+                        router.push('/pricing')
+                      }
+                    }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${
                       batchMode
                         ? 'border-amber-500 bg-amber-500/15 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.25)]'
                         : 'border-gray-600 text-gray-300 hover:border-amber-500/60 hover:text-amber-400'
                     }`}
-                    title="Generate up to 8 styles in one click"
+                    title={userPlan === 'pro' || userPlan === 'unlimited' ? 'Generate up to 8 styles in one click' : 'Upgrade to Pro to use Batch'}
                   >
                     <span>⚡</span>
-                    <span>{batchMode ? 'Batch ON' : 'Try Batch (up to 8 styles)'}</span>
+                    <span>{batchMode ? '✓ Batch enabled' : '⚡ Batch · Generate 8 styles at once'}</span>
                   </button>
                 )}
               </div>
@@ -451,7 +464,7 @@ function GeneratePageInner() {
                 <p className="text-xs text-gray-500 mb-2">
                   {batchMode
                     ? 'Pick 2–8 styles and generate them in parallel — compare side by side'
-                    : 'Tip: Turn on Batch to try multiple styles at once'}
+                    : 'Tip: Pro users can batch-generate up to 8 styles in parallel.'}
                 </p>
               )}
               {batchMode ? (

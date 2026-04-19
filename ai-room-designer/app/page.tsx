@@ -27,7 +27,7 @@ export default function HomePage() {
         <p className="text-gray-400 text-base sm:text-lg text-center max-w-lg">
           {s.heroSubtitle}
         </p>
-         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2 w-full sm:w-auto mx-auto">
+         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2 max-w-md sm:max-w-none mx-auto w-full sm:w-auto">
            <Link href="/generate" className="bg-amber-500 text-black font-bold text-base px-8 rounded flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-[0_8px_24px_rgba(255,152,0,0.3)] w-full sm:w-auto min-w-[200px]" style={{height:'52px'}}>
              {s.heroCta}
            </Link>
@@ -221,7 +221,7 @@ export default function HomePage() {
               },
               {
                 q: "What's the difference between Free, Pro, and Unlimited?",
-                a: 'Free: 3 designs per day at 1024px standard resolution (watermarked preview). Pro ($9.99/mo): 150 designs per month, unlocks 2048px HD and 4096px Ultra resolutions, no watermark, full commercial use rights. Unlimited ($19.99/mo): 500 designs per month (fair use), all Pro features plus priority rendering queue and parallel batch generation (up to 8 styles at once).',
+                a: 'Free tier lets you explore with 3 designs per day at 1024px (watermarked preview). Pro ($9.99/mo): 150 designs per month, 4K resolution, commercial license, no watermark, and batch generation (up to 8 styles). Unlimited ($19.99/mo): 500/month with priority rendering. Free is for exploring styles; Pro/Unlimited unlock production-ready designs.',
               },
               {
                 q: 'How does billing work?',

@@ -55,5 +55,17 @@ export const { handlers: { GET, POST }, handlers, auth, signIn, signOut } = Next
     signIn: '/login',
     signOut: '/api/auth/signout',
   },
+  cookies: {
+    sessionToken: {
+      name: 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        domain: process.env.NODE_ENV === 'production' ? '.roomai.shop' : undefined,
+      },
+    },
+  },
   trustHost: true,
 })

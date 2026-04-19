@@ -1,16 +1,17 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import Image from 'next/image'
 
 import { isOverseas } from '@/lib/region'
 
 const STYLES = [
-  { key: '北欧简约', labelEn: 'Nordic Minimal',  desc: '原木 · 白墙 · 绿植',        descEn: 'Oak wood · White walls · Greenery' },
-  { key: '现代轻奢', labelEn: 'Modern Luxury',    desc: '大理石 · 金属 · 灰调',       descEn: 'Marble · Metal accents · Grey tones' },
-  { key: '新中式',   labelEn: 'Neo-Chinese',      desc: '禅意 · 木格 · 留白',         descEn: 'Zen · Wood lattice · Negative space' },
-  { key: '侘寂风',   labelEn: 'Wabi-Sabi',        desc: '不完美 · 自然 · 素色',       descEn: 'Imperfect · Natural · Muted tones' },
-  { key: '工业风',   labelEn: 'Industrial',       desc: '裸砖 · 铁艺 · 水泥灰',       descEn: 'Exposed brick · Iron · Concrete' },
-  { key: '奶油风',   labelEn: 'Cream Style',      desc: '米白 · 柔软 · 治愈系',       descEn: 'Cream white · Soft textures · Cozy' },
+  { key: '北欧简约', styleKey: 'nordic_minimal',   labelEn: 'Nordic Minimal',  desc: '原木 · 白墙 · 绿植',        descEn: 'Oak wood · White walls · Greenery' },
+  { key: '现代轻奢', styleKey: 'modern_luxury',    labelEn: 'Modern Luxury',    desc: '大理石 · 金属 · 灰调',       descEn: 'Marble · Metal accents · Grey tones' },
+  { key: '新中式',   styleKey: 'neo_chinese',      labelEn: 'Neo-Chinese',      desc: '禅意 · 木格 · 留白',         descEn: 'Zen · Wood lattice · Negative space' },
+  { key: '侘寂风',   styleKey: 'wabi_sabi',        labelEn: 'Wabi-Sabi',        desc: '不完美 · 自然 · 素色',       descEn: 'Imperfect · Natural · Muted tones' },
+  { key: '工业风',   styleKey: 'industrial',       labelEn: 'Industrial',       desc: '裸砖 · 铁艺 · 水泥灰',       descEn: 'Exposed brick · Iron · Concrete' },
+  { key: '奶油风',   styleKey: 'cream_style',      labelEn: 'Cream Style',      desc: '米白 · 柔软 · 治愈系',       descEn: 'Cream white · Soft textures · Cozy' },
 ]
 
 export default function StyleGallery() {
@@ -82,11 +83,22 @@ export default function StyleGallery() {
               className="object-contain max-h-[80vh] w-auto"
               priority
             />
-            {/* Caption */}
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black to-transparent px-6 py-4">
-              <div className="text-white font-bold text-lg">{isOverseas ? STYLES.find(s => s.key === active)?.labelEn : active}</div>
-              <div className="text-gray-400 text-sm mt-0.5">
-                {isOverseas ? STYLES.find(s => s.key === active)?.descEn : STYLES.find(s => s.key === active)?.desc}
+            {/* Caption and Use button */}
+            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/80 to-transparent px-6 py-6">
+              <div className="flex items-end justify-between gap-4">
+                <div className="flex-1">
+                  <div className="text-white font-bold text-lg">{isOverseas ? STYLES.find(s => s.key === active)?.labelEn : active}</div>
+                  <div className="text-gray-400 text-sm mt-0.5">
+                    {isOverseas ? STYLES.find(s => s.key === active)?.descEn : STYLES.find(s => s.key === active)?.desc}
+                  </div>
+                </div>
+                <Link
+                  href={`/generate?style=${STYLES.find(s => s.key === active)?.styleKey}`}
+                  className="bg-amber-500 text-black font-semibold text-sm px-4 py-2 rounded-lg hover:bg-amber-400 transition-colors whitespace-nowrap"
+                  onClick={close}
+                >
+                  Use this style
+                </Link>
               </div>
             </div>
             {/* Close button */}

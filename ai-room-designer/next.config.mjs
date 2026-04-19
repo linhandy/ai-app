@@ -16,20 +16,33 @@ const nextConfig = {
     instrumentationHook: true,
     serverComponentsExternalPackages: ['@libsql/client', '@libsql/client/web'],
   },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:" },
+        ],
+      },
+    ]
+  },
   webpack: (config, { isServer }) => {
     if (isServer) {
       if (!Array.isArray(config.externals)) {
         config.externals = config.externals ? [config.externals] : []
       }
-      // Force @libsql packages to CommonJS externals so webpack emits require()
-      // instead of import() (which returns a Promise and breaks synchronous code).
       config.externals.unshift(function (ctx, callback) {
         if (ctx.request?.startsWith('@libsql/')) {
           return callback(null, 'commonjs ' + ctx.request)
         }
         callback()
       })
-      // sharp uses native C++ bindings — exclude from bundle
       config.externals.push('sharp')
     }
     return config

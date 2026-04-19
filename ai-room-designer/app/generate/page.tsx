@@ -12,6 +12,7 @@ import { DESIGN_MODES } from '@/lib/design-config'
 import type { DesignMode } from '@/lib/orders'
 import InpaintCanvas from '@/components/InpaintCanvas'
 import FreeQuotaBanner from '@/components/FreeQuotaBanner'
+import GenerationProgress from '@/components/GenerationProgress'
 import { saveToHistory } from '@/lib/history'
 import { isOverseas } from '@/lib/region'
 import { regionConfig } from '@/lib/region-config'
@@ -55,14 +56,17 @@ function GeneratePageInner() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const initialQuality = searchParams.get('quality') ?? 'standard'
+  const initialStyle = searchParams.get('style') ?? 'nordic_minimal'
+  const initialMode = (searchParams.get('mode') ?? 'redesign') as DesignMode
+  const initialRoomType = searchParams.get('roomType') ?? 'living_room'
 
   const [uploadId, setUploadId] = useState<string | null>(null)
   const [referenceUploadId, setReferenceUploadId] = useState<string | null>(null)
   const [hasMask, setHasMask] = useState(false)
   const compositeBlobRef = useRef<(() => Promise<Blob>) | null>(null)
-  const [style, setStyle] = useState('nordic_minimal')
+  const [style, setStyle] = useState(initialStyle)
   const [quality, setQuality] = useState(initialQuality)
-  const [mode, setMode] = useState<DesignMode>('redesign')
+  const [mode, setMode] = useState<DesignMode>(initialMode)
   const handleModeChange = (newMode: DesignMode) => {
     setMode(newMode)
     setReferenceUploadId(null)
@@ -79,7 +83,7 @@ function GeneratePageInner() {
         : prev.length >= 8 ? prev : [...prev, styleKey]
     )
   }
-  const [roomType, setRoomType] = useState('living_room')
+  const [roomType, setRoomType] = useState(initialRoomType)
   const [customPrompt, setCustomPrompt] = useState('')
   const [customPromptOpen, setCustomPromptOpen] = useState(false)
 
@@ -96,7 +100,8 @@ function GeneratePageInner() {
   const [batchMode, setBatchMode] = useState(false)
   const [batchStyles, setBatchStyles] = useState<string[]>([])
   const [batchLoading, setBatchLoading] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
+  const [userPlan, setUserPlan] = useState<'free' | 'pro' | 'unlimited' | null>(null)
 
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
   const canGenerate = !currentMode.needsUpload || (
@@ -120,8 +125,16 @@ function GeneratePageInner() {
     if (!isOverseas) return
     fetch('/api/quota')
       .then(r => r.json())
-      .then(d => { if (d.plan && d.plan !== null) setIsLoggedIn(true) })
-      .catch(() => {})
+      .then(d => {
+        const loggedIn = d.plan !== null && d.plan !== undefined
+        setIsLoggedIn(loggedIn)
+        if (loggedIn && (d.plan === 'free' || d.plan === 'pro' || d.plan === 'unlimited')) {
+          setUserPlan(d.plan)
+        } else {
+          setUserPlan(null)
+        }
+      })
+      .catch(() => { setIsLoggedIn(false); setUserPlan(null) })
   }, [])
 
   useEffect(() => {
@@ -305,7 +318,7 @@ function GeneratePageInner() {
         <span className="text-gray-600 text-xs hidden sm:block">
           {currentMode.needsUpload ? s.generateNavHint : s.generateNavHintFree}
         </span>
-        {isOverseas && !isLoggedIn && (
+        {isOverseas && isLoggedIn === false && (
           <Link href="/api/auth/signin" className="ml-4 text-gray-500 text-xs hover:text-gray-300 transition-colors hidden sm:block">
             Sign in
           </Link>
@@ -313,15 +326,15 @@ function GeneratePageInner() {
       </nav>
 
       {isOverseas && (
-        <div className="px-4 sm:px-6 lg:px-[120px] pt-4 md:pt-6 max-w-7xl mx-auto w-full">
+        <div className="px-4 sm:px-6 lg:px-12 pt-4 md:pt-6 max-w-[1200px] mx-auto w-full">
           <FreeQuotaBanner />
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row px-4 sm:px-6 lg:px-[120px] pt-4 md:pt-6 pb-4 md:pb-16 gap-6 lg:gap-10 items-start max-w-7xl mx-auto w-full">
+      <div className="flex flex-col lg:flex-row px-4 sm:px-6 lg:px-12 pt-4 md:pt-6 pb-4 md:pb-16 gap-6 lg:gap-10 items-start max-w-[1200px] mx-auto w-full">
 
         {/* ── Left column: Upload ── */}
-        <div className="w-full lg:flex-[1_1_50%] xl:flex-[0_0_550px] flex flex-col gap-4">
+        <div className="w-full lg:flex-1 lg:min-w-0 flex flex-col gap-4">
           {mode === 'style-match' ? (
             <>
               <div>
@@ -411,23 +424,31 @@ function GeneratePageInner() {
           {/* Style selector */}
           {currentMode.needsStyle ? (
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1">
                 <h2 className="text-white text-base md:text-xl font-bold">{s.styleTitle}</h2>
                 {isOverseas && (
                   <button
                     type="button"
                     onClick={() => { setBatchMode((v) => !v); setBatchStyles([]) }}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${
                       batchMode
-                        ? 'border-amber-500 bg-amber-500/10 text-amber-400'
-                        : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                        ? 'border-amber-500 bg-amber-500/15 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.25)]'
+                        : 'border-gray-600 text-gray-300 hover:border-amber-500/60 hover:text-amber-400'
                     }`}
+                    title="Generate up to 8 styles in one click"
                   >
                     <span>⚡</span>
-                    <span>{batchMode ? 'Batch ON' : 'Batch'}</span>
+                    <span>{batchMode ? 'Batch ON' : 'Try Batch (up to 8 styles)'}</span>
                   </button>
                 )}
               </div>
+              {isOverseas && (
+                <p className="text-xs text-gray-500 mb-2">
+                  {batchMode
+                    ? 'Pick 2–8 styles and generate them in parallel — compare side by side'
+                    : 'Tip: Turn on Batch to try multiple styles at once'}
+                </p>
+              )}
               {batchMode ? (
                 <BatchStyleSelector selected={batchStyles} onToggle={toggleBatchStyle} />
               ) : (
@@ -486,20 +507,41 @@ function GeneratePageInner() {
           <div>
             <h3 className="text-white text-sm font-semibold mb-2">{s.qualityTitle}</h3>
             <div className="grid grid-cols-3 gap-2">
-              {QUALITY_OPTIONS.map((opt) => (
-                <button
-                  type="button"
-                  key={opt.key}
-                  onClick={() => setQuality(opt.key)}
-                  className={`py-2.5 px-2 rounded-lg border text-center transition-all ${
-                    quality === opt.key ? opt.color + ' bg-white/5' : 'border-gray-800 text-gray-500 hover:border-gray-600'
-                  }`}
-                >
-                  <div className="text-sm font-semibold">{isOverseas ? opt.labelEn : opt.label}</div>
-                  <div className="text-[10px] mt-0.5 opacity-70">{opt.resolution}</div>
-                  {!isOverseas && <div className="text-xs mt-0.5 font-bold">¥{opt.price}</div>}
-                </button>
-              ))}
+              {QUALITY_OPTIONS.map((opt) => {
+                const isFreeUser = isOverseas && (isLoggedIn === false || userPlan === 'free')
+                const locked = isFreeUser && opt.key !== 'standard'
+                return (
+                  <button
+                    type="button"
+                    key={opt.key}
+                    onClick={() => {
+                      if (locked) {
+                        setError('Upgrade to Pro to unlock ' + opt.labelEn + ' quality')
+                        router.push('/pricing')
+                        return
+                      }
+                      setQuality(opt.key)
+                    }}
+                    disabled={locked}
+                    className={`relative py-2.5 px-2 rounded-lg border text-center transition-all ${
+                      locked
+                        ? 'border-gray-800 text-gray-600 opacity-60 cursor-not-allowed'
+                        : quality === opt.key
+                          ? opt.color + ' bg-white/5'
+                          : 'border-gray-800 text-gray-500 hover:border-gray-600'
+                    }`}
+                  >
+                    <div className="text-sm font-semibold">{isOverseas ? opt.labelEn : opt.label}</div>
+                    <div className="text-[10px] mt-0.5 opacity-70">{opt.resolution}</div>
+                    {!isOverseas && <div className="text-xs mt-0.5 font-bold">¥{opt.price}</div>}
+                    {locked && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                        Pro
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -584,6 +626,8 @@ function GeneratePageInner() {
           <p className="text-gray-500 text-xs text-center mt-1">{s.errorUploadFirst}</p>
         )}
       </div>
+
+      <GenerationProgress active={generating || batchLoading} estimatedSeconds={batchLoading ? 60 : 30} />
 
       {payModal && (
         <PaymentModal

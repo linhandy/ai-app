@@ -52,7 +52,8 @@ export const { handlers: { GET, POST }, handlers, auth, signIn, signOut } = Next
     },
   },
   pages: {
-    signIn: '/api/auth/signin',
+    signIn: '/login',
     signOut: '/api/auth/signout',
   },
+  trustHost: true,
 })

@@ -8,7 +8,7 @@ import { getBalance, consumeCredit } from '@/lib/credits'
 import { ALL_ROOM_TYPE_KEYS, ALL_STYLE_KEYS, DESIGN_MODES } from '@/lib/design-config'
 import { isOverseas } from '@/lib/region'
 import { ERR } from '@/lib/errors'
-import { getSubscription, incrementGenerationsUsed } from '@/lib/subscription'
+import { getSubscription, incrementGenerationsUsed, getAllowedQualities, type QualityKey } from '@/lib/subscription'
 import QRCode from 'qrcode'
 
 const QUALITY_PRICE: Record<string, number> = {
@@ -57,6 +57,18 @@ export async function POST(req: NextRequest) {
       if (modeConfig.needsStyle && !ALL_STYLE_KEYS.includes(style)) return NextResponse.json({ error: ERR.invalidStyle }, { status: 400 })
       if (!ALL_ROOM_TYPE_KEYS.includes(roomType)) return NextResponse.json({ error: ERR.invalidRoomType }, { status: 400 })
       if (modeConfig.needsUpload && !uploadId) return NextResponse.json({ error: ERR.uploadMissing }, { status: 400 })
+
+      // Quality gating: Free users limited to 1024px (standard); Pro/Unlimited unlock all
+      {
+        const currentPlan = session ? (await getSubscription(session.userId)).plan : 'free'
+        const allowed = getAllowedQualities(currentPlan)
+        if (!allowed.includes(quality as QualityKey)) {
+          return NextResponse.json(
+            { error: 'This resolution requires Pro or Unlimited plan', upgradeUrl: '/pricing' },
+            { status: 403 },
+          )
+        }
+      }
       if (modeConfig.needsUpload && uploadId) {
         const uploadData = await getUploadData(uploadId)
         if (!uploadData) return NextResponse.json({ error: ERR.fileNotFound }, { status: 400 })

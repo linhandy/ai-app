@@ -23,7 +23,7 @@ export const regionConfig = {
     heroSubtitle:         isOverseas ? 'Upload a photo. Get a professional interior design in 30 seconds.' : '上传任意角度的房间照片，30秒内看到专业室内设计师级别的装修效果图',
     heroCta:              isOverseas ? 'Generate for Free'                                      : '免费生成效果图',
     heroSecondaryCta:     isOverseas ? 'View Examples'                                          : '查看示例效果',
-    heroBadge:            isOverseas ? '✦ 3 free designs daily · No credit card needed'         : '✦ 免费生成 · 满意再付费',
+    heroBadge:            isOverseas ? '✦ 3 free designs daily (1024px preview) · No credit card needed' : '✦ 免费生成 · 满意再付费',
     // Hero before/after labels
     beforeLabel:          isOverseas ? 'Before'                                                 : '改造前',
     afterLabel:           isOverseas ? 'AI Result'                                              : 'AI效果图',
@@ -48,7 +48,7 @@ export const regionConfig = {
     // FAQ
     faqTitle:             isOverseas ? 'Frequently Asked Questions'                             : '常见问题',
     // Footer
-    footer:               isOverseas ? '© 2026 RoomAI · Powered by ZenMux AI'                  : '© 2026 装AI · 由 ZenMux AI 驱动',
+    footer:               isOverseas ? '© 2026 RoomAI · Powered by AI'                  : '© 2026 装AI · 由 AI 驱动',
     // Upload component
     uploadPrompt:         isOverseas ? 'Drop your room photo here'                              : '拖拽上传房间照片',
     uploadDragHint:       isOverseas ? 'or click to browse'                                     : '或点击选择文件',

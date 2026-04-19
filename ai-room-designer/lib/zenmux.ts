@@ -84,8 +84,8 @@ export function buildStylePrompt(
     } else {
       // redesign (default)
       base = useEn
-        ? `Redesign this room photo: ${entry.promptEn}. Keep the original room structure, windows and layout. Only change furniture, decor and style. Ensure bright lighting, clear details. Generate a professional photorealistic interior design image.`
-        : `请将这张室内照片${entry.prompt}。保留原有的空间结构、门窗位置和整体布局，仅改变装修风格和家具陈设。保证充足的光线亮度，画面明亮清晰，不要偏暗。生成专业室内设计师水准的效果图，高质量写实风格，照片真实感强。`
+        ? `Completely transform this room into ${entry.promptEn} interior design style. Keep only the architectural bones: walls, windows, door positions and overall room dimensions. Replace ALL furniture, wall finishes, flooring, lighting fixtures, textiles, artwork and decor to fully express the ${entry.promptEn} aesthetic — do not keep the original furnishings. Make the style transformation unmistakably visible. Professional interior photography, bright natural lighting, sharp details, photorealistic.`
+        : `彻底将这张照片改造为${entry.prompt}风格的室内设计。只保留建筑结构：墙体、门窗位置和整体空间尺寸。**完全替换**所有家具、墙面饰面、地板、灯具、软装、艺术品和装饰——不要保留原有家具陈设。让风格转变一眼可辨。专业室内摄影级写实效果，自然光线充足，画面清晰锐利。`
     }
   }
 
@@ -98,6 +98,15 @@ export function buildStylePrompt(
   // Append optional custom prompt
   if (customPrompt?.trim()) {
     base += `\n${customPrompt.trim()}`
+  }
+
+  // Hyper Realism boost — only for Ultra quality (4096px, Pro/Unlimited only)
+  // Note: inpaint mode exits early above, so this branch is for photo-mode prompts only
+  if (quality === 'ultra') {
+    const hyperRealism = useEn
+      ? '\nHyper-realism boost: ultra-realistic architectural photography, cinematic lighting with ray-traced global illumination, shallow depth of field, crisp 8K details, magazine cover quality.'
+      : '\n超写实加强：超真实建筑摄影、电影级光照和全局光追效果、浅景深虚化、8K级细节锐利度、杂志封面级品质。'
+    base += hyperRealism
   }
 
   return base

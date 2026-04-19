@@ -42,7 +42,7 @@ export default function UploadZone({ onUpload }: Props) {
       onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
       onDragLeave={() => setDragging(false)}
       onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
-      className={`relative w-full h-[240px] md:h-[360px] lg:h-[480px] rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors
+      className={`relative w-full aspect-[4/3] min-h-[300px] md:min-h-[360px] lg:min-h-[420px] rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors
         ${dragging ? 'border-amber-500 bg-amber-500/5' : 'border-gray-700 bg-[#0A0A0A] hover:border-gray-500'}`}
       onClick={() => document.getElementById('file-input')?.click()}
     >
@@ -56,7 +56,7 @@ export default function UploadZone({ onUpload }: Props) {
 
       {preview ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={preview} alt="" className="w-full h-full object-cover rounded-lg absolute inset-0" />
+        <img src={preview} alt="" className="w-full h-full object-contain rounded-lg absolute inset-0 bg-black" />
       ) : (
         <>
           <div className="w-14 h-14 rounded-full bg-[#1A1A1A] flex items-center justify-center">

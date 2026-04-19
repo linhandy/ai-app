@@ -19,6 +19,14 @@ export default async function AccountPage() {
 
   const subscription = await getSubscription(sub_session.userId)
 
+  const adminEmails = (process.env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+  const userEmail = (nextAuthSession?.user?.email ?? '').toLowerCase()
+  const isAdmin = !!userEmail && adminEmails.includes(userEmail)
+  const adminToken = process.env.ADMIN_TOKEN ?? ''
+
   // 获取推荐统计数据
   let referralStats = {
     refCode: '',
@@ -81,12 +89,20 @@ export default async function AccountPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {subscription.plan !== 'unlimited' && (
+          {subscription.plan === 'free' && (
             <a
               href="/pricing"
               className="block w-full py-3 bg-amber-500 text-black font-semibold text-sm text-center rounded-lg hover:bg-amber-400 transition-colors"
             >
-              Upgrade Plan
+              Upgrade to Pro
+            </a>
+          )}
+          {subscription.plan === 'pro' && (
+            <a
+              href="/pricing#unlimited"
+              className="block w-full py-3 bg-purple-600 text-white font-semibold text-sm text-center rounded-lg hover:bg-purple-500 transition-colors"
+            >
+              Upgrade to Unlimited
             </a>
           )}
           {subscription.plan !== 'free' && (
@@ -95,6 +111,14 @@ export default async function AccountPage() {
               className="block w-full py-3 bg-gray-800 text-white font-semibold text-sm text-center rounded-lg hover:bg-gray-700 transition-colors"
             >
               Manage Billing
+            </a>
+          )}
+          {isAdmin && adminToken && (
+            <a
+              href={`/admin?token=${encodeURIComponent(adminToken)}`}
+              className="block w-full py-3 bg-blue-600 text-white font-semibold text-sm text-center rounded-lg hover:bg-blue-500 transition-colors"
+            >
+              📊 Admin Dashboard
             </a>
           )}
         </div>

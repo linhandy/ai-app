@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import StyleGallery from '@/components/StyleGallery'
 import NavBar from '@/components/NavBar'
 import { regionConfig } from '@/lib/region-config'
@@ -28,11 +27,11 @@ export default function HomePage() {
         <p className="text-gray-400 text-base sm:text-lg text-center max-w-lg">
           {s.heroSubtitle}
         </p>
-         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2 w-full mx-auto">
-           <Link href="/generate" className="bg-amber-500 text-black font-bold text-base px-8 rounded flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-[0_8px_24px_rgba(255,152,0,0.3)] w-full sm:w-auto" style={{height:'52px'}}>
+         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2 w-full sm:w-auto mx-auto">
+           <Link href="/generate" className="bg-amber-500 text-black font-bold text-base px-8 rounded flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-[0_8px_24px_rgba(255,152,0,0.3)] w-full sm:w-auto min-w-[200px]" style={{height:'52px'}}>
              {s.heroCta}
            </Link>
-           <a href="#examples" className="text-gray-400 text-base px-7 rounded border border-gray-700 hover:border-gray-500 transition-colors flex items-center justify-center w-full sm:w-auto" style={{height:'52px'}}>
+           <a href="#examples" className="text-gray-400 text-base px-7 rounded border border-gray-700 hover:border-gray-500 transition-colors flex items-center justify-center w-full sm:w-auto min-w-[200px]" style={{height:'52px'}}>
              {s.heroSecondaryCta}
            </a>
          </div>
@@ -60,48 +59,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Before/After side-by-side direct comparison */}
-        <div className="w-full max-w-[1100px] mt-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5">
-            <div className="relative rounded-xl overflow-hidden border border-gray-700">
-              <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
-                <Image
-                  src="/styles/before-sample.jpg"
-                  alt={s.beforeCaption}
-                  fill
-                  priority
-                  sizes="(max-width: 640px) 100vw, 50vw"
-                  className="object-cover"
-                  style={{ filter: 'brightness(1.25) contrast(1.05)' }}
-                />
-              </div>
-              <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/75 backdrop-blur-sm text-white text-xs font-semibold px-3 h-7 rounded-full border border-white/10">
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block" />
-                {s.beforeLabel}
-              </div>
-            </div>
-            <div className="relative rounded-xl overflow-hidden border border-amber-500/50">
-              <div className="absolute inset-0 rounded-xl ring-1 ring-amber-500/30 pointer-events-none z-10" />
-              <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
-                <Image src="/styles/hero-after.jpg" alt={s.afterCaption} fill priority sizes="(max-width: 640px) 100vw, 50vw" className="object-cover" />
-              </div>
-              <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-amber-500 text-black text-xs font-bold px-3 h-7 rounded-full z-20">
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                {s.afterLabel}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center gap-6 mt-3">
-            <span className="text-gray-600 text-xs">{s.beforeCaption}</span>
-            <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-            <span className="text-amber-500 text-xs font-semibold">{s.afterCaption}</span>
-          </div>
-        </div>
       </section>
 
       {/* Social proof — counter + testimonials (overseas only) */}
@@ -264,7 +221,7 @@ export default function HomePage() {
               },
               {
                 q: "What's the difference between Free, Pro, and Unlimited?",
-                a: 'Free gives you 3 HD designs every day (resets daily UTC midnight, no watermark). Pro ($9.99/mo) gives 150 designs per month with priority and commercial use rights. Unlimited ($19.99/mo) offers up to 500 designs per month under fair use, plus priority processing.',
+                a: 'Free: 3 designs per day at 1024px standard resolution (watermarked preview). Pro ($9.99/mo): 150 designs per month, unlocks 2048px HD and 4096px Ultra resolutions, no watermark, full commercial use rights. Unlimited ($19.99/mo): 500 designs per month (fair use), all Pro features plus priority rendering queue and parallel batch generation (up to 8 styles at once).',
               },
               {
                 q: 'How does billing work?',

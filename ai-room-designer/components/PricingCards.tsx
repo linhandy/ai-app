@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 const PLANS = [
@@ -8,7 +8,7 @@ const PLANS = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     generationsBadge: '3 / day',
-    features: ['3 HD designs every day', 'No watermark', 'All 40+ styles', 'All room types'],
+    features: ['3 designs per day', '1024px standard resolution', 'Watermarked preview', 'All 40+ styles', 'All room types'],
     cta: 'Start Free',
     ctaHref: '/generate',
     plan: null as string | null,
@@ -21,7 +21,7 @@ const PLANS = [
     monthlyPrice: 9.99,
     yearlyPrice: 7.99,
     generationsBadge: '150 / month',
-    features: ['150 generations / month', 'No watermark', 'All 40+ styles', 'All room types', 'High-res downloads'],
+    features: ['150 generations / month', '2048px HD + 4096px Ultra unlocked', 'No watermark', 'Commercial use license', 'All 40+ styles · all room types'],
     cta: 'Upgrade to Pro',
     ctaHref: null,
     plan: 'pro' as string | null,
@@ -35,7 +35,7 @@ const PLANS = [
     monthlyPrice: 19.99,
     yearlyPrice: 15.99,
     generationsBadge: 'Unlimited*',
-    features: ['Unlimited generations*', 'No watermark', 'All 40+ styles', 'All room types', 'High-res downloads', 'Priority generation'],
+    features: ['Unlimited generations*', 'All Pro features included', 'Priority rendering queue', 'Parallel batch generation (up to 8 styles)', 'Hyper Realism mode'],
     footnote: '* Fair use: up to 500 generations per month',
     cta: 'Go Unlimited',
     ctaHref: null,
@@ -49,6 +49,23 @@ const PLANS = [
 export default function PricingCards() {
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month')
   const [loading, setLoading] = useState<string | null>(null)
+  const [currentPlan, setCurrentPlan] = useState<'free' | 'pro' | 'unlimited' | null>(null)
+
+  useEffect(() => {
+    fetch('/api/quota')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.plan === 'pro' || d.plan === 'unlimited' || d.plan === 'free') {
+          setCurrentPlan(d.plan)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const planRank: Record<string, number> = { free: 0, pro: 1, unlimited: 2 }
+  const isCurrent = (plan: string | null) => !!plan && plan === currentPlan
+  const isDowngrade = (plan: string | null) =>
+    !!plan && !!currentPlan && planRank[plan] < planRank[currentPlan]
 
   async function handleUpgrade(plan: string) {
     setLoading(plan)
@@ -146,28 +163,55 @@ export default function PricingCards() {
               )}
 
               {/* CTA */}
-              {p.ctaHref ? (
-                <Link
-                  href={p.ctaHref}
-                  className="flex items-center justify-center h-11 rounded-xl font-semibold text-sm bg-white/10 text-white hover:bg-white/15 transition-colors"
-                >
-                  {p.cta}
-                </Link>
-              ) : (
-                <button
-                  onClick={() => handleUpgrade(p.plan!)}
-                  disabled={loading === p.plan}
-                  className={`h-11 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 ${
-                    p.highlight
-                      ? 'bg-amber-500 text-black hover:bg-amber-400 shadow-[0_4px_16px_rgba(245,158,11,0.3)]'
-                      : p.plan === 'unlimited'
-                        ? 'bg-purple-600 text-white hover:bg-purple-500'
-                        : 'bg-gray-700 text-white hover:bg-gray-600'
-                  }`}
-                >
-                  {loading === p.plan ? 'Loading...' : p.cta}
-                </button>
-              )}
+              {(() => {
+                const current = isCurrent(p.plan)
+                const downgrade = isDowngrade(p.plan)
+                if (current) {
+                  return (
+                    <button
+                      disabled
+                      className="h-11 rounded-xl font-semibold text-sm bg-gray-800 text-gray-400 cursor-not-allowed border border-gray-700"
+                    >
+                      Current Plan
+                    </button>
+                  )
+                }
+                if (downgrade) {
+                  return (
+                    <a
+                      href="/api/stripe/portal"
+                      className="flex items-center justify-center h-11 rounded-xl font-semibold text-sm bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors border border-gray-700"
+                    >
+                      Manage Billing
+                    </a>
+                  )
+                }
+                if (p.ctaHref) {
+                  return (
+                    <Link
+                      href={p.ctaHref}
+                      className="flex items-center justify-center h-11 rounded-xl font-semibold text-sm bg-white/10 text-white hover:bg-white/15 transition-colors"
+                    >
+                      {p.cta}
+                    </Link>
+                  )
+                }
+                return (
+                  <button
+                    onClick={() => handleUpgrade(p.plan!)}
+                    disabled={loading === p.plan}
+                    className={`h-11 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 ${
+                      p.highlight
+                        ? 'bg-amber-500 text-black hover:bg-amber-400 shadow-[0_4px_16px_rgba(245,158,11,0.3)]'
+                        : p.plan === 'unlimited'
+                          ? 'bg-purple-600 text-white hover:bg-purple-500'
+                          : 'bg-gray-700 text-white hover:bg-gray-600'
+                    }`}
+                  >
+                    {loading === p.plan ? 'Loading...' : p.cta}
+                  </button>
+                )
+              })()}
             </div>
           )
         })}

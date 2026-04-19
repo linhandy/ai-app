@@ -2,6 +2,16 @@ import { getClient } from './orders'
 import crypto from 'crypto'
 
 export type SubscriptionPlan = 'free' | 'pro' | 'unlimited'
+export type QualityKey = 'standard' | 'premium' | 'ultra'
+
+/**
+ * Overseas quality gating — Free users get 1024px only (standard);
+ * Pro/Unlimited unlock 2048px (premium) and 4096px (ultra).
+ */
+export function getAllowedQualities(plan: SubscriptionPlan): QualityKey[] {
+  if (plan === 'free') return ['standard']
+  return ['standard', 'premium', 'ultra']
+}
 
 const PLAN_LIMITS: Record<SubscriptionPlan, number> = {
   free:      3,

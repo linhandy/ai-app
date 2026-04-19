@@ -93,14 +93,14 @@ export default function ShareModal({ style, pageUrl, resultUrl, onClose }: Props
         )}
 
         {/* Config-driven share buttons */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
           {shareTargets
             .filter(t => t !== 'wechat')  // WeChat handled above via QR
             .map((target) => (
               <button
                 key={target}
                 onClick={() => handleShareClick(target)}
-                className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 transition-colors"
+                className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 transition-colors min-w-[88px]"
               >
                 <span className="text-xl">{SHARE_TARGET_ICONS[target]}</span>
                 <span className="text-xs text-gray-400">

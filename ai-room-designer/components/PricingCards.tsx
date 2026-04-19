@@ -58,8 +58,16 @@ export default function PricingCards() {
       body: JSON.stringify({ plan, interval: billingInterval }),
     })
     const data = await res.json()
-    if (data.url) window.location.href = data.url
-    else setLoading(null)
+    if (data.error === 'authRequired') {
+      window.location.href = '/api/auth/signin?callbackUrl=' + encodeURIComponent('/pricing')
+      return
+    }
+    if (data.url) {
+      window.location.href = data.url
+    } else {
+      alert('Payment setup failed. Please try again.')
+      setLoading(null)
+    }
   }
 
   return (

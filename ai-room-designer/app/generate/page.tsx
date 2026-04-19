@@ -96,6 +96,7 @@ function GeneratePageInner() {
   const [batchMode, setBatchMode] = useState(false)
   const [batchStyles, setBatchStyles] = useState<string[]>([])
   const [batchLoading, setBatchLoading] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   const currentOption = QUALITY_OPTIONS.find((o) => o.key === quality) ?? QUALITY_OPTIONS[0]
   const canGenerate = !currentMode.needsUpload || (
@@ -112,6 +113,14 @@ function GeneratePageInner() {
     fetch('/api/credits/balance')
       .then(r => r.json())
       .then(d => setCreditBalance(d.balance ?? 0))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!isOverseas) return
+    fetch('/api/quota')
+      .then(r => r.json())
+      .then(d => { if (d.plan && d.plan !== null) setIsLoggedIn(true) })
       .catch(() => {})
   }, [])
 
@@ -296,7 +305,7 @@ function GeneratePageInner() {
         <span className="text-gray-600 text-xs hidden sm:block">
           {currentMode.needsUpload ? s.generateNavHint : s.generateNavHintFree}
         </span>
-        {isOverseas && (
+        {isOverseas && !isLoggedIn && (
           <Link href="/api/auth/signin" className="ml-4 text-gray-500 text-xs hover:text-gray-300 transition-colors hidden sm:block">
             Sign in
           </Link>
@@ -312,7 +321,7 @@ function GeneratePageInner() {
       <div className="flex flex-col lg:flex-row px-4 sm:px-6 lg:px-[120px] pt-4 md:pt-6 pb-4 md:pb-16 gap-6 lg:gap-10 items-start max-w-7xl mx-auto w-full">
 
         {/* ── Left column: Upload ── */}
-        <div className="w-full lg:w-[480px] flex flex-col gap-4">
+        <div className="w-full lg:flex-[1_1_50%] xl:flex-[0_0_550px] flex flex-col gap-4">
           {mode === 'style-match' ? (
             <>
               <div>

@@ -5,14 +5,14 @@ export default function DesignModesGrid() {
   return (
     <section className="px-4 sm:px-6 lg:px-[120px] py-16 bg-[#050505]">
       <div className="max-w-6xl mx-auto flex flex-col items-center gap-8">
-        <div className="text-center max-w-2xl">
-          <h2 className="text-3xl md:text-4xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>
-            10 design modes, <span className="text-amber-500">one subscription</span>
-          </h2>
-          <p className="text-gray-400 text-sm md:text-base mt-3">
-            From full-room redesigns to pixel-precise inpainting. Most tools give you 3 modes — we give you ten.
-          </p>
-        </div>
+         <div className="text-center max-w-2xl">
+           <h2 className="text-3xl md:text-4xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>
+             10 design modes, <span className="text-amber-500">one subscription</span>
+           </h2>
+           <p className="text-gray-400 text-sm md:text-base mt-3 text-center">
+             From full-room redesigns to pixel-precise inpainting. Most tools give you 3 modes — we give you ten.
+           </p>
+         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 w-full">
           {DESIGN_MODES.map((m) => (

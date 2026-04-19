@@ -28,14 +28,14 @@ export default function HomePage() {
         <p className="text-gray-400 text-base sm:text-lg text-center max-w-lg">
           {s.heroSubtitle}
         </p>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-2 w-full max-w-sm sm:max-w-none">
-          <Link href="/generate" className="bg-amber-500 text-black font-bold text-base px-8 rounded flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-[0_8px_24px_rgba(255,152,0,0.3)]" style={{height:'52px'}}>
-            {s.heroCta}
-          </Link>
-          <a href="#examples" className="text-gray-400 text-base px-7 rounded border border-gray-700 hover:border-gray-500 transition-colors flex items-center justify-center" style={{height:'52px'}}>
-            {s.heroSecondaryCta}
-          </a>
-        </div>
+         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2 w-full max-w-sm sm:max-w-none mx-auto">
+           <Link href="/generate" className="bg-amber-500 text-black font-bold text-base px-8 rounded flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-[0_8px_24px_rgba(255,152,0,0.3)] w-full sm:w-auto" style={{height:'52px'}}>
+             {s.heroCta}
+           </Link>
+           <a href="#examples" className="text-gray-400 text-base px-7 rounded border border-gray-700 hover:border-gray-500 transition-colors flex items-center justify-center w-full sm:w-auto" style={{height:'52px'}}>
+             {s.heroSecondaryCta}
+           </a>
+         </div>
 
         {isOverseas && (
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">

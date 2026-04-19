@@ -14,14 +14,14 @@ export default function PriceComparisonCard() {
   return (
     <section className="px-4 sm:px-6 lg:px-[120px] py-16 bg-black">
       <div className="max-w-5xl mx-auto flex flex-col items-center gap-8">
-        <div className="text-center max-w-2xl">
-          <h2 className="text-3xl md:text-4xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>
-            Everything you need at <span className="text-amber-500">1/3 the price</span>
-          </h2>
-          <p className="text-gray-400 text-sm md:text-base mt-3">
-            Honest side-by-side vs the leading AI interior design tool.
-          </p>
-        </div>
+         <div className="text-center max-w-2xl">
+           <h2 className="text-3xl md:text-4xl font-bold text-center" style={{ fontFamily: 'Georgia, serif' }}>
+             Everything you need at <span className="text-amber-500">1/3 the price</span>
+           </h2>
+           <p className="text-gray-400 text-sm md:text-base mt-3 text-center">
+             Honest side-by-side vs the leading AI interior design tool.
+           </p>
+         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
           {/* Us */}

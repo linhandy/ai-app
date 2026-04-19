@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { findOrCreateWechatUser, createSessionToken } from '@/lib/auth'
+import { tryAttributeReferral } from '@/lib/referral'
 
 function failRedirect(baseUrl: string) {
   const res = NextResponse.redirect(`${baseUrl}/login?error=wechat_failed`)
@@ -46,9 +47,36 @@ export async function GET(req: Request) {
       avatar: userData.headimgurl ?? '',
     })
 
+    // Wire referral attribution for new users
+    if (user.isNew) {
+      const ref_code = cookieStore.get('ref_code')?.value
+      if (ref_code) {
+        const visitorIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+        try {
+          const attrResult = await tryAttributeReferral({
+            refCode: ref_code,
+            newUserId: user.userId,
+            visitorIp,
+          })
+          if (attrResult.ok) {
+            console.log(`[referral] attributed new WeChat user ${user.userId} to ref_code ${ref_code}`)
+          } else {
+            console.log(`[referral] failed to attribute WeChat user: ${attrResult.reason}`, {
+              userId: user.userId,
+              refCode: ref_code,
+              reason: attrResult.reason,
+            })
+          }
+        } catch (err) {
+          console.error(`[referral] error during WeChat attribution:`, err)
+        }
+      }
+    }
+
     const token = createSessionToken(user.userId)
     const res = NextResponse.redirect(baseUrl)
     res.cookies.delete('wechat_state')
+    res.cookies.delete('ref_code')
     res.cookies.set('session', token, {
       httpOnly: true,
       sameSite: 'lax',

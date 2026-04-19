@@ -1,4 +1,4 @@
-import { getSubscription, upsertSubscription, incrementGenerationsUsed, closeSubscriptionDb } from '@/lib/subscription'
+import { getSubscription, upsertSubscription, incrementGenerationsUsed, closeSubscriptionDb, addBonusGenerationsBy, MAX_BONUS_GENERATIONS } from '@/lib/subscription'
 import { closeDb } from '@/lib/orders'
 
 beforeEach(() => {
@@ -157,5 +157,43 @@ describe('incrementGenerationsUsed daily', () => {
     const sub = await getSubscription('user_inc_stale')
     expect(sub.generationsUsed).toBe(1)
     expect(sub.generationsLeft).toBe(2)
+  })
+})
+
+describe('addBonusGenerationsBy', () => {
+  test('adds N bonus generations and returns N', async () => {
+    const added = await addBonusGenerationsBy('usr_bonus1', 2)
+    expect(added).toBe(2)
+    const sub = await getSubscription('usr_bonus1')
+    expect(sub.generationsLeft).toBe(3 + 2) // free 3 + bonus 2
+  })
+
+  test('stops at MAX cap (30) and returns actual count added', async () => {
+    const first = await addBonusGenerationsBy('usr_bonus2', MAX_BONUS_GENERATIONS - 2)
+    expect(first).toBe(MAX_BONUS_GENERATIONS - 2)
+    const second = await addBonusGenerationsBy('usr_bonus2', 5)
+    expect(second).toBe(2) // cap is MAX_BONUS_GENERATIONS, we only add 2 more
+  })
+
+  test('returns 0 when already at cap', async () => {
+    await addBonusGenerationsBy('usr_bonus3', MAX_BONUS_GENERATIONS)
+    const added = await addBonusGenerationsBy('usr_bonus3', 3)
+    expect(added).toBe(0)
+  })
+
+  test('returns 0 and does not mutate for non-positive or non-finite count', async () => {
+    const a = await addBonusGenerationsBy('usr_bonus4', 0)
+    const b = await addBonusGenerationsBy('usr_bonus4', -5)
+    const c = await addBonusGenerationsBy('usr_bonus4', Number.NaN)
+    const d = await addBonusGenerationsBy('usr_bonus4', Number.POSITIVE_INFINITY)
+    expect(a).toBe(0)
+    expect(b).toBe(0)
+    expect(c).toBe(0)
+    expect(d).toBe(0)
+
+    // Verify no subscription row was created (no side effects)
+    const sub = await getSubscription('usr_bonus4')
+    expect(sub.plan).toBe('free')
+    expect(sub.generationsLeft).toBe(3) // default free tier
   })
 })

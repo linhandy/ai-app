@@ -4,7 +4,6 @@ import { createHash } from 'crypto'
 import type { Metadata } from 'next'
 import { getOrder } from '@/lib/orders'
 import { regionConfig } from '@/lib/region-config'
-import { getReferralCount } from '@/lib/referral'
 import ComparePanel from '@/components/ComparePanel'
 import SaveToHistory from '@/components/SaveToHistory'
 import SharePanel from '@/components/SharePanel'
@@ -135,10 +134,12 @@ export default async function ResultPage({ params }: { params: { orderId: string
   // Overseas free-tier upsell: read subscription server-side
   let overseasFreeGenerationsLeft: number | null = null
   let isOverseasGuest = false
+  let currentUserId: string | null = null
   if (isOverseas) {
     const { auth } = await import('@/lib/next-auth')
     const session = await auth()
     isOverseasGuest = !session?.user?.id
+    currentUserId = session?.user?.id ?? null
     if (session?.user?.id) {
       try {
         const sub = await getSubscription(session.user.id)
@@ -147,6 +148,25 @@ export default async function ResultPage({ params }: { params: { orderId: string
         }
       } catch {
         // non-fatal — upsell strip simply won't render
+      }
+    }
+  } else {
+    // For domestic users, try to get userId from cookies
+    const cookieStore = await import('next/headers').then(m => m.cookies())
+    const sessionToken = (await cookieStore).get('session')?.value
+    if (sessionToken) {
+      const { parseSessionToken, getUser } = await import('@/lib/auth')
+      const session = parseSessionToken(sessionToken)
+      if (session?.userId) {
+        currentUserId = session.userId
+        try {
+          const user = await getUser(session.userId)
+          if (user) {
+            // User found, we can use this ID
+          }
+        } catch {
+          // non-fatal
+        }
       }
     }
   }
@@ -186,7 +206,6 @@ export default async function ResultPage({ params }: { params: { orderId: string
   const visitorIp = visitorForwarded?.split(',')[0]?.trim() ?? 'unknown'
   const refCode = createHash('sha256').update(visitorIp).digest('hex').slice(0, 6)
   const shareUrl = `${proto}://${host}/r/${order.id}?ref=${refCode}`
-  const referralCount = await getReferralCount(refCode)
 
   return (
     <main className="min-h-screen bg-black">
@@ -289,7 +308,7 @@ export default async function ResultPage({ params }: { params: { orderId: string
           </p>
         )}
 
-        <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={shareUrl} referralCount={referralCount} isOverseas={isOverseas} />
+        <SharePanel style={order.style} resultUrl={order.resultUrl} pageUrl={shareUrl} isOverseas={isOverseas} userId={currentUserId ?? undefined} />
 
         {isOverseas && !isOverseasGuest && (
           <GalleryOptIn orderId={order.id} initialOptIn={order.isPublicGallery ?? false} />

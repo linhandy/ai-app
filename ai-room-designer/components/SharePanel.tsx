@@ -11,9 +11,18 @@ interface Props {
   pageUrl?: string     // full URL of the result page (passed from server)
   referralCount?: number
   isOverseas?: boolean
+  userId?: string      // current user ID for referral
 }
 
-type Modal = 'wechat' | 'douyin' | 'xiaohongshu' | null
+interface ReferralStats {
+  refCode: string
+  inviteUrl: string
+  thisMonthCompleted: number
+  totalCompleted: number
+  monthlyLimit: number
+}
+
+type Modal = 'wechat' | 'douyin' | 'xiaohongshu' | 'invite' | 'invite_wechat' | 'invite_douyin' | 'invite_xiaohongshu' | null
 
 function useCopy() {
   const [copied, setCopied] = useState<string | null>(null)
@@ -26,11 +35,13 @@ function useCopy() {
   return { copied, copy }
 }
 
-export default function SharePanel({ style, pageUrl, referralCount = 0, isOverseas = false }: Props) {
+export default function SharePanel({ style, pageUrl, referralCount = 0, isOverseas = false, userId }: Props) {
   const [modal, setModal] = useState<Modal>(null)
   const [qrDataUrl, setQrDataUrl] = useState<string>('')
   const [canNativeShare, setCanNativeShare] = useState(false)
   const [bonusToast, setBonusToast] = useState<'awarded' | 'already' | null>(null)
+  const [referralStats, setReferralStats] = useState<ReferralStats | null>(null)
+  const [referralError, setReferralError] = useState(false)
   const { copied, copy } = useCopy()
 
   const claimShareBonus = async () => {
@@ -54,6 +65,85 @@ export default function SharePanel({ style, pageUrl, referralCount = 0, isOverse
   useEffect(() => {
     setCanNativeShare(typeof navigator !== 'undefined' && !!navigator.share)
   }, [])
+
+  // Fetch referral stats when userId is available
+  const fetchReferralStats = async () => {
+    if (!userId) {
+      setReferralError(true)
+      return
+    }
+    setReferralError(false)
+    try {
+      const response = await fetch(`/api/referral/stats?userId=${encodeURIComponent(userId)}`)
+      if (response.ok) {
+        const data = await response.json()
+        setReferralStats(data)
+      } else {
+        setReferralError(true)
+      }
+    } catch (err) {
+      console.error('[SharePanel] Failed to fetch referral stats:', err)
+      setReferralError(true)
+    }
+  }
+
+  const handleInviteClick = async () => {
+    if (!referralStats) {
+      await fetchReferralStats()
+    }
+    setModal('invite')
+  }
+
+  // Generate referral-specific share targets based on region
+  const getReferralShareTargets = (): ShareTarget[] => {
+    if (isOverseas) {
+      return ['twitter', 'facebook', 'copy_link'] as const
+    } else {
+      return ['wechat', 'douyin', 'xiaohongshu', 'copy_link'] as const
+    }
+  }
+
+  const shareReferralUrl = (target: ShareTarget) => {
+    if (!referralStats) return
+    const url = referralStats.inviteUrl
+    const shareText = regionConfig.currency === 'CNY'
+      ? '邀请朋友，获得 +2 次免费生成'
+      : 'Get +2 bonus generations when friends sign up'
+
+    switch (target) {
+      case 'twitter':
+        return getShareUrl('twitter', { url, title: shareText })
+      case 'facebook':
+        return getShareUrl('facebook', { url, title: shareText })
+      case 'copy_link':
+        copy(url, 'referral_link')
+        return null
+      case 'wechat':
+        openWechatReferral()
+        return null
+      case 'douyin':
+        setModal('invite_douyin')
+        return null
+      case 'xiaohongshu':
+        setModal('invite_xiaohongshu')
+        return null
+      default:
+        return null
+    }
+  }
+
+  const openWechatReferral = async () => {
+    if (!referralStats) return
+    if (!qrDataUrl) {
+      try {
+        const url = await QRCode.toDataURL(referralStats.inviteUrl, { width: 200, margin: 2, color: { dark: '#000', light: '#fff' } })
+        setQrDataUrl(url)
+      } catch (err) {
+        console.error('[SharePanel] Failed to generate QR code:', err)
+      }
+    }
+    setModal('invite_wechat')
+  }
 
   const openWechat = async () => {
     if (!qrDataUrl) {
@@ -160,7 +250,20 @@ export default function SharePanel({ style, pageUrl, referralCount = 0, isOverse
     }
   }
 
+  const inviteButton = userId && !referralError ? {
+    key: 'invite',
+    label: regionConfig.currency === 'CNY' ? '邀请朋友' : 'Invite Friends',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+    bg: 'bg-purple-600 hover:bg-purple-500 text-white',
+    onClick: handleInviteClick,
+  } : null
+
   const BUTTONS = [
+    ...(inviteButton ? [inviteButton] : []),
     ...(canNativeShare ? [{
       key: 'native',
       label: regionConfig.currency === 'CNY' ? '一键分享' : 'Share',
@@ -277,6 +380,214 @@ export default function SharePanel({ style, pageUrl, referralCount = 0, isOverse
               </button>
               <button onClick={() => setModal(null)} className="px-4 h-10 rounded-lg text-sm text-gray-500 hover:text-gray-300 transition-colors">
                 关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite friends modal */}
+      {modal === 'invite' && referralStats && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4" onClick={() => setModal(null)}>
+          <div className="bg-[#0D0D0D] border border-gray-800 rounded-xl p-6 flex flex-col gap-4 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h3 className="text-white font-bold">
+                {regionConfig.currency === 'CNY' ? '邀请朋友' : 'Invite Friends'}
+              </h3>
+            </div>
+
+            <p className="text-gray-400 text-sm">
+              {regionConfig.currency === 'CNY'
+                ? '分享你的推荐链接，朋友注册并生成一次后，你们都能获得 +2 次免费生成'
+                : 'Share your referral link. When friends sign up and generate once, you both get +2 bonus generations'}
+            </p>
+
+            {/* Referral stats display */}
+            <div className="bg-black rounded-lg p-4 border border-purple-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">
+                  {regionConfig.currency === 'CNY' ? '本月邀请成功' : 'This month'}
+                </span>
+                <span className="text-purple-400 font-bold">
+                  {referralStats.thisMonthCompleted} / {referralStats.monthlyLimit}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">
+                  {regionConfig.currency === 'CNY' ? '总共邀请成功' : 'Total referrals'}
+                </span>
+                <span className="text-green-400 font-bold">{referralStats.totalCompleted}</span>
+              </div>
+            </div>
+
+            {/* Invite URL */}
+            <div className="bg-black rounded-lg p-3 border border-gray-700">
+              <p className="text-gray-400 text-xs mb-2">
+                {regionConfig.currency === 'CNY' ? '你的邀请链接' : 'Your referral link'}
+              </p>
+              <p className="text-gray-300 text-xs break-all font-mono">{referralStats.inviteUrl}</p>
+            </div>
+
+            {/* Share buttons */}
+            <div className="space-y-3">
+              <p className="text-gray-400 text-xs">
+                {regionConfig.currency === 'CNY' ? '分享到' : 'Share via'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {getReferralShareTargets().map(target => (
+                  <button
+                    key={target}
+                    onClick={() => {
+                      const url = shareReferralUrl(target)
+                      if (url) window.open(url, '_blank', 'noopener')
+                    }}
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-semibold transition-colors bg-gray-900 hover:bg-gray-800 text-gray-300 border border-gray-700"
+                  >
+                    {target === 'twitter' && (
+                      <>
+                        <span className="font-bold">𝕏</span>
+                        <span>Twitter</span>
+                      </>
+                    )}
+                    {target === 'facebook' && (
+                      <>
+                        <span className="font-bold">f</span>
+                        <span>Facebook</span>
+                      </>
+                    )}
+                    {target === 'wechat' && (
+                      <>
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.49.49 0 01.177-.554C22.979 18.222 24 16.614 24 14.811c0-3.218-2.959-5.951-7.063-5.953zM14.5 13.478c-.535 0-.969-.44-.969-.983 0-.543.434-.983.969-.983s.969.44.969.983-.434.983-.969.983zm4.762 0c-.535 0-.969-.44-.969-.983 0-.543.434-.983.969-.983s.969.44.969.983-.434.983-.969.983z" />
+                        </svg>
+                        <span>WeChat</span>
+                      </>
+                    )}
+                    {target === 'douyin' && (
+                      <>
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.28 8.28 0 004.83 1.54v-3.4a4.85 4.85 0 01-1.06-.14z" />
+                        </svg>
+                        <span>Douyin</span>
+                      </>
+                    )}
+                    {target === 'xiaohongshu' && (
+                      <>
+                        <span className="font-bold text-red-400">书</span>
+                        <span>小红书</span>
+                      </>
+                    )}
+                    {target === 'copy_link' && (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        <span>{copied === 'referral_link' ? (regionConfig.currency === 'CNY' ? '已复制' : 'Copied') : (regionConfig.currency === 'CNY' ? '复制链接' : 'Copy Link')}</span>
+                      </>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={() => setModal(null)} className="w-full h-10 rounded-lg text-sm text-gray-500 hover:text-gray-300 transition-colors">
+              {regionConfig.currency === 'CNY' ? '关闭' : 'Close'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Invite via WeChat modal */}
+      {modal === 'invite_wechat' && referralStats && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4" onClick={() => setModal(null)}>
+          <div className="bg-[#0D0D0D] border border-gray-800 rounded-xl p-8 flex flex-col items-center gap-4 w-80" onClick={e => e.stopPropagation()}>
+            <h3 className="text-white font-bold text-lg">
+              {regionConfig.currency === 'CNY' ? '微信扫码邀请' : 'WeChat Scan to Invite'}
+            </h3>
+            {qrDataUrl && <img src={qrDataUrl} alt={regionConfig.currency === 'CNY' ? '邀请二维码' : 'Referral QR code'} className="w-44 h-44 rounded-xl bg-white p-1" />}
+            <p className="text-gray-400 text-sm text-center">
+              {regionConfig.currency === 'CNY'
+                ? '用微信扫描二维码分享给朋友'
+                : 'Share this QR code with your WeChat friends'}
+            </p>
+            <button onClick={() => setModal(null)} className="text-gray-600 text-sm hover:text-gray-400 transition-colors mt-1">
+              {regionConfig.currency === 'CNY' ? '关闭' : 'Close'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Invite via Douyin modal */}
+      {modal === 'invite_douyin' && referralStats && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4" onClick={() => setModal(null)}>
+          <div className="bg-[#0D0D0D] border border-gray-800 rounded-xl p-6 flex flex-col gap-4 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center border border-gray-700">
+                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.28 8.28 0 004.83 1.54v-3.4a4.85 4.85 0 01-1.06-.14z" />
+                </svg>
+              </div>
+              <h3 className="text-white font-bold">
+                {regionConfig.currency === 'CNY' ? '分享邀请链接到抖音' : 'Share via Douyin'}
+              </h3>
+            </div>
+            <p className="text-gray-500 text-xs">
+              {regionConfig.currency === 'CNY'
+                ? '复制下方邀请链接，发布抖音视频/图文时粘贴使用'
+                : 'Copy the referral link below and paste it in your Douyin posts'}
+            </p>
+            <div className="bg-black rounded-lg p-4 text-gray-300 text-sm border border-gray-800 break-all">
+              {referralStats.inviteUrl}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => copy(referralStats.inviteUrl, 'invite_douyin_link')}
+                className={`flex-1 h-10 rounded-lg text-sm font-semibold transition-colors ${copied === 'invite_douyin_link' ? 'bg-green-900 text-green-400' : 'bg-white/10 text-white hover:bg-white/15'}`}
+              >
+                {copied === 'invite_douyin_link' ? '✓ 已复制' : '复制链接'}
+              </button>
+              <button onClick={() => setModal(null)} className="px-4 h-10 rounded-lg text-sm text-gray-500 hover:text-gray-300 transition-colors">
+                {regionConfig.currency === 'CNY' ? '关闭' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite via Xiaohongshu modal */}
+      {modal === 'invite_xiaohongshu' && referralStats && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4" onClick={() => setModal(null)}>
+          <div className="bg-[#0D0D0D] border border-gray-800 rounded-xl p-6 flex flex-col gap-4 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-[#FF2442] flex items-center justify-center">
+                <span className="text-white text-xs font-bold">书</span>
+              </div>
+              <h3 className="text-white font-bold">
+                {regionConfig.currency === 'CNY' ? '分享邀请链接到小红书' : 'Share via Xiaohongshu'}
+              </h3>
+            </div>
+            <p className="text-gray-500 text-xs">
+              {regionConfig.currency === 'CNY'
+                ? '复制下方邀请链接，发布小红书笔记时粘贴使用'
+                : 'Copy the referral link below and paste it in your Xiaohongshu posts'}
+            </p>
+            <div className="bg-black rounded-lg p-4 text-gray-300 text-sm border border-gray-800 break-all">
+              {referralStats.inviteUrl}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => copy(referralStats.inviteUrl, 'invite_xiaohongshu_link')}
+                className={`flex-1 h-10 rounded-lg text-sm font-semibold transition-colors ${copied === 'invite_xiaohongshu_link' ? 'bg-green-900 text-green-400' : 'bg-[#FF2442] text-white hover:bg-[#e01e3a]'}`}
+              >
+                {copied === 'invite_xiaohongshu_link' ? '✓ 已复制' : '复制链接'}
+              </button>
+              <button onClick={() => setModal(null)} className="px-4 h-10 rounded-lg text-sm text-gray-500 hover:text-gray-300 transition-colors">
+                {regionConfig.currency === 'CNY' ? '关闭' : 'Close'}
               </button>
             </div>
           </div>

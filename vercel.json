@@ -1,5 +1,4 @@
 {
   "buildCommand": "cd ai-room-designer && npm run build",
-  "devCommand": "cd ai-room-designer && npm run dev",
-  "installCommand": "npm install && cd ai-room-designer && npm install"
+  "outputDirectory": "ai-room-designer/.next"
 }
